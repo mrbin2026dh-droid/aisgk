@@ -1,0 +1,109 @@
+/* Tùy chỉnh thanh cuộn thanh mảnh và giao diện sân khấu */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* Kiểu dáng cho nội dung Markdown bài học */
+.prose h1 {
+  color: #38bdf8;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.prose h2 {
+  color: #7dd3fc;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose h3 {
+  color: #bae6fd;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.prose p {
+  margin-bottom: 0.75rem;
+  color: #cbd5e1;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+  color: #e2e8f0;
+}
+
+.prose blockquote {
+  border-left: 4px solid #38bdf8;
+  padding-left: 0.75rem;
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin: 0.75rem 0;
+  color: #f1f5f9;
+}
+
+.prose strong {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+/* Thẻ lựa chọn trắc nghiệm */
+.quiz-option-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  background: rgba(30, 41, 59, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-option-label:hover {
+  background: rgba(51, 65, 85, 0.7);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.quiz-option-label.selected {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: #0ea5e9;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.2);
+}
+
+.quiz-option-label.correct {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+}
+
+.quiz-option-label.wrong {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: #ef4444 !important;
+}
