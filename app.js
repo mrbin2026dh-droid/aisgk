@@ -1,6 +1,6 @@
 /**
  * Frontend Application: AI SGK Tin học THCS
- * Tuân thủ chuẩn Alibaba Open-Code-Review (Zero XSS) và stitch-type-safe-ui
+ * Tuân thủ chuẩn Alibaba Open-Code-Review (Zero XSS) và Educational Light Theme
  */
 
 const API_BASE = "http://127.0.0.1:8000/api";
@@ -53,12 +53,12 @@ async function loadLesson(grade, lessonId) {
     renderQuiz(data.quiz);
 
   } catch (err) {
-    const errorHtml = '<div class="p-4 rounded-xl bg-rose-950/40 border border-rose-800 text-rose-300 text-xs">⚠️ Không thể kết nối với Backend API. Vui lòng đảm bảo server đang chạy tại <code>127.0.0.1:8000</code>.</div>';
+    const errorHtml = '<div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">⚠️ Không thể kết nối với Backend API. Vui lòng đảm bảo server đang chạy tại <code>127.0.0.1:8000</code>.</div>';
     lessonContentEl.innerHTML = DOMPurify.sanitize(errorHtml);
   }
 }
 
-// Render các câu hỏi trắc nghiệm
+// Render các câu hỏi trắc nghiệm (Chuẩn Educational Light Theme)
 function renderQuiz(quizList) {
   if (!quizList || quizList.length === 0) {
     quizContainerEl.innerHTML = DOMPurify.sanitize('<p class="text-xs text-slate-500">Bài học này chưa có câu hỏi trắc nghiệm.</p>');
@@ -72,27 +72,27 @@ function renderQuiz(quizList) {
   let html = "";
   quizList.forEach((q, idx) => {
     html += `
-      <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-700/80 space-y-2.5" id="quiz-card-${q.id}">
-        <div class="flex items-start gap-2">
-          <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center justify-center shrink-0">
+      <div class="p-4 rounded-xl bg-slate-50/70 border border-slate-200 space-y-3" id="quiz-card-${q.id}">
+        <div class="flex items-start gap-2.5">
+          <span class="w-6 h-6 rounded-md bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
             ${idx + 1}
           </span>
-          <p class="font-medium text-slate-200 text-xs leading-relaxed">${escapeHtml(q.cau_hoi)}</p>
+          <p class="font-bold text-slate-800 text-xs leading-relaxed">${escapeHtml(q.cau_hoi)}</p>
         </div>
 
-        <div class="space-y-1.5 pt-1">
+        <div class="space-y-2 pt-1">
           ${Object.entries(q.lua_chon).map(([optKey, optText]) => `
             <div class="quiz-option-label" data-qid="${q.id}" data-key="${optKey}">
-              <span class="w-5 h-5 rounded-md bg-slate-700/50 text-slate-300 font-bold text-[11px] flex items-center justify-center shrink-0">
+              <span class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center shrink-0">
                 ${optKey}
               </span>
-              <span class="text-xs text-slate-300">${escapeHtml(optText)}</span>
+              <span class="text-xs text-slate-700 font-medium">${escapeHtml(optText)}</span>
             </div>
           `).join("")}
         </div>
 
         <!-- Vùng hiển thị nhận xét sư phạm sau khi chấm -->
-        <div id="feedback-${q.id}" class="hidden p-2.5 rounded-lg text-xs leading-relaxed"></div>
+        <div id="feedback-${q.id}" class="hidden p-3 rounded-xl text-xs leading-relaxed"></div>
       </div>
     `;
   });
@@ -117,16 +117,13 @@ function renderQuiz(quizList) {
 
 // Thiết lập sự kiện tương tác
 function setupEvents() {
-  // Nộp bài trắc nghiệm
   btnSubmitQuizEl.addEventListener("click", submitQuiz);
 
-  // Gửi tin nhắn chat với Gia sư
   chatFormEl.addEventListener("submit", (e) => {
     e.preventDefault();
     sendChatMessage();
   });
 
-  // Gợi ý câu hỏi nhanh (Quick chips)
   document.querySelectorAll(".quick-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       chatInputEl.value = chip.dataset.prompt;
@@ -173,15 +170,17 @@ async function submitQuiz() {
   }
 }
 
-// Hiển thị kết quả chấm điểm & nhận xét sư phạm
+// Hiển thị kết quả chấm điểm & nhận xét sư phạm (Chuẩn Giáo Dục Ánh Sáng)
 function displayQuizEvaluation(evaluation) {
   quizScoreBannerEl.classList.remove("hidden");
+  quizScoreBannerEl.className = "mb-3 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs shadow-xs space-y-1.5";
+
   const summaryHtml = `
-    <div class="flex items-center justify-between border-b border-slate-700/80 pb-2 mb-2">
-      <span class="font-bold text-amber-400">Điểm số: ${evaluation.score}/10</span>
-      <span class="text-slate-400">Đúng ${evaluation.correct_count}/${evaluation.total_questions} câu</span>
+    <div class="flex items-center justify-between border-b border-blue-200/80 pb-2 mb-1.5">
+      <span class="font-extrabold text-blue-700 text-sm">Điểm số: ${evaluation.score}/10</span>
+      <span class="text-slate-600 font-semibold">Đúng ${evaluation.correct_count}/${evaluation.total_questions} câu</span>
     </div>
-    <p class="text-slate-300 font-medium">${escapeHtml(evaluation.summary_comment)}</p>
+    <p class="text-slate-700 font-medium leading-relaxed">${escapeHtml(evaluation.summary_comment)}</p>
   `;
   quizScoreBannerEl.innerHTML = DOMPurify.sanitize(summaryHtml);
 
@@ -195,23 +194,23 @@ function displayQuizEvaluation(evaluation) {
     feedbackEl.classList.remove("hidden");
 
     if (item.is_correct) {
-      feedbackEl.className = "p-2.5 rounded-lg text-xs leading-relaxed bg-emerald-950/40 border border-emerald-600/50 text-emerald-300 mt-2";
-      const goodHtml = `<strong>✔ Lời khen:</strong> ${escapeHtml(item.feedback)}`;
+      // Màu xanh ngọc lục bảo khen ngợi
+      feedbackEl.className = "p-3 rounded-xl text-xs leading-relaxed bg-emerald-50 border border-emerald-200 text-emerald-900 mt-2.5 space-y-1";
+      const goodHtml = `<p class="font-bold text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-600"></i> Rất tốt!</p><p class="text-slate-700">${escapeHtml(item.feedback)}</p>`;
       feedbackEl.innerHTML = DOMPurify.sanitize(goodHtml);
-      // Highlight nhãn đã chọn là màu xanh
       const selectedLabel = cardEl.querySelector(`.quiz-option-label[data-key="${item.student_choice}"]`);
       if (selectedLabel) selectedLabel.classList.add("correct");
     } else {
-      feedbackEl.className = "p-2.5 rounded-lg text-xs leading-relaxed bg-rose-950/40 border border-rose-600/50 text-rose-300 mt-2";
+      // Màu cam ấm hổ phách chữa bài (Triệt tiêu màu đỏ trừng phạt)
+      feedbackEl.className = "p-3 rounded-xl text-xs leading-relaxed bg-amber-50 border border-amber-200 text-amber-950 mt-2.5 space-y-1.5";
       const wrongHtml = `
         <div class="space-y-1">
-          <p><strong>❌ Chưa chính xác!</strong></p>
-          <p>${escapeHtml(item.feedback)}</p>
-          ${item.muc_sgk ? `<p class="text-[11px] text-amber-300 italic">👉 Đọc lại: ${escapeHtml(item.muc_sgk)}</p>` : ""}
+          <p class="font-bold text-amber-800 flex items-center gap-1.5"><i class="fa-solid fa-circle-question text-amber-600"></i> Chưa chính xác rồi em! Hãy cùng suy nghĩ thêm:</p>
+          <p class="text-slate-700">${escapeHtml(item.feedback)}</p>
+          ${item.muc_sgk ? `<p class="text-[11px] text-amber-800 font-bold mt-1">👉 Xem lại: ${escapeHtml(item.muc_sgk)}</p>` : ""}
         </div>
       `;
       feedbackEl.innerHTML = DOMPurify.sanitize(wrongHtml);
-      // Highlight nhãn đã chọn là màu đỏ
       const selectedLabel = cardEl.querySelector(`.quiz-option-label[data-key="${item.student_choice}"]`);
       if (selectedLabel) selectedLabel.classList.add("wrong");
     }
@@ -223,12 +222,10 @@ async function sendChatMessage() {
   const text = chatInputEl.value.trim();
   if (!text) return;
 
-  // Append tin nhắn của học sinh
   appendMessage("user", text);
   chatInputEl.value = "";
   chatInputEl.focus();
 
-  // Hiển thị indicator đang suy nghĩ
   const loadingId = appendMessage("tutor", "Thầy đang đọc bài và suy nghĩ hướng dẫn cho em nhé...");
 
   try {
@@ -261,7 +258,7 @@ async function sendChatMessage() {
   }
 }
 
-// Append tin nhắn vào giao diện an toàn
+// Append tin nhắn vào giao diện (Chuẩn Giáo Dục Ánh Sáng)
 function appendMessage(sender, text) {
   const msgId = "msg-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4);
   const isUser = (sender === "user");
@@ -269,14 +266,14 @@ function appendMessage(sender, text) {
   const msgDiv = document.createElement("div");
   msgDiv.id = msgId;
   msgDiv.className = isUser 
-    ? "bg-sky-600/30 border border-sky-500/40 rounded-xl p-3 text-slate-200 ml-4"
-    : "bg-slate-700/40 border border-slate-600/50 rounded-xl p-3 text-slate-300 mr-2";
+    ? "bg-blue-600 text-white rounded-2xl p-3 text-xs ml-4 shadow-xs"
+    : "bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl p-3 text-xs mr-2 shadow-xs";
 
   const msgContentHtml = `
-    <div class="font-bold text-[11px] mb-1 flex items-center gap-1.5 ${isUser ? 'text-sky-300 justify-end' : 'text-emerald-400'}">
-      <span>${isUser ? 'Học sinh' : 'Gia sư Socrates'}</span>
+    <div class="font-bold text-[11px] mb-1 flex items-center gap-1.5 ${isUser ? 'text-blue-100 justify-end' : 'text-blue-700'}">
+      <span>${isUser ? 'Em' : 'Thầy Socrates'}</span>
     </div>
-    <div class="whitespace-pre-line">${escapeHtml(text)}</div>
+    <div class="whitespace-pre-line leading-relaxed">${escapeHtml(text)}</div>
   `;
   msgDiv.innerHTML = DOMPurify.sanitize(msgContentHtml);
 

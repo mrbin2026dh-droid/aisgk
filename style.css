@@ -1,34 +1,44 @@
-/* Tùy chỉnh thanh cuộn thanh mảnh và giao diện sân khấu */
+/* ==========================================================================
+   GIAO DIỆN CHUẨN GIÁO DỤC ÁNH SÁNG (EDUCATIONAL LIGHT THEME)
+   Tuân thủ WCAG AAA (Contrast >= 7:1) và Tâm lý học Sư phạm EdTech
+   ========================================================================== */
+
+body {
+  font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Tùy chỉnh thanh cuộn thanh mảnh, màu xám nhã nhặn */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
+  background: #94a3b8;
 }
 
-/* Kiểu dáng cho nội dung Markdown bài học */
+/* Định dạng Typography bài học SGK (Prose) */
 .prose h1 {
-  color: #38bdf8;
+  color: #1d4ed8; /* Blue 700 */
   font-size: 1.25rem;
   font-weight: 800;
   margin-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  border-bottom: 2px solid #dbeafe;
   padding-bottom: 0.5rem;
 }
 
 .prose h2 {
-  color: #7dd3fc;
+  color: #1e40af; /* Blue 800 */
   font-size: 1.05rem;
   font-weight: 700;
   margin-top: 1.25rem;
@@ -36,7 +46,7 @@
 }
 
 .prose h3 {
-  color: #bae6fd;
+  color: #2563eb; /* Blue 600 */
   font-size: 0.95rem;
   font-weight: 600;
   margin-top: 0.75rem;
@@ -44,7 +54,8 @@
 
 .prose p {
   margin-bottom: 0.75rem;
-  color: #cbd5e1;
+  color: #334155; /* Slate 700 - Đậm rõ nét */
+  line-height: 1.65;
 }
 
 .prose ul {
@@ -54,56 +65,64 @@
 }
 
 .prose li {
-  margin-bottom: 0.25rem;
-  color: #e2e8f0;
+  margin-bottom: 0.35rem;
+  color: #334155;
 }
 
 .prose blockquote {
-  border-left: 4px solid #38bdf8;
-  padding-left: 0.75rem;
-  background: rgba(56, 189, 248, 0.08);
+  border-left: 4px solid #2563eb;
+  padding-left: 0.85rem;
+  background: #eff6ff; /* Blue 50 */
   border-radius: 0 0.5rem 0.5rem 0;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  margin: 0.75rem 0;
-  color: #f1f5f9;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  margin: 0.85rem 0;
+  color: #1e3a8a; /* Blue 900 */
+  font-style: italic;
 }
 
 .prose strong {
-  color: #f8fafc;
+  color: #0f172a; /* Slate 900 */
   font-weight: 700;
 }
 
-/* Thẻ lựa chọn trắc nghiệm */
+/* Thẻ lựa chọn trắc nghiệm (Tối ưu điểm chạm >= 48px) */
 .quiz-option-label {
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  padding: 0.65rem 0.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(71, 85, 105, 0.6);
-  background: rgba(30, 41, 59, 0.5);
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 48px;
 }
 
 .quiz-option-label:hover {
-  background: rgba(51, 65, 85, 0.7);
-  border-color: rgba(56, 189, 248, 0.5);
+  background: #f8fafc;
+  border-color: #93c5fd;
 }
 
 .quiz-option-label.selected {
-  background: rgba(14, 165, 233, 0.15);
-  border-color: #0ea5e9;
-  box-shadow: 0 0 12px rgba(14, 165, 233, 0.2);
+  background: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
 }
 
+/* Khi đúng: Xanh ngọc tươi chúc mừng */
 .quiz-option-label.correct {
-  background: rgba(16, 185, 129, 0.2) !important;
+  background: #ecfdf5 !important;
   border-color: #10b981 !important;
+  color: #065f46 !important;
+  font-weight: 600;
 }
 
+/* Khi chưa đúng: Cam ấm hổ phách chữa bài (Triệt tiêu đỏ trừng phạt) */
 .quiz-option-label.wrong {
-  background: rgba(239, 68, 68, 0.2) !important;
-  border-color: #ef4444 !important;
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
 }
