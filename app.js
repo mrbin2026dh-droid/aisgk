@@ -191,6 +191,7 @@ function displayQuizEvaluation(evaluation) {
     const feedbackEl = document.getElementById(`feedback-${item.id}`);
     if (!feedbackEl || !cardEl) return;
 
+    cardEl.querySelectorAll('.quiz-option-label').forEach(l => l.classList.remove('correct', 'wrong'));
     feedbackEl.classList.remove("hidden");
 
     if (item.is_correct) {
