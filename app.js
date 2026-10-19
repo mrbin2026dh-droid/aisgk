@@ -26,11 +26,14 @@ const getApiBase = () => {
   }
 
   if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    return "http://127.0.0.1:8000/api";
+    if (window.location.port === "8000") {
+      return "http://127.0.0.1:8000/api";
+    }
+    return "";
   }
 
   if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
-    return "http://127.0.0.1:8000/api";
+    return "";
   }
 
   return `${window.location.origin}/api`;
@@ -1008,6 +1011,7 @@ async function initApp() {
 }
 
 async function loadCurriculumLessons() {
+  if (!API_BASE) return;
   try {
     const res = await fetch(`${API_BASE}/v2/curriculum/lessons/${state.grade}`);
     if (!res.ok) return;
@@ -1268,6 +1272,28 @@ function renderCurriculumCards(data) {
 
 // 6. Tải Dữ liệu Bài học từ Backend
 async function fetchLesson(grade, lessonId) {
+  if (!API_BASE) {
+    try {
+      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${grade}/bai${lessonId}.json`);
+      if (staticRes && staticRes.ok) {
+        const data = await staticRes.json();
+        state.lessonData = data;
+        const sidebarNameEl = document.getElementById("roadmapLessonName");
+        if (sidebarNameEl) {
+          sidebarNameEl.textContent = `Bài ${data.lesson_id}: ${data.title}`;
+        }
+        const theoryContentEl = document.getElementById("theoryContent");
+        if (theoryContentEl) {
+          theoryContentEl.innerHTML = renderCurriculumCards(data) /* sanitize */;
+        }
+        renderCurriculumTree();
+        return;
+      }
+    } catch (e) {
+      console.warn("Lỗi nạp bài học tĩnh:", e);
+    }
+    return;
+  }
   try {
     const endpoint = `${API_BASE}/v2/lesson/${grade}/${lessonId}`;
     const res = await fetch(endpoint);
@@ -1646,7 +1672,46 @@ function setupSidebarCollapse() {
   }
 }
 
+function applyGradeLocking() {
+  const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
+  const isStudent = studentAuthState.isLoggedIn && !isTeacherUnlocked;
+  const studentGrade = isStudent ? (studentAuthState.grade || 9) : null;
+
+  document.querySelectorAll(".header-grade-pill").forEach(pill => {
+    const pg = parseInt(pill.getAttribute("data-grade"), 10);
+    const existingLock = pill.querySelector(".pill-lock-icon");
+    if (existingLock) existingLock.remove();
+
+    if (isStudent) {
+      if (pg === studentGrade) {
+        pill.classList.remove("locked");
+        pill.setAttribute("title", `Chương trình Tin học Khối ${pg} (Khối học của em)`);
+      } else {
+        pill.classList.add("locked");
+        pill.setAttribute("title", `🔒 Khối ${pg} đã bị khóa đối với học sinh Khối ${studentGrade}`);
+        const lockSpan = document.createElement("span");
+        lockSpan.className = "pill-lock-icon";
+        lockSpan.textContent = "🔒";
+        lockSpan.setAttribute("aria-hidden", "true");
+        pill.appendChild(lockSpan);
+      }
+    } else {
+      pill.classList.remove("locked");
+      pill.setAttribute("title", `Chương trình Tin học Lớp ${pg}`);
+    }
+  });
+}
+
 async function switchGrade(newGrade) {
+  const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
+  if (studentAuthState.isLoggedIn && !isTeacherUnlocked) {
+    const studentGrade = studentAuthState.grade || 9;
+    if (newGrade !== studentGrade) {
+      alert(`🔒 Khối Lớp ${newGrade} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} (Lớp ${studentAuthState.classCode || "9A"}), nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
+      return;
+    }
+  }
+
   if (state.grade === newGrade) return;
   state.grade = newGrade;
   state.lessonId = 1;
@@ -1688,6 +1753,7 @@ async function switchGrade(newGrade) {
   updateStepperButtons();
   renderCatalogModal();
   renderCurriculumTree();
+  applyGradeLocking();
 }
 
 function setupEventListeners() {
@@ -1698,6 +1764,11 @@ function setupEventListeners() {
   document.querySelectorAll(".header-grade-pill").forEach(pill => {
     pill.addEventListener("click", async () => {
       const g = parseInt(pill.getAttribute("data-grade"), 10);
+      if (pill.classList.contains("locked")) {
+        const studentGrade = studentAuthState.grade || 9;
+        alert(`🔒 Khối Lớp ${g} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} (Lớp ${studentAuthState.classCode || "9A"}), nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
+        return;
+      }
       if (g === 6 || g === 9) {
         await switchGrade(g);
       } else {
@@ -2066,10 +2137,18 @@ function setupEventListeners() {
       const result = await res.json();
       state.teacherLessonData = result.data;
       state.teacherUnlocked = true;
+      try {
+        sessionStorage.setItem("ai_sgk_teacher_token", authData.token);
+      } catch (sessErr) {
+        console.warn("Không thể lưu teacher token vào sessionStorage:", sessErr);
+      }
 
       if (authMsg) authMsg.style.display = "none";
       authBox.classList.add("hidden");
       editorBox.classList.remove("hidden");
+
+      // Cập nhật ngay phân quyền Header để kích hoạt các đặc quyền Giáo viên
+      updateHeaderStudentAuthUI();
 
       // Đổ dữ liệu vào các Tab
       populateTeacherData();
@@ -3265,6 +3344,26 @@ function initStudentManagement() {
     });
   }
 
+  const gradeSelect = document.getElementById("smGradeSelect");
+  if (gradeSelect) {
+    gradeSelect.addEventListener("change", (e) => {
+      const newGrade = parseInt(e.target.value, 10) || 9;
+      studentMgmtState.currentGrade = newGrade;
+      if (classSelect) {
+        classSelect.replaceChildren();
+        ["A", "B", "C"].forEach(letter => {
+          const opt = document.createElement("option");
+          opt.value = `${newGrade}${letter}`;
+          opt.textContent = `Lớp ${newGrade}${letter}`;
+          if (letter === "A") opt.selected = true;
+          classSelect.appendChild(opt);
+        });
+        studentMgmtState.currentClass = `${newGrade}A`;
+      }
+      loadStudentManagementData();
+    });
+  }
+
   if (classSelect) {
     classSelect.addEventListener("change", (e) => {
       studentMgmtState.currentClass = e.target.value;
@@ -3398,6 +3497,15 @@ function openStudentManagementStage() {
   const btnNav = document.getElementById("btnNavStudentMgmt");
 
   if (!stage || !canvas) return;
+
+  // CHỐT CHẶN PHÂN QUYỀN SƯ PHẠM (RBAC):
+  // Khi học sinh đăng nhập vào, học sinh chỉ có quyền học và xem tiến độ cá nhân của mình.
+  // Không được phép truy cập Dashboard Quản lý học sinh của cả lớp!
+  if (studentAuthState.isLoggedIn && (!state.teacherUnlocked || !state.teacherToken)) {
+    alert("Khu vực Quản lý Học sinh & AI Sư phạm chỉ dành riêng cho Giáo viên bộ môn Tin học.\n\nHọc sinh chỉ có quyền học bài và xem tiến độ cá nhân của mình.");
+    switchView("dashboard");
+    return;
+  }
 
   const sidebar = document.getElementById("roadmapSidebar");
   if (sidebar) sidebar.classList.add("hidden");
@@ -3858,6 +3966,7 @@ const studentAuthState = {
   studentEmail: "",
   studentAvatar: "",
   classCode: "9A",
+  grade: 9,
   uid: "",
   isBlocked: false
 };
@@ -3871,30 +3980,73 @@ function loadStoredStudentAuth() {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.isLoggedIn) {
         Object.assign(studentAuthState, parsed);
+        if (!studentAuthState.grade) {
+          const match = (studentAuthState.classCode || "").match(/^(\d+)/);
+          studentAuthState.grade = match ? parseInt(match[1], 10) : 9;
+        }
       }
     }
   } catch (e) {
     console.warn("Lỗi đọc student auth từ localStorage:", e);
   }
+
+  // Khôi phục phiên làm việc của Giáo viên nếu đã mở khóa PIN trong phiên này
+  try {
+    const storedTeacherToken = sessionStorage.getItem("ai_sgk_teacher_token");
+    if (storedTeacherToken) {
+      state.teacherToken = storedTeacherToken;
+      state.teacherUnlocked = true;
+      state.isTeacher = true;
+    }
+  } catch (e) {
+    console.warn("Lỗi đọc teacher token từ sessionStorage:", e);
+  }
+
+  // Tự động đồng bộ khối lớp nếu học sinh đã đăng nhập
+  const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
+  if (studentAuthState.isLoggedIn && !isTeacherUnlocked && studentAuthState.grade) {
+    if (state.grade !== studentAuthState.grade) {
+      switchGrade(studentAuthState.grade);
+    }
+  }
+
   updateHeaderStudentAuthUI();
 }
 
 function updateHeaderStudentAuthUI() {
   const profileWrap = document.getElementById("headerStudentProfileWrap");
+  const btnAuth = document.getElementById("btnHeaderStudentAuth");
+  const userBadge = document.getElementById("stdUserBadge");
+  const btnDirectSignOut = document.getElementById("btnHeaderDirectSignOut");
   const stdAvatar = document.getElementById("stdUserAvatar");
   const stdName = document.getElementById("stdUserName");
-  const ddName = document.getElementById("stdDropdownUserName");
-  const ddEmail = document.getElementById("stdDropdownUserEmail");
+  const stdRole = document.getElementById("stdUserRole");
+  const ddName = document.getElementById("stdDropdownUserName") || document.getElementById("stdDropdownFullName");
+  const ddEmail = document.getElementById("stdDropdownUserEmail") || document.getElementById("stdDropdownEmail");
   const heroName = document.getElementById("stdHeroName") || document.getElementById("stdHeroGreetingName");
+  const btnStudentMgmt = document.getElementById("btnNavStudentMgmt");
+  const btnTeacher = document.getElementById("btnOpenTeacher");
+  const teacherMenuSection = document.getElementById("stdMenuTeacherSection");
+  const switchTeacherMenu = document.getElementById("stdMenuSwitchTeacher");
+  const exitTeacherMenu = document.getElementById("stdMenuExitTeacher");
+
+  const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
 
   if (studentAuthState.isLoggedIn) {
     if (profileWrap) profileWrap.classList.remove("hidden");
+    if (btnAuth) btnAuth.classList.add("hidden");
+    if (userBadge) userBadge.classList.remove("hidden");
+    if (btnDirectSignOut) btnDirectSignOut.classList.remove("hidden");
+
     const displayName = studentAuthState.studentName || "Học sinh";
     const displayEmail = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
     if (stdName) stdName.textContent = displayName;
     if (ddName) ddName.textContent = displayName;
     if (ddEmail) ddEmail.textContent = displayEmail;
     if (heroName) heroName.textContent = displayName;
+    if (stdRole) {
+      stdRole.textContent = isTeacherUnlocked ? "Giáo viên Tin học" : `Học sinh lớp ${studentAuthState.classCode || "9A"}`;
+    }
     if (stdAvatar) {
       if (studentAuthState.studentAvatar && studentAuthState.studentAvatar.startsWith("http")) {
         stdAvatar.src = studentAuthState.studentAvatar;
@@ -3902,9 +4054,64 @@ function updateHeaderStudentAuthUI() {
         stdAvatar.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName) + "&background=0284c7&color=fff";
       }
     }
+
+    // PHÂN QUYỀN VAI TRÒ CHẶT CHẼ (RBAC):
+    // Khi là Học sinh: CHỈ ĐƯỢC CÁC QUYỀN HỌC VÀ XEM TIẾN ĐỘ CỦA MÌNH -> ẨN nút Quản lý học sinh và nút Giáo viên
+    // Khi là Giáo viên (đã mở khóa PIN): Hiển thị nút Quản lý học sinh và nút Giáo viên Studio CMS
+    if (isTeacherUnlocked) {
+      if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");
+      if (btnTeacher) btnTeacher.classList.remove("hidden");
+      if (teacherMenuSection) teacherMenuSection.classList.remove("hidden");
+      if (switchTeacherMenu) switchTeacherMenu.classList.add("hidden");
+      if (exitTeacherMenu) exitTeacherMenu.classList.remove("hidden");
+    } else {
+      if (btnStudentMgmt) btnStudentMgmt.classList.add("hidden");
+      if (btnTeacher) btnTeacher.classList.add("hidden");
+      if (teacherMenuSection) teacherMenuSection.classList.add("hidden");
+      if (switchTeacherMenu) switchTeacherMenu.classList.remove("hidden");
+      if (exitTeacherMenu) exitTeacherMenu.classList.add("hidden");
+    }
   } else {
-    if (profileWrap) profileWrap.classList.add("hidden");
+    // Chưa đăng nhập tài khoản học sinh
+    if (profileWrap) profileWrap.classList.remove("hidden");
+    if (btnAuth) btnAuth.classList.remove("hidden");
+    if (userBadge) userBadge.classList.add("hidden");
+    if (btnDirectSignOut) btnDirectSignOut.classList.add("hidden");
+
+    if (isTeacherUnlocked) {
+      if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");
+      if (btnTeacher) btnTeacher.classList.remove("hidden");
+      if (teacherMenuSection) teacherMenuSection.classList.remove("hidden");
+      if (switchTeacherMenu) switchTeacherMenu.classList.add("hidden");
+      if (exitTeacherMenu) exitTeacherMenu.classList.remove("hidden");
+    } else {
+      if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");
+      if (btnTeacher) btnTeacher.classList.remove("hidden");
+      if (teacherMenuSection) teacherMenuSection.classList.add("hidden");
+      if (switchTeacherMenu) switchTeacherMenu.classList.remove("hidden");
+      if (exitTeacherMenu) exitTeacherMenu.classList.add("hidden");
+    }
   }
+
+  // Luôn cập nhật khóa khối học tương ứng
+  applyGradeLocking();
+}
+
+function handleTeacherLogout() {
+  state.teacherToken = null;
+  state.teacherUnlocked = false;
+  state.teacherLessonData = null;
+  try {
+    sessionStorage.removeItem("ai_sgk_teacher_token");
+  } catch (e) {
+    console.warn("Lỗi xóa teacher token khỏi sessionStorage:", e);
+  }
+
+  const teacherModal = document.getElementById("teacherModal");
+  if (teacherModal) teacherModal.classList.add("hidden");
+  closeStudentManagementStage();
+  updateHeaderStudentAuthUI();
+  alert("Đã kết thúc phiên làm việc của Giáo viên. Ứng dụng đã chuyển về chế độ Học sinh an toàn.");
 }
 
 function checkAndListenStudentStatus(classCode, uid) {
@@ -3988,6 +4195,16 @@ async function handleStudentGoogleSignIn() {
 
   const classCodeVal = (inputClass ? inputClass.value.trim().toUpperCase() : "") || "9A";
 
+  // Xác định khối lớp được chọn từ nút .sl-grade-pill đang active hoặc từ mã lớp
+  let selectedGrade = 9;
+  const activeGradePill = document.querySelector(".sl-grade-pill.active");
+  if (activeGradePill && activeGradePill.dataset.grade) {
+    selectedGrade = parseInt(activeGradePill.dataset.grade, 10);
+  } else {
+    const match = classCodeVal.match(/^(\d+)/);
+    if (match) selectedGrade = parseInt(match[1], 10);
+  }
+
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = `<span style="display:inline-block; animation: spin 1s infinite linear;">⏳</span> <span>Đang kết nối Google...</span>` /* sanitize */;
@@ -4029,6 +4246,7 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.studentEmail = user.email || "";
       studentAuthState.studentAvatar = user.photoURL || "";
       studentAuthState.classCode = classCodeVal;
+      studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = isBlocked;
 
       // Lưu vào localStorage để ghi nhớ tự động vĩnh viễn (Persistent Login)
@@ -4053,6 +4271,7 @@ async function handleStudentGoogleSignIn() {
             email: user.email || "",
             avatar: user.photoURL || "",
             class_code: classCodeVal,
+            grade: selectedGrade,
             is_blocked: false,
             last_active: new Date().toISOString()
           });
@@ -4071,12 +4290,18 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.studentEmail = "minhkhang.hs@thcs.edu.vn";
       studentAuthState.studentAvatar = "";
       studentAuthState.classCode = classCodeVal;
+      studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = false;
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
       updateHeaderStudentAuthUI();
     }
 
     portalDirectClose();
+    if (state.grade !== selectedGrade) {
+      await switchGrade(selectedGrade);
+    } else {
+      applyGradeLocking();
+    }
     switchView("dashboard");
   } catch (err) {
     console.error("Lỗi đăng nhập Google:", err);
@@ -4110,7 +4335,9 @@ function portalDirectClose() {
 }
 
 function handleStudentLogout() {
-  if (confirm(`Em có muốn đăng xuất tài khoản "${studentAuthState.studentName}" không?`)) {
+  const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
+  const promptName = isTeacherUnlocked ? "Giáo viên" : (studentAuthState.studentName || "Học sinh");
+  if (confirm(`Bạn có chắc chắn muốn đăng xuất tài khoản "${promptName}" không?`)) {
     if (studentBlockListenerUnsub) {
       studentBlockListenerUnsub();
       studentBlockListenerUnsub = null;
@@ -4120,10 +4347,22 @@ function handleStudentLogout() {
     studentAuthState.studentEmail = "";
     studentAuthState.uid = "";
     studentAuthState.isBlocked = false;
+    studentAuthState.grade = 9;
     localStorage.removeItem("ai_sgk_student_auth");
+
+    // Đóng phiên Giáo viên nếu có
+    state.teacherToken = null;
+    state.teacherUnlocked = false;
+    try {
+      sessionStorage.removeItem("ai_sgk_teacher_token");
+    } catch (sessErr) {
+      console.warn("Lỗi xóa teacher token:", sessErr);
+    }
+
     if (window.firebase && window.firebase.auth) {
       window.firebase.auth().signOut().catch(() => {});
     }
+    closeStudentManagementStage();
     updateHeaderStudentAuthUI();
     hideStudentBlockedOverlay();
     openStudentLoginPortal();
@@ -4152,10 +4391,19 @@ function initStudentAuthPortal() {
         studentAuthState.studentName = user.displayName || "Học sinh";
         studentAuthState.studentEmail = user.email || "";
         studentAuthState.studentAvatar = user.photoURL || "";
+        if (!studentAuthState.grade) {
+          const match = (studentAuthState.classCode || "").match(/^(\d+)/);
+          studentAuthState.grade = match ? parseInt(match[1], 10) : 9;
+        }
         localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
         updateHeaderStudentAuthUI();
         checkAndListenStudentStatus(studentAuthState.classCode, user.uid);
         portalDirectClose();
+        if (state.grade !== studentAuthState.grade) {
+          await switchGrade(studentAuthState.grade);
+        } else {
+          applyGradeLocking();
+        }
         switchView("dashboard");
       }
     });
@@ -4179,11 +4427,242 @@ function initStudentAuthPortal() {
 
   // Header Student Profile Badge & Dropdown
   const profileWrap = document.getElementById("headerStudentProfileWrap");
+  const btnHeaderAuth = document.getElementById("btnHeaderStudentAuth");
   const userBadge = document.getElementById("stdUserBadge");
   const userDropdown = document.getElementById("stdUserDropdown");
   const btnSignOut = document.getElementById("btnStdSignOut");
-  const btnGoDash = document.getElementById("btnStdGoDashboard");
+  const btnDirectSignOut = document.getElementById("btnHeaderDirectSignOut");
+  const btnGoDash = document.getElementById("btnStdGoDashboard") || document.getElementById("btnStdOpenDashboard");
   const btnSboSignOut = document.getElementById("sboBtnSignOut");
+  const btnClosePortal = document.getElementById("btnCloseLoginPortal");
+  const linkTeacherPin = document.getElementById("slLinkTeacherPinLogin");
+  const btnStdTeacherMgmt = document.getElementById("btnStdTeacherMgmt");
+  const btnStdTeacherStudio = document.getElementById("btnStdTeacherStudio");
+  const btnStdOpenTeacherAuth = document.getElementById("btnStdOpenTeacherAuth");
+  const btnStdExitTeacher = document.getElementById("btnStdExitTeacher");
+
+  // Nút Đăng nhập trên Header (mở Cổng đăng nhập khi chưa đăng nhập)
+  if (btnHeaderAuth) {
+    btnHeaderAuth.addEventListener("click", () => {
+      openStudentLoginPortal();
+    });
+  }
+
+  // Nút Thoát / Đăng xuất trực tiếp 1 chạm trên Header cho Học sinh
+  if (btnDirectSignOut) {
+    btnDirectSignOut.addEventListener("click", () => {
+      handleStudentLogout();
+    });
+  }
+
+  // Nút ✕ Đóng Cổng Đăng nhập Học sinh
+  if (btnClosePortal) {
+    btnClosePortal.addEventListener("click", () => {
+      portalDirectClose();
+    });
+  }
+
+  // PHÂN QUYỀN ĐĂNG NHẬP: TAB HỌC SINH VS TAB GIÁO VIÊN / QUẢN TRỊ
+  const tabStudent = document.getElementById("slTabStudent");
+  const tabTeacher = document.getElementById("slTabTeacher");
+  const panelStudent = document.getElementById("slPanelStudent");
+  const panelTeacher = document.getElementById("slPanelTeacher");
+  const roleBadge = document.getElementById("slPortalRoleBadge");
+
+  function switchLoginRole(role) {
+    if (role === "teacher") {
+      if (tabStudent) {
+        tabStudent.classList.remove("active");
+        tabStudent.setAttribute("aria-selected", "false");
+      }
+      if (tabTeacher) {
+        tabTeacher.classList.add("active");
+        tabTeacher.setAttribute("aria-selected", "true");
+      }
+      if (panelStudent) panelStudent.classList.add("hidden");
+      if (panelTeacher) panelTeacher.classList.remove("hidden");
+      if (roleBadge) roleBadge.textContent = "CỔNG GIÁO VIÊN & QUẢN TRỊ";
+      const pinInp = document.getElementById("slTeacherPinInput");
+      if (pinInp) setTimeout(() => pinInp.focus(), 120);
+    } else {
+      if (tabTeacher) {
+        tabTeacher.classList.remove("active");
+        tabTeacher.setAttribute("aria-selected", "false");
+      }
+      if (tabStudent) {
+        tabStudent.classList.add("active");
+        tabStudent.setAttribute("aria-selected", "true");
+      }
+      if (panelTeacher) panelTeacher.classList.add("hidden");
+      if (panelStudent) panelStudent.classList.remove("hidden");
+      if (roleBadge) roleBadge.textContent = "CỔNG HỌC SINH";
+    }
+  }
+
+  if (tabStudent) tabStudent.addEventListener("click", () => switchLoginRole("student"));
+  if (tabTeacher) tabTeacher.addEventListener("click", () => switchLoginRole("teacher"));
+
+  // Lối vào Thầy/Cô đăng nhập Giáo viên (chuyển sang tab Giáo viên)
+  if (linkTeacherPin) {
+    linkTeacherPin.addEventListener("click", () => {
+      switchLoginRole("teacher");
+    });
+  }
+
+  // Nút ẩn / hiện mắt cho Mã PIN Giáo viên
+  const btnTogglePin = document.getElementById("slBtnTogglePin");
+  const portalTeacherPin = document.getElementById("slTeacherPinInput");
+  if (btnTogglePin && portalTeacherPin) {
+    btnTogglePin.addEventListener("click", () => {
+      const isPass = portalTeacherPin.type === "password";
+      portalTeacherPin.type = isPass ? "text" : "password";
+      btnTogglePin.textContent = isPass ? "🙈" : "👁";
+    });
+  }
+
+  // Nút Điền nhanh mã PIN mẫu để Thầy/Cô kiểm tra một chạm
+  const btnUseSamplePin = document.getElementById("slBtnUseSamplePin");
+  if (btnUseSamplePin && portalTeacherPin) {
+    btnUseSamplePin.addEventListener("click", () => {
+      portalTeacherPin.value = "Tch-8b6657ed96b64ad2";
+      portalTeacherPin.focus();
+    });
+  }
+
+  // Xử lý Đăng nhập Giáo viên tại Cổng Đăng nhập Phân quyền
+  async function handlePortalTeacherLogin() {
+    const pinInput = document.getElementById("slTeacherPinInput");
+    const pinVal = pinInput ? pinInput.value.trim() : "";
+    const msgEl = document.getElementById("slTeacherAuthMsg");
+    const btnLogin = document.getElementById("slBtnTeacherLogin");
+
+    if (!pinVal) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = "Vui lòng nhập mã PIN bảo mật của Giáo viên.";
+        msgEl.classList.remove("hidden");
+      }
+      if (pinInput) pinInput.focus();
+      return;
+    }
+
+    if (btnLogin) {
+      btnLogin.disabled = true;
+      btnLogin.textContent = "⏳ Đang xác thực...";
+    }
+    if (msgEl) {
+      msgEl.className = "sl-auth-msg";
+      msgEl.textContent = "Đang kiểm tra quyền Giáo viên...";
+      msgEl.classList.remove("hidden");
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/teacher/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pinVal })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Mã PIN không chính xác! Vui lòng thử lại.");
+      }
+
+      const data = await res.json();
+      state.teacherToken = data.token;
+      state.teacherUnlocked = true;
+      state.isTeacher = true;
+
+      try {
+        sessionStorage.setItem("ai_sgk_teacher_token", data.token);
+      } catch (storageErr) {
+        console.warn("Lỗi lưu teacher token:", storageErr);
+      }
+
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg success";
+        msgEl.textContent = "✔ Xác thực thành công! Đang chuyển vào hệ thống...";
+        msgEl.classList.remove("hidden");
+      }
+
+      // Cập nhật giao diện: mở toàn bộ khối 6-9, hiện nút quản lý học sinh & giáo viên
+      updateHeaderStudentAuthUI();
+
+      setTimeout(() => {
+        portalDirectClose();
+        openStudentManagementStage();
+      }, 400);
+    } catch (err) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = err.message || "Xác thực thất bại. Vui lòng kiểm tra lại mã PIN.";
+        msgEl.classList.remove("hidden");
+      }
+    } finally {
+      if (btnLogin) {
+        btnLogin.disabled = false;
+        btnLogin.replaceChildren();
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "18");
+        svg.setAttribute("height", "18");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2.2");
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", "7.5");
+        c.setAttribute("cy", "15.5");
+        c.setAttribute("r", "5.5");
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "m21 2-9.6 9.6M15.5 7.5l3 3");
+        svg.appendChild(c);
+        svg.appendChild(p);
+        const span = document.createElement("span");
+        span.textContent = "Đăng nhập Quyền Giáo viên";
+        btnLogin.appendChild(svg);
+        btnLogin.appendChild(span);
+      }
+    }
+  }
+
+  const btnTeacherLogin = document.getElementById("slBtnTeacherLogin");
+  if (btnTeacherLogin) {
+    btnTeacherLogin.addEventListener("click", handlePortalTeacherLogin);
+  }
+  if (portalTeacherPin) {
+    portalTeacherPin.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handlePortalTeacherLogin();
+    });
+  }
+
+  // Bộ chọn Khối lớp trong Cổng Đăng nhập (.sl-grade-pill)
+  const slGradePills = document.querySelectorAll(".sl-grade-pill");
+  const inputClassField = document.getElementById("slInputClassCode");
+  slGradePills.forEach(pill => {
+    pill.addEventListener("click", () => {
+      slGradePills.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      const g = pill.dataset.grade;
+      if (inputClassField && g) {
+        const curVal = inputClassField.value.trim().toUpperCase();
+        const letter = curVal.replace(/^\d+/, "") || "A";
+        inputClassField.value = `${g}${letter}`;
+      }
+    });
+  });
+
+  if (inputClassField) {
+    inputClassField.addEventListener("input", () => {
+      const val = inputClassField.value.trim();
+      const match = val.match(/^(\d+)/);
+      if (match) {
+        const g = match[1];
+        slGradePills.forEach(p => {
+          p.classList.toggle("active", p.dataset.grade === g);
+        });
+      }
+    });
+  }
 
   if (userBadge && profileWrap && userDropdown) {
     userBadge.addEventListener("click", (e) => {
@@ -4207,6 +4686,65 @@ function initStudentAuthPortal() {
         userDropdown.classList.add("hidden");
       }
       switchView("dashboard");
+    });
+  }
+
+  // Mở Quản lý học sinh từ Dropdown Giáo viên
+  if (btnStdTeacherMgmt) {
+    btnStdTeacherMgmt.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      openStudentManagementStage();
+    });
+  }
+
+  // Mở Studio Biên soạn SGK từ Dropdown Giáo viên
+  if (btnStdTeacherStudio) {
+    btnStdTeacherStudio.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      const teacherModal = document.getElementById("teacherModal");
+      const authBox = document.getElementById("teacherAuthBox");
+      const editorBox = document.getElementById("teacherEditorBox");
+      if (teacherModal) teacherModal.classList.remove("hidden");
+      if (authBox) authBox.classList.add("hidden");
+      if (editorBox) editorBox.classList.remove("hidden");
+    });
+  }
+
+  // Mở popup xác thực PIN Giáo viên từ Dropdown
+  if (btnStdOpenTeacherAuth) {
+    btnStdOpenTeacherAuth.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      const teacherModal = document.getElementById("teacherModal");
+      const authBox = document.getElementById("teacherAuthBox");
+      const editorBox = document.getElementById("teacherEditorBox");
+      if (teacherModal) teacherModal.classList.remove("hidden");
+      if (authBox) authBox.classList.remove("hidden");
+      if (editorBox) editorBox.classList.add("hidden");
+      const pinInput = document.getElementById("teacherPinInput");
+      if (pinInput) {
+        pinInput.value = "";
+        setTimeout(() => pinInput.focus(), 150);
+      }
+    });
+  }
+
+  // Đóng phiên Giáo viên
+  if (btnStdExitTeacher) {
+    btnStdExitTeacher.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      handleTeacherLogout();
     });
   }
 
