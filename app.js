@@ -3885,7 +3885,7 @@ function updateHeaderStudentAuthUI() {
   const stdName = document.getElementById("stdUserName");
   const ddName = document.getElementById("stdDropdownUserName");
   const ddEmail = document.getElementById("stdDropdownUserEmail");
-  const heroName = document.getElementById("stdHeroGreetingName");
+  const heroName = document.getElementById("stdHeroName") || document.getElementById("stdHeroGreetingName");
 
   if (studentAuthState.isLoggedIn) {
     if (profileWrap) profileWrap.classList.remove("hidden");
