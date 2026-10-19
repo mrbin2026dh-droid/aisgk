@@ -1271,7 +1271,7 @@ function renderCatalogModal() {
 function renderCurriculumCards(data) {
   const content = data.content_markdown || "";
   const titleText = data.title || "";
-  const titleHtml = titleText ? `<h1 class="theory-main-title" style="font-size: 1.75rem; font-weight: 800; color: #f8fafc; margin: 0.25rem 0 1.25rem 0; line-height: 1.3;">${escapeHtml(titleText)}</h1>` : "";
+  const titleHtml = titleText ? `<h1 class="theory-main-title">${escapeHtml(titleText)}</h1>` : "";
   const lessonBadge = `<div class="theory-top-badge"><span class="badge-pill">Bài ${data.lesson_id || state.lessonId}</span></div>`;
   return `<div class="theory-markdown-canvas">${lessonBadge}${titleHtml}${parseMarkdown(content)}</div>`;
 }
@@ -4095,6 +4095,12 @@ function updateHeaderStudentAuthUI() {
   const teacherMenuSection = document.getElementById("stdMenuTeacherSection");
   const switchTeacherMenu = document.getElementById("stdMenuSwitchTeacher");
   const exitTeacherMenu = document.getElementById("stdMenuExitTeacher");
+  const headerGradeTabs = document.querySelector(".header-grade-tabs");
+  const drawerUserCard = document.getElementById("drawerUserCard");
+  const drawerUserName = document.getElementById("drawerUserName");
+  const drawerUserAvatar = document.getElementById("drawerUserAvatar");
+  const drawerUserTag = document.getElementById("drawerUserTag");
+  const drawerGradesSection = document.getElementById("drawerGradesSection") || document.querySelector(".drawer-grades-section");
 
   const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
 
@@ -4105,6 +4111,32 @@ function updateHeaderStudentAuthUI() {
     if (btnDirectSignOut) btnDirectSignOut.classList.remove("hidden");
 
     const displayName = studentAuthState.studentName || "Học sinh";
+
+    // Ẩn cụm chọn khối lớp trên Header theo yêu cầu Hình 1 khi là học sinh
+    if (headerGradeTabs) {
+      if (isTeacherUnlocked) {
+        headerGradeTabs.classList.remove("hidden");
+      } else {
+        headerGradeTabs.classList.add("hidden");
+      }
+    }
+
+    // Cập nhật thông tin học sinh trong Mobile Drawer
+    if (drawerUserCard) {
+      drawerUserCard.classList.remove("hidden");
+      if (drawerUserName) drawerUserName.textContent = displayName;
+      if (drawerUserAvatar && stdAvatar) drawerUserAvatar.src = stdAvatar.src;
+      if (drawerUserTag) {
+        drawerUserTag.textContent = isTeacherUnlocked ? "Giáo viên Tin học" : `Lớp ${studentAuthState.classCode || "9A"} • Tin học ${studentAuthState.grade || 9}`;
+      }
+    }
+    if (drawerGradesSection) {
+      if (isTeacherUnlocked) {
+        drawerGradesSection.classList.remove("hidden");
+      } else {
+        drawerGradesSection.classList.add("hidden");
+      }
+    }
     const displayEmail = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
     if (stdName) stdName.textContent = displayName;
     if (ddName) ddName.textContent = displayName;
@@ -4143,6 +4175,9 @@ function updateHeaderStudentAuthUI() {
     if (btnAuth) btnAuth.classList.remove("hidden");
     if (userBadge) userBadge.classList.add("hidden");
     if (btnDirectSignOut) btnDirectSignOut.classList.add("hidden");
+    if (headerGradeTabs) headerGradeTabs.classList.remove("hidden");
+    if (drawerUserCard) drawerUserCard.classList.add("hidden");
+    if (drawerGradesSection) drawerGradesSection.classList.remove("hidden");
 
     if (isTeacherUnlocked) {
       if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");

@@ -117,7 +117,7 @@
           <img id="stdUserAvatar" class="std-user-avatar" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="Avatar" />
           <div class="std-user-text">
             <span class="std-user-name" id="stdUserName">Nguyễn Minh Anh</span>
-            <span class="std-user-role" id="stdUserRole">Học sinh lớp 9A</span>
+            <span class="std-user-role hidden" id="stdUserRole">Học sinh lớp 9A</span>
           </div>
           <span class="std-user-arrow" aria-hidden="true">▾</span>
         </div>
@@ -203,8 +203,31 @@
         <button type="button" class="btn-close-drawer" id="btnCloseSidebarDrawer" aria-label="Đóng menu">✕</button>
       </div>
 
-      <!-- Khối chọn Lớp trong Drawer trên Mobile -->
-      <div class="drawer-section drawer-grades-section">
+      <!-- Thẻ thông tin học sinh trong Mobile Drawer -->
+      <div class="drawer-user-card hidden" id="drawerUserCard">
+        <img class="drawer-user-avatar" id="drawerUserAvatar" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="Avatar" />
+        <div class="drawer-user-meta">
+          <strong class="drawer-user-name" id="drawerUserName">Học sinh</strong>
+          <span class="drawer-user-badge-tag" id="drawerUserTag">Khối 9 • Tin học 9</span>
+        </div>
+      </div>
+
+      <!-- Danh mục Tính năng nhanh trong Drawer trên Mobile -->
+      <div class="drawer-section drawer-actions-section">
+        <div class="drawer-section-title">CHỨC NĂNG CHÍNH</div>
+        <button type="button" class="drawer-nav-item" id="btnDrawerNavDashboard">
+          <span class="drawer-nav-icon">🏠</span> <span>Trang chủ học sinh</span>
+        </button>
+        <button type="button" class="drawer-nav-item" id="btnDrawerNavTutor">
+          <span class="drawer-nav-icon">💡</span> <span>Gia sư Socrates</span>
+        </button>
+        <button type="button" class="drawer-nav-item hidden" id="btnDrawerNavStudentMgmt">
+          <span class="drawer-nav-icon">👥</span> <span>Quản lý học sinh</span>
+        </button>
+      </div>
+
+      <!-- Khối chọn Lớp trong Drawer trên Mobile (khi chưa đăng nhập hoặc cho giáo viên) -->
+      <div class="drawer-section drawer-grades-section hidden" id="drawerGradesSection">
         <div class="drawer-section-title">CHỌN KHỐI LỚP</div>
         <div class="drawer-grade-pills">
           <button class="header-grade-pill active" data-grade="6" type="button">LỚP 6</button>
@@ -218,7 +241,7 @@
         <div class="sidebar-nav-top-row">
           <div class="sidebar-nav-badge">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>TIN HỌC 6</span>
+            <span id="sidebarGradeLabel">TIN HỌC 9</span>
           </div>
           <div class="tree-quick-actions" role="group" aria-label="Thao tác mục lục">
             <button id="btnExpandAllTree" class="tree-quick-btn" title="Mở rộng tất cả bài">› Mở rộng</button>
@@ -249,18 +272,8 @@
         </div>
       </div>
 
-      <!-- Danh mục Tính năng nhanh trong Drawer trên Mobile -->
-      <div class="drawer-section drawer-actions-section">
-        <div class="drawer-section-title">CHỨC NĂNG</div>
-        <button type="button" class="drawer-nav-item" id="btnDrawerNavDashboard">
-          <span class="drawer-nav-icon">🏠</span> <span>Trang chủ học sinh</span>
-        </button>
-        <button type="button" class="drawer-nav-item" id="btnDrawerNavTutor">
-          <span class="drawer-nav-icon">💡</span> <span>Gia sư Socrates</span>
-        </button>
-        <button type="button" class="drawer-nav-item" id="btnDrawerNavStudentMgmt">
-          <span class="drawer-nav-icon">👥</span> <span>Quản lý học sinh</span>
-        </button>
+      <!-- Khu vực Đăng xuất / Thoát ở cuối Drawer -->
+      <div class="drawer-section drawer-logout-section">
         <button type="button" class="drawer-nav-item drawer-nav-signout" id="btnDrawerSignOut">
           <span class="drawer-nav-icon">🚪</span> <span>Đăng xuất / Thoát</span>
         </button>
