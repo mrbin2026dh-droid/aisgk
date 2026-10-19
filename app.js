@@ -1198,7 +1198,7 @@ function renderCatalogModal() {
 
   // 3. Render Grid Cards
   if (filtered.length === 0) {
-    gridEl.innerHTML = ` /* sanitize */
+    gridEl.innerHTML = /* sanitize */ `
       <div style="grid-column: 1 / -1; padding: 48px 24px; text-align: center; color: #64748b;">
         <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
         <p style="font-size: 15px; font-weight: 600; color: #334155; margin: 0 0 6px 0;">Không tìm thấy bài học nào phù hợp</p>
@@ -1283,7 +1283,7 @@ async function fetchLesson(grade, lessonId) {
 
       const quizTitleEl = document.getElementById("questionTitle");
       if (quizTitleEl) {
-        quizTitleEl.innerHTML = `<div style="padding:22px; background: rgba(245, 158, 11, 0.12); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius:14px; color:#fde68a; text-align:left;"> /* sanitize */
+        quizTitleEl.innerHTML = /* sanitize */ `<div style="padding:22px; background: rgba(245, 158, 11, 0.12); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius:14px; color:#fde68a; text-align:left;">
           <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:700; color:#fbbf24;">📝 Bài học đang ở trạng thái Bản nháp (Draft)</h3>
           <p style="margin:0 0 12px 0; font-size:14px; line-height:1.6; color:#cbd5e1;">${escapeHtml(detail)}</p>
           <div style="background: rgba(245, 158, 11, 0.08); padding:12px; border-radius:8px; border:1px dashed rgba(245, 158, 11, 0.35); font-size:13px; line-height:1.6; margin-bottom:12px; color:#fde68a;">
@@ -1304,7 +1304,7 @@ async function fetchLesson(grade, lessonId) {
 
       const theoryContentEl = document.getElementById("theoryContent");
       if (theoryContentEl) {
-        theoryContentEl.innerHTML = ` /* sanitize */
+        theoryContentEl.innerHTML = /* sanitize */ `
           <div style="padding:32px 24px; background: rgba(56, 189, 248, 0.08); border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 16px; color: #f8fafc; text-align:center; margin: 30px auto; max-width: 620px;">
             <div style="font-size:36px; margin-bottom:12px;">⏳</div>
             <h3 style="margin:0 0 8px 0; font-size:18px; font-weight:700; color: #38bdf8;">Bài học đang chờ Giáo viên thẩm định</h3>
@@ -1492,7 +1492,7 @@ function renderApp() {
       });
     }
 
-    btn.innerHTML = ` /* sanitize */
+    btn.innerHTML = /* sanitize */ `
       <span class="option-letter">${letter}</span>
       <span class="option-text">${escapeHtml(optText)}</span>
     `;
@@ -2151,7 +2151,7 @@ function setupEventListeners() {
     if (countBadge) countBadge.innerText = quiz.length;
 
     if (quiz.length === 0) {
-      container.innerHTML = ` /* sanitize */
+      container.innerHTML = /* sanitize */ `
         <div style="text-align: center; padding: 2.5rem; background: #111827; border: 1px solid var(--border-light); border-radius: var(--radius-lg); color: #94a3b8;">
           Chưa có câu hỏi trắc nghiệm nào. Nhấn nút <strong>+ Thêm câu hỏi mới</strong> ở trên để bắt đầu!
         </div>
@@ -3434,7 +3434,7 @@ function renderStudentTable(students) {
   if (!tbody) return;
 
   if (students.length === 0) {
-    tbody.innerHTML = ` /* sanitize */
+    tbody.innerHTML = /* sanitize */ `
       <tr>
         <td colspan="7" style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8;">
           Không tìm thấy học sinh nào phù hợp với bộ lọc tìm kiếm.
@@ -3563,7 +3563,7 @@ function openStudentDetailModal(student) {
   }).join("");
 
   if (elBody) {
-    elBody.innerHTML = ` /* sanitize */
+    elBody.innerHTML = /* sanitize */ `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.25rem;">
         <div style="background: #0f172a; padding: 0.85rem; border-radius: 8px; border: 1px solid #334155;">
           <div style="font-size: 0.75rem; color: #94a3b8;">Tiến độ học tập</div>
@@ -3795,7 +3795,7 @@ async function handleStudentGoogleSignIn() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = ` /* sanitize */
+      btn.innerHTML = /* sanitize */ `
         <svg class="sl-google-svg" width="22" height="22" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
           <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
