@@ -3009,8 +3009,9 @@ async function sendChatMessage(messageText, customContext = null) {
     // Lưu lịch sử
     state.chatHistory.push({ role: "user", content: cleanMessage });
     state.chatHistory.push({ role: "assistant", content: reply });
-  } catch {
-    loadingBubble.innerHTML = "Thầy đang kết nối với SGK... Em hãy nhớ lại: <strong>Dữ liệu</strong> là những gì mắt thấy, tai nghe; còn <strong>Thông tin</strong> là điều em hiểu được sau khi não xử lý nhé!" /* sanitize */;
+  } catch (err) {
+    console.error("Lỗi kết nối AI Socrates:", err);
+    loadingBubble.innerHTML = "⚠️ <em>Máy chủ AI đang khởi động hoặc đang cập nhật kết nối. Em vui lòng thử lại sau giây lát nhé!</em>" /* sanitize */;
     releaseChatMutex(currentTurnId);
   }
 
