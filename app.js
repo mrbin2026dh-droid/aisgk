@@ -10,10 +10,40 @@
  * ============================================================================
  */
 
-// 1. Cấu hình Endpoint Động
-const API_BASE = (window.location.origin && window.location.origin !== "null" && !window.location.origin.startsWith("file:"))
-  ? `${window.location.origin}/api`
-  : "http://127.0.0.1:8000/api";
+// 1. Cấu hình Endpoint Động thông minh (Hỗ trợ Localhost, Render, GitHub Pages)
+const DEFAULT_RENDER_BACKEND = "https://aisgk.onrender.com/api";
+
+const getApiBase = () => {
+  try {
+    const saved = localStorage.getItem("AISGK_BACKEND_URL");
+    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, "");
+  } catch (err) {
+    console.debug("Unable to read custom backend URL from localStorage:", err);
+  }
+
+  if (typeof window !== "undefined" && window.location && window.location.hostname && window.location.hostname.endsWith("github.io")) {
+    return DEFAULT_RENDER_BACKEND;
+  }
+
+  if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+    return "http://127.0.0.1:8000/api";
+  }
+
+  if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
+    return "http://127.0.0.1:8000/api";
+  }
+
+  return `${window.location.origin}/api`;
+};
+
+const API_BASE = getApiBase();
+window.getBackendUrl = () => API_BASE;
+window.setBackendUrl = (url) => {
+  if (url) {
+    localStorage.setItem("AISGK_BACKEND_URL", url);
+    window.location.reload();
+  }
+};
 
 // 2. Quản lý Máy Trạng thái
 const state = {
@@ -1344,7 +1374,27 @@ async function fetchLesson(grade, lessonId) {
       theoryContentEl.innerHTML = renderCurriculumCards(data) /* sanitize */;
     }
     renderCurriculumTree();
-  } catch {
+  } catch (err) {
+    try {
+      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${grade}/bai${lessonId}.json`);
+      if (staticRes && staticRes.ok) {
+        const data = await staticRes.json();
+        state.lessonData = data;
+        const sidebarNameEl = document.getElementById("roadmapLessonName");
+        if (sidebarNameEl) {
+          sidebarNameEl.textContent = `Bài ${data.lesson_id}: ${data.title}`;
+        }
+        const theoryContentEl = document.getElementById("theoryContent");
+        if (theoryContentEl) {
+          theoryContentEl.innerHTML = renderCurriculumCards(data) /* sanitize */;
+        }
+        renderCurriculumTree();
+        return;
+      }
+    } catch (staticErr) {
+      console.warn("Could not load static curriculum fallback:", staticErr);
+    }
+
     const quizTitleEl = document.getElementById("questionTitle");
     if (quizTitleEl) {
       quizTitleEl.innerHTML = `<span style="color:#78350F;">⚠️ Chưa kết nối được Backend tại <code>${API_BASE}</code>. Vui lòng kiểm tra server.</span>` /* sanitize */;
@@ -2682,13 +2732,26 @@ async function evaluateCurrentQuestion(qid) {
       };
     }
   } catch (err) {
-    console.error("Grade quiz error:", err);
-    state.evaluatedQuestions[qid] = {
-      is_correct: false,
-      feedback: "Em hãy xem lại nội dung trong SGK và suy ngẫm thêm nhé!",
-      muc_sgk: "Mục 1",
-      student_choice: choice
-    };
+    console.warn("Grade quiz offline fallback:", err);
+    const quizItem = (state.lessonData && state.lessonData.quiz) ? state.lessonData.quiz.find((q) => q.id === qid) : null;
+    if (quizItem && quizItem.dap_an_dung) {
+      const isCorrect = choice.trim().toUpperCase() === quizItem.dap_an_dung.trim().toUpperCase();
+      state.evaluatedQuestions[qid] = {
+        is_correct: isCorrect,
+        feedback: isCorrect
+          ? (quizItem.giai_thich_su_pham || "Chính xác! Em làm rất tốt.")
+          : (quizItem.goi_y_khi_sai || "Em hãy xem lại nội dung trong SGK và suy ngẫm thêm nhé!"),
+        muc_sgk: quizItem.muc_sgk || "SGK",
+        student_choice: choice
+      };
+    } else {
+      state.evaluatedQuestions[qid] = {
+        is_correct: false,
+        feedback: "Em hãy xem lại nội dung trong SGK và suy ngẫm thêm nhé!",
+        muc_sgk: "Mục 1",
+        student_choice: choice
+      };
+    }
   }
 
   state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;

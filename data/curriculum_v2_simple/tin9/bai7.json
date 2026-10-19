@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 7,
+  "title": "Trình bày thông tin trong trao đổi và hợp tác",
+  "topic": "Chủ đề 4. Ứng dụng tin học",
+  "status": "published",
+  "content_markdown": "# Bài 7: Trình bày thông tin trong trao đổi và hợp tác\n\n### 1. Vai trò của trực quan hóa thông tin\nTrong kỷ nguyên số, cách thức trình bày thông tin quyết định trực tiếp đến hiệu quả truyền đạt và khả năng hợp tác nhóm.\n\n- **Ba lợi ích cốt lõi của trực quan hóa**:\n  - **Tiếp thu nhanh chóng**: Bộ não con người xử lý hình ảnh và màu sắc nhanh hơn hàng chục lần so với văn bản thuần túy.\n  - **Ghi nhớ bền vững**: Các sơ đồ, biểu đồ giúp liên kết các ý tưởng thành hệ thống logic mạch lạc, chống quên.\n  - **Thuyết phục và tạo hứng thú**: Trực quan hóa tạo cảm xúc tích cực, thu hút sự tập trung của người nghe trong các buổi thuyết trình và làm việc nhóm.\n\n---\n\n### 2. Các công cụ trực quan và nguyên tắc thiết kế\n- **Các công cụ phổ biến**:\n  - **Sơ đồ tư duy (Mindmap)**: Thể hiện chủ đề trung tâm và phát triển các nhánh ý tưởng logic (phần mềm XMind, Coggle, GitMind).\n  - **Trang trình chiếu (Presentation Slides)**: Trình bày bài báo cáo đa phương tiện kết hợp chữ, hình ảnh, video và hiệu ứng chuyển động (PowerPoint, Google Slides, Canva).\n  - **Bảng biểu & Đồ thị**: Tóm tắt số liệu định lượng, so sánh đối chiếu chỉ số (Excel, Google Sheets).\n\n- **Bốn nguyên tắc thiết kế trực quan chuẩn mực**:\n  1. **Tính cô đọng (Less is more)**: Không đưa nguyên đoạn văn bản dài lên slide, chỉ giữ lại các từ khóa (keywords) cốt lõi.\n  2. **Độ tương phản cao**: Màu chữ phải nổi bật trên màu nền (chữ trắng/vàng trên nền tối, hoặc chữ đen/xanh đậm trên nền sáng).\n  3. **Cỡ chữ dễ đọc**: Cỡ chữ tiêu đề từ $32\\text{pt} - 44\\text{pt}$, nội dung từ $20\\text{pt} - 28\\text{pt}$ để người ngồi xa vẫn đọc rõ.\n  4. **Hình ảnh minh họa có ý nghĩa**: Sử dụng hình ảnh sắc nét, liên quan trực tiếp đến bài nói, tránh chèn icon vô nghĩa gây rối mắt.\n\n> **Ghi nhớ:** Trực quan hóa thông tin không phải là trang trí cho đẹp mắt, mà là biến những ý tưởng phức tạp trở nên đơn giản, dễ hiểu và dễ hành động.",
+  "quiz": [
+    {
+      "id": "tin9_b7_q1",
+      "section_ref": "Mục 1: Vai trò của trực quan hóa thông tin",
+      "muc_sgk": "Mục 1: Vai trò trực quan hóa",
+      "trang_sgk": 35,
+      "cau_hoi": "Lợi ích nổi bật nhất của việc sử dụng các công cụ trực quan (như sơ đồ tư duy, bài trình chiếu) khi trao đổi thông tin là gì?",
+      "lua_chon": {
+        "A": "Giúp người nghe tiếp thu thông tin nhanh hơn, dễ ghi nhớ và tăng tính thuyết phục",
+        "B": "Làm cho máy tính chạy tốn nhiều dung lượng bộ nhớ hơn",
+        "C": "Thay thế hoàn toàn việc học sinh phải phát biểu bằng lời nói",
+        "D": "Không có lợi ích gì đáng kể so với việc chỉ đọc sách chữ"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Não bộ xử lý hình ảnh nhanh hơn chữ viết rất nhiều lần. Trực quan hóa giúp thông tin trở nên cô đọng, sinh động và dễ ghi nhớ.",
+      "goi_y_khi_sai": "Hãy nghĩ xem khi xem một bức tranh sơ đồ so với đọc một trang sách toàn chữ, cách nào giúp em hiểu nhanh và nhớ lâu hơn? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["tiếp thu nhanh", "dễ ghi nhớ", "đáp án A"]
+    },
+    {
+      "id": "tin9_b7_q2",
+      "section_ref": "Mục 2: Các công cụ trực quan và nguyên tắc thiết kế",
+      "muc_sgk": "Mục 2: Công cụ trực quan",
+      "trang_sgk": 36,
+      "cau_hoi": "Công cụ nào sau đây phù hợp nhất để thể hiện sự phát triển các nhánh ý tưởng logic từ một chủ đề trung tâm?",
+      "lua_chon": {
+        "A": "Phần mềm nghe nhạc",
+        "B": "Sơ đồ tư duy (Mindmap)",
+        "C": "Hòm thư điện tử (Email)",
+        "D": "Phần mềm gõ văn bản thuần túy không có hình vẽ"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Sơ đồ tư duy (Mindmap) có cấu trúc phân nhánh tỏa tròn từ tâm ra ngoài, là công cụ tối ưu để phát triển và liên kết các ý tưởng.",
+      "goi_y_khi_sai": "Công cụ nào có cấu trúc hình cây phát triển các nhánh ý tưởng từ chủ đề ở chính giữa? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["Sơ đồ tư duy", "Mindmap", "đáp án B"]
+    },
+    {
+      "id": "tin9_b7_q3",
+      "section_ref": "Mục 2: Các công cụ trực quan và nguyên tắc thiết kế",
+      "muc_sgk": "Mục 2: Nguyên tắc thiết kế",
+      "trang_sgk": 38,
+      "cau_hoi": "Nguyên tắc nào sau đây là ĐÚNG khi thiết kế một bài trình chiếu (PowerPoint/Google Slides) để thuyết trình trước lớp?",
+      "lua_chon": {
+        "A": "Chép nguyên văn cả trang sách giáo khoa lên từng trang slide",
+        "B": "Chọn màu chữ vàng nhạt trên nền trắng để nhìn cho sáng",
+        "C": "Chỉ trình bày các từ khóa cốt lõi, chọn cỡ chữ đủ lớn và có độ tương phản rõ ràng giữa chữ và nền",
+        "D": "Chèn thật nhiều hình động lấp lánh để người nghe không cần tập trung nghe nói"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Chính xác! Bài trình chiếu chỉ nên chứa từ khóa cô đọng, chữ to rõ ràng và tương phản tốt với nền để người ngồi cuối lớp vẫn đọc được.",
+      "goi_y_khi_sai": "Một slide chuẩn cần ít chữ hay nhiều chữ? Màu chữ và màu nền cần như thế nào để người nghe dễ đọc? Xem lại 4 nguyên tắc ở Mục 2 nhé!",
+      "forbidden_keywords": ["từ khóa cốt lõi", "độ tương phản", "đáp án C"]
+    },
+    {
+      "id": "tin9_b7_q4",
+      "section_ref": "Mục 2: Các công cụ trực quan và nguyên tắc thiết kế",
+      "muc_sgk": "Mục 2: Hợp tác trực tuyến",
+      "trang_sgk": 39,
+      "cau_hoi": "Khi làm việc nhóm trực tuyến để chuẩn bị bài báo cáo, tính năng công nghệ nào hỗ trợ các thành viên hợp tác hiệu quả nhất?",
+      "lua_chon": {
+        "A": "Tính năng chia sẻ liên kết cho phép nhiều người cùng xem và chỉnh sửa đồng thời theo thời gian thực",
+        "B": "Mỗi người làm một tệp riêng rồi lưu vào USB mang đến lớp cãi nhau",
+        "C": "Khóa không cho bất kỳ ai truy cập vào tài liệu của mình",
+        "D": "In ra giấy gửi bưu điện cho từng bạn trong nhóm"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Khả năng chia sẻ qua đám mây và đồng chỉnh sửa thời gian thực (real-time collaboration) là chìa khóa then chốt của làm việc nhóm hiện đại.",
+      "goi_y_khi_sai": "Khi các bạn ở các nhà khác nhau, tính năng chia sẻ trực tuyến qua đường dẫn liên kết giúp ích gì? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["chia sẻ liên kết", "thời gian thực", "đáp án A"]
+    }
+  ]
+}

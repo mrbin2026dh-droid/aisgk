@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 6,
+  "title": "Thực hành: Khai thác phần mềm mô phỏng",
+  "topic": "Chủ đề 4. Ứng dụng tin học",
+  "status": "published",
+  "content_markdown": "# Bài 6: Thực hành: Khai thác phần mềm mô phỏng\n\n### 1. Mục tiêu và quy trình khai thác mô phỏng\nKhai thác phần mềm mô phỏng giúp học sinh làm chủ phương pháp học tập khám phá thông qua thực nghiệm số.\n\n- **Quy trình 4 bước chuẩn mực**:\n  1. **Xác định mục tiêu thực hành**: Nắm rõ hiện tượng, định luật hoặc hệ thống cần khảo sát (ví dụ: định luật Ohm trong mạch điện, sự chuyển động của các hành tinh).\n  2. **Thiết lập thông số ban đầu**: Lựa chọn các giá trị đầu vào (điện áp, điện trở, khối lượng, vận tốc, khoảng cách).\n  3. **Tương tác và quan sát**: Thay đổi tham số bằng thanh trượt, nút điều khiển và theo dõi đồ thị/kết quả hiển thị theo thời gian thực.\n  4. **Rút ra kết luận khoa học**: So sánh kết quả mô phỏng với kiến thức lý thuyết đã học để củng cố nhận thức.\n\n---\n\n### 2. Thực hành với phần mềm PhET và Solar System Scope\n- **Thực hành với PhET (Mô phỏng Định luật Ohm)**:\n  - **Môi trường**: Truy cập mô phỏng mạch điện trên website PhET (`phet.colorado.edu`).\n  - **Thao tác**: Giữ nguyên điện trở $R$, tăng dần hiệu điện thế $U$ từ $1.5\\text{V}$ lên $9\\text{V}$.\n  - **Hiện tượng**: Cường độ dòng điện $I$ tăng tỉ lệ thuận, đèn sáng rõ hơn và đồ thị biểu diễn đi lên.\n  - **Kết luận**: Khẳng định công thức định luật Ohm $I = \\frac{U}{R}$ một cách trực quan sinh động.\n\n- **Thực hành với Solar System Scope (Mô phỏng Thiên văn học)**:\n  - **Mục tiêu**: Khảo sát chu kỳ quay của Trái Đất và Mặt Trăng quanh Mặt Trời.\n  - **Thao tác**: Tùy chỉnh thanh tốc độ thời gian (tua nhanh theo ngày/tháng), xoay góc nhìn 3D để quan sát hiện tượng nhật thực, nguyệt thực và sự thay đổi các mùa trong năm.\n\n> **Ghi nhớ:** Khi kết quả mô phỏng khác với dự đoán, hãy bình tĩnh kiểm tra lại các giá trị tham số đầu vào và quy luật điều kiện thiết lập trước khi rút ra kết luận.",
+  "quiz": [
+    {
+      "id": "tin9_b6_q1",
+      "section_ref": "Mục 1: Mục tiêu và quy trình khai thác mô phỏng",
+      "muc_sgk": "Mục 1: Quy trình khai thác mô phỏng",
+      "trang_sgk": 30,
+      "cau_hoi": "Bước đầu tiên và quan trọng nhất khi bắt đầu khai thác một phần mềm mô phỏng là gì?",
+      "lua_chon": {
+        "A": "Bấm liên tục các nút trên màn hình để xem có gì xảy ra",
+        "B": "Xác định rõ ràng mục tiêu thí nghiệm và hiện tượng khoa học cần khảo sát",
+        "C": "Đóng phần mềm lại và đọc lý thuyết trong sách giáo khoa",
+        "D": "Chụp ảnh màn hình máy tính gửi cho bạn bè"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Bước đầu tiên bao giờ cũng là xác định mục tiêu học tập rõ ràng để biết mình cần khảo sát hiện tượng gì và cần quan sát biến số nào.",
+      "goi_y_khi_sai": "Trước khi bắt đầu bất kỳ thí nghiệm thực tế hay mô phỏng nào, em cần định hình rõ mục đích mình làm việc đó để làm gì. Xem lại Quy trình 4 bước ở Mục 1 nhé!",
+      "forbidden_keywords": ["mục tiêu thí nghiệm", "đáp án B"]
+    },
+    {
+      "id": "tin9_b6_q2",
+      "section_ref": "Mục 2: Thực hành với phần mềm PhET và Solar System Scope",
+      "muc_sgk": "Mục 2: Thực hành PhET",
+      "trang_sgk": 32,
+      "cau_hoi": "Trong mô phỏng định luật Ohm của PhET, nếu em giữ nguyên giá trị điện trở R và kéo tăng hiệu điện thế U thì điều gì sẽ xảy ra?",
+      "lua_chon": {
+        "A": "Cường độ dòng điện I sẽ tăng lên và bóng đèn sáng rực rỡ hơn",
+        "B": "Cường độ dòng điện I sẽ giảm dần về 0",
+        "C": "Phần mềm sẽ báo lỗi và tắt ứng dụng",
+        "D": "Mạch điện hoàn toàn không có bất kỳ thay đổi nào"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Theo định luật Ohm I = U / R, khi R không đổi, nếu tăng hiệu điện thế U thì cường độ dòng điện I sẽ tăng tỉ lệ thuận.",
+      "goi_y_khi_sai": "Hãy nhớ lại công thức I = U / R: Tử số U tăng lên trong khi mẫu số R giữ nguyên thì phân số sẽ tăng hay giảm? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["tăng lên", "I tăng", "đáp án A"]
+    },
+    {
+      "id": "tin9_b6_q3",
+      "section_ref": "Mục 1: Mục tiêu và quy trình khai thác mô phỏng",
+      "muc_sgk": "Mục 1: Tương tác mô phỏng",
+      "trang_sgk": 31,
+      "cau_hoi": "Đặc điểm nào sau đây thể hiện rõ nhất tính năng 'tương tác hai chiều' của phần mềm mô phỏng?",
+      "lua_chon": {
+        "A": "Người dùng chỉ có thể xem thụ động như một đoạn phim hoạt hình",
+        "B": "Người dùng có thể chủ động thay đổi thông số đầu vào và quan sát kết quả thay đổi tức thì trên màn hình",
+        "C": "Màn hình tự động chuyển bài mà không cần bấm chuột",
+        "D": "Phần mềm yêu cầu phải in kết quả ra giấy mới xem được"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Tương tác hai chiều nghĩa là người dùng tác động làm thay đổi tham số đầu vào và phần mềm phản hồi kết quả hiển thị lại ngay lập tức.",
+      "goi_y_khi_sai": "Tương tác hai chiều nghĩa là có sự qua lại giữa người và máy: người nhập/chỉnh dữ liệu thì máy sẽ làm gì? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["thay đổi thông số", "đáp án B"]
+    },
+    {
+      "id": "tin9_b6_q4",
+      "section_ref": "Mục 2: Thực hành với phần mềm PhET và Solar System Scope",
+      "muc_sgk": "Mục 2: Thực hành Solar System",
+      "trang_sgk": 33,
+      "cau_hoi": "Khi sử dụng phần mềm mô phỏng Solar System Scope, tính năng 'điều chỉnh tốc độ thời gian' mang lại lợi ích nổi bật nào?",
+      "lua_chon": {
+        "A": "Làm cho máy vi tính hoạt động nhanh hơn",
+        "B": "Giúp quan sát chu kỳ chuyển động của các hành tinh vốn mất nhiều tháng hoặc nhiều năm ngoài thực tế chỉ trong vài giây",
+        "C": "Thay đổi vị trí của các ngôi sao ngoài vũ trụ thật",
+        "D": "Tắt màn hình máy tính để tiết kiệm điện"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Các hiện tượng thiên văn ngoài đời thực diễn ra rất chậm (Trái Đất quay quanh Mặt Trời mất 365 ngày). Tua nhanh thời gian giúp học sinh quan sát trọn vẹn chu kỳ chỉ trong tích tắc.",
+      "goi_y_khi_sai": "Hiện tượng thiên văn thực tế diễn ra trong bao lâu? Việc tua nhanh thời gian trên máy tính giúp ích gì cho mắt thường? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["quan sát chu kỳ", "vài giây", "đáp án B"]
+    }
+  ]
+}

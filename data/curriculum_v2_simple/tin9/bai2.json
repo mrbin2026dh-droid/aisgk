@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 2,
+  "title": "Thông tin trong giải quyết vấn đề",
+  "topic": "Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin",
+  "status": "published",
+  "content_markdown": "# Bài 2: Thông tin trong giải quyết vấn đề\n\n### 1. Vai trò của thông tin trong giải quyết vấn đề\n- **Thông tin là cơ sở để ra quyết định**: Mọi kế hoạch, quyết định và hành động hiệu quả trong học tập, công việc và đời sống đều bắt nguồn từ thông tin thu thập được.\n- **Hậu quả của thông tin kém chất lượng**: Thông tin sai lệch, thiếu sót hoặc lỗi thời sẽ dẫn đến những quyết định sai lầm, gây lãng phí thời gian, công sức và tiền bạc.\n- **Nguồn thông tin đáng tin cậy**: Cần ưu tiên thu thập từ cổng thông tin điện tử của cơ quan nhà nước (`.gov.vn`), trường học (`.edu.vn`), tổ chức khoa học uy tín hoặc ý kiến của các chuyên gia.\n\n---\n\n### 2. Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin\nĐể đảm bảo thông tin giúp ích tối đa cho việc giải quyết vấn đề, ta dùng 4 tiêu chí cốt lõi (**Mnemonic: MỚI - ĐÚNG - ĐỦ - DÙNG ĐƯỢC**):\n\n| Tiêu chí | Ý nghĩa cốt lõi | Ví dụ minh họa thực tế |\n| :--- | :--- | :--- |\n| **1. Tính mới (Cập nhật)** | Phản ánh đúng thực tế ở thời điểm hiện tại, không dùng dữ liệu đã hết hạn. | Khi xem chỉ tiêu và điểm chuẩn tuyển sinh lớp 10, phải xem văn bản của năm học mới nhất. |\n| **2. Tính chính xác** | Đúng sự thật, chuẩn xác về số liệu, sự kiện, tên người, địa điểm. | Lịch thi tốt nghiệp THCS phải đúng ngày, giờ do Sở Giáo dục và Đào tạo công bố. |\n| **3. Tính đầy đủ** | Bao quát toàn diện các khía cạnh cần thiết của vấn đề cần giải quyết. | Khi tìm hiểu về một trường THPT, cần biết điểm chuẩn, khoảng cách đi lại, tổ hợp môn học và cơ sở vật chất. |\n| **4. Tính sử dụng được (Phù hợp)** | Có ích và liên quan trực tiếp đến mục tiêu giải quyết vấn đề đặt ra. | Cần ôn thi Tin học 9 thì tìm tài liệu đúng SGK Tin 9, không dùng tài liệu của môn khác. |\n\n> **Ghi nhớ:** Một thông tin dù rất mới và chính xác nhưng nếu không liên quan đến bài toán đang giải quyết thì cũng không có giá trị sử dụng.",
+  "quiz": [
+    {
+      "id": "tin9_b2_q1",
+      "section_ref": "Mục 1: Vai trò của thông tin trong giải quyết vấn đề",
+      "muc_sgk": "Mục 1: Vai trò của thông tin",
+      "trang_sgk": 10,
+      "cau_hoi": "Yếu tố nào sau đây đóng vai trò là căn cứ quan trọng nhất để con người phân tích và đưa ra quyết định khi giải quyết một vấn đề?",
+      "lua_chon": {
+        "A": "Thông tin thu thập được",
+        "B": "Sự phỏng đoán may rủi",
+        "C": "Cảm tính nhất thời",
+        "D": "Tin đồn không rõ nguồn gốc"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
+      "goi_y_khi_sai": "Để giải quyết vấn đề hiệu quả và khoa học, chúng ta cần dựa vào cơ sở dữ liệu và điều gì? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Thông tin", "đáp án A"]
+    },
+    {
+      "id": "tin9_b2_q2",
+      "section_ref": "Mục 2: Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin",
+      "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin",
+      "trang_sgk": 11,
+      "cau_hoi": "Bạn Mai tìm hiểu điểm chuẩn xét tuyển vào lớp 10 của một trường THPT nhưng lại dùng bảng số liệu tuyển sinh từ 3 năm trước. Thông tin đó đã vi phạm tiêu chí chất lượng nào?",
+      "lua_chon": {
+        "A": "Tính mới (Tính cập nhật)",
+        "B": "Tính bảo mật",
+        "C": "Tính thẩm mỹ",
+        "D": "Tính dung lượng"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
+      "goi_y_khi_sai": "Thông tin phản ánh đúng thời điểm hiện tại và chưa bị lỗi thời liên quan đến tiêu chí nào trong 4 tiêu chí? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["Tính mới", "Tính cập nhật", "đáp án A"]
+    },
+    {
+      "id": "tin9_b2_q3",
+      "section_ref": "Mục 1: Vai trò của thông tin trong giải quyết vấn đề",
+      "muc_sgk": "Mục 1: Vai trò của thông tin",
+      "trang_sgk": 12,
+      "cau_hoi": "Khi tra cứu thông tin về kỳ thi tuyển sinh vào lớp 10, nguồn tin nào dưới đây có độ tin cậy và tính chính xác cao nhất?",
+      "lua_chon": {
+        "A": "Cổng thông tin điện tử chính thức của Sở Giáo dục và Đào tạo",
+        "B": "Bình luận của một tài khoản ẩn danh trên diễn đàn mạng",
+        "C": "Bài đăng chia sẻ không rõ nguồn trên mạng xã hội",
+        "D": "Tin nhắn quảng cáo dịch vụ luyện thi"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Cổng thông tin của Sở Giáo dục và Đào tạo là cơ quan quản lý nhà nước có thẩm quyền, thông tin phát hành luôn chuẩn xác và có giá trị pháp lý.",
+      "goi_y_khi_sai": "Hãy chọn cơ quan nhà nước có thẩm quyền quản lý chuyên ngành giáo dục trong Mục 1 nhé!",
+      "forbidden_keywords": ["Sở Giáo dục", "đáp án A"]
+    },
+    {
+      "id": "tin9_b2_q4",
+      "section_ref": "Mục 2: Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin",
+      "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin",
+      "trang_sgk": 13,
+      "cau_hoi": "Một bài viết khoa học có số liệu rất chính xác và mới xuất bản hôm qua, nhưng lại bàn về kỹ thuật chăn nuôi trong khi em đang cần tìm tài liệu ôn tập Tin học 9. Thông tin này thiếu tiêu chí nào?",
+      "lua_chon": {
+        "A": "Tính sử dụng được (Tính liên quan, phù hợp)",
+        "B": "Tính mới",
+        "C": "Tính chính xác",
+        "D": "Tính dung lượng"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất tốt! Dù thông tin mới và chính xác nhưng không ăn nhập gì với mục tiêu bài toán đang cần giải quyết thì nó thiếu Tính sử dụng được.",
+      "goi_y_khi_sai": "Tiêu chí đòi hỏi thông tin phải có ích và liên quan trực tiếp đến mục đích giải quyết vấn đề là gì? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["sử dụng được", "liên quan", "đáp án A"]
+    }
+  ]
+}

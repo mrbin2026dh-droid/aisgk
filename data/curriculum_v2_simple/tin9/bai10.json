@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 10,
+  "title": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+  "topic": "Chủ đề 4. Ứng dụng tin học",
+  "status": "published",
+  "content_markdown": "# Bài 10: Thực hành: Xử lý dữ liệu bảng tính nâng cao\n\n### 1. Các hàm thống kê có điều kiện COUNTIF và SUMIF\nTrong thực tế xử lý dữ liệu học tập và quản lý nhà trường, ta thường không chỉ tính tổng hay đếm đơn thuần mà cần lọc theo những tiêu chí cụ thể.\n\n- **Hàm đếm có điều kiện COUNTIF**:\n  - **Cú pháp**: `=COUNTIF(vùng_dữ_liệu, tiêu_chí_đếm)`\n  - **Ý nghĩa**: Đếm số ô trong `vùng_dữ_liệu` thỏa mãn `tiêu_chí_đếm` quy định.\n  - **Ví dụ**: Đếm số học sinh đạt kết quả \"Đạt\" trong cột E từ dòng 2 đến dòng 35: `=COUNTIF(E2:E35, \"Đạt\")`.\n  - **Ví dụ điều kiện số**: Đếm số bạn có điểm môn Tin học từ 8 trở lên: `=COUNTIF(D2:D35, \">=8\")`.\n\n- **Hàm tính tổng có điều kiện SUMIF**:\n  - **Cú pháp**: `=SUMIF(vùng_kiểm_tra, điều_kiện, [vùng_tính_tổng])`\n  - **Ý nghĩa**: Tính tổng các giá trị trong `vùng_tính_tổng` tương ứng với các ô trong `vùng_kiểm_tra` thỏa mãn `điều_kiện`.\n  - **Ví dụ**: Tính tổng kinh phí chi cho các hoạt động thể thao trong sổ chi tiêu: `=SUMIF(B2:B20, \"Thể thao\", C2:C20)`.\n\n---\n\n### 2. Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính\n- **Quy trình 3 bước xử lý báo cáo chuyên nghiệp**:\n  1. **Bước 1: Sắp xếp dữ liệu (Sort)**:\n     - Chọn vùng dữ liệu $\\rightarrow$ vào mục **Data** $\\rightarrow$ chọn **Sort**.\n     - Sắp xếp theo tiêu chí ưu tiên: Xếp giảm dần theo *Điểm trung bình*, nếu trùng điểm thì sắp xếp tăng dần theo *Tên học sinh* theo bảng chữ cái A-Z.\n  2. **Bước 2: Lọc dữ liệu tự động (AutoFilter)**:\n     - Chọn dòng tiêu đề $\\rightarrow$ bật biểu tượng cái phễu **Filter**.\n     - Nhấp chuột vào mũi tên ở cột cần lọc để trích xuất danh sách mong muốn (ví dụ: chỉ hiển thị học sinh xếp loại *Xuất sắc*).\n  3. **Bước 3: Vẽ biểu đồ trực quan (Charts)**:\n     - Quét chọn bảng số liệu thống kê tổng hợp $\\rightarrow$ chọn **Insert** $\\rightarrow$ chọn dạng biểu đồ thích hợp (Biểu đồ cột để so sánh số lượng, biểu đồ hình tròn để xem tỉ lệ phần trăm).\n\n> **Ghi nhớ:** Khi sử dụng hàm `COUNTIF` hoặc `SUMIF` với tiêu chí chứa toán tử so sánh (như `>=8`), bắt buộc phải kẹp toán tử và số đó trong dấu ngoặc kép (ví dụ: `\">=8\"`).",
+  "quiz": [
+    {
+      "id": "tin9_b10_q1",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Hàm COUNTIF",
+      "trang_sgk": 55,
+      "cau_hoi": "Để đếm xem trong danh sách học sinh có bao nhiêu bạn được xếp loại học lực 'Tốt' ở cột Xếp loại (từ ô F2 đến F40), ta sử dụng công thức nào sau đây?",
+      "lua_chon": {
+        "A": "=SUM(F2:F40, \"Tốt\")",
+        "B": "=COUNTIF(F2:F40, \"Tốt\")",
+        "C": "=IF(F2:F40=\"Tốt\")",
+        "D": "=AVERAGE(F2:F40)"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Hàm COUNTIF nhận vùng dữ liệu F2:F40 và đếm số lượng ô có chứa giá trị chuỗi \"Tốt\".",
+      "goi_y_khi_sai": "Hàm nào trong tiếng Anh có nghĩa là ĐẾM (COUNT) kết hợp với NẾU (IF)? Xem lại cú pháp ở Mục 1 nhé!",
+      "forbidden_keywords": ["COUNTIF", "đáp án B"]
+    },
+    {
+      "id": "tin9_b10_q2",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Phân biệt SUM và SUMIF",
+      "trang_sgk": 56,
+      "cau_hoi": "Điểm khác biệt cơ bản nhất giữa hàm SUM và hàm SUMIF là gì?",
+      "lua_chon": {
+        "A": "Hàm SUM chỉ cộng được 2 ô, còn hàm SUMIF cộng được 100 ô",
+        "B": "Hàm SUM cộng tất cả các ô trong vùng chỉ định, còn hàm SUMIF chỉ cộng những ô thỏa mãn một điều kiện nhất định",
+        "C": "Hàm SUM là để đếm, còn SUMIF là để tính trung bình cộng",
+        "D": "Hai hàm này hoàn toàn giống nhau, không có gì khác biệt"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! SUM là tính tổng toàn bộ các số trong vùng, còn SUMIF bổ sung thêm tiêu chí lọc điều kiện trước khi tính tổng.",
+      "goi_y_khi_sai": "Chữ 'IF' ở cuối tên hàm SUMIF có nghĩa là gì? Điều đó đem lại tính năng gì khác biệt so với hàm SUM thông thường? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["thỏa mãn một điều kiện", "tất cả các ô", "đáp án B"]
+    },
+    {
+      "id": "tin9_b10_q3",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Cú pháp hàm SUMIF",
+      "trang_sgk": 57,
+      "cau_hoi": "Trong công thức =SUMIF(A2:A15, \"Sách giáo khoa\", C2:C15), đối số vùng ô C2:C15 đóng vai trò là gì?",
+      "lua_chon": {
+        "A": "Vùng chứa tiêu chí kiểm tra điều kiện",
+        "B": "Vùng chứa các giá trị số cần tính tổng (sum_range)",
+        "C": "Tên của trang tính",
+        "D": "Tiêu đề của cột cần xóa"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Cú pháp SUMIF là (vùng_kiểm_tra, điều_kiện, vùng_tính_tổng). Cột C2:C15 ở vị trí thứ ba chính là vùng chứa các số thực tế để máy cộng tổng lại.",
+      "goi_y_khi_sai": "C2:C15 nằm ở vị trí thứ 3 trong hàm SUMIF. Vị trí này chứa dữ liệu gì để máy cộng lại? Xem lại cú pháp ở Mục 1 nhé!",
+      "forbidden_keywords": ["cần tính tổng", "sum_range", "đáp án B"]
+    },
+    {
+      "id": "tin9_b10_q4",
+      "section_ref": "Mục 2: Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính",
+      "muc_sgk": "Mục 2: Lọc dữ liệu Filter",
+      "trang_sgk": 58,
+      "cau_hoi": "Khi muốn trích xuất nhanh danh sách các học sinh đạt học lực Xuất sắc để gửi khen thưởng mà KHÔNG làm mất hoặc xáo trộn dữ liệu của các bạn khác trong bảng, ta nên sử dụng công cụ nào?",
+      "lua_chon": {
+        "A": "Dùng phím Delete để xóa hết những bạn không đạt Xuất sắc",
+        "B": "Công cụ Lọc dữ liệu tự động (AutoFilter)",
+        "C": "Vẽ hình tròn che lại các dòng khác",
+        "D": "Tắt máy tính đi bật lại"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Công cụ AutoFilter tạm thời ẩn đi những dòng không thỏa mãn điều kiện và chỉ hiển thị đúng các dòng học sinh Xuất sắc, toàn bộ dữ liệu gốc vẫn được bảo toàn nguyên vẹn 100%.",
+      "goi_y_khi_sai": "Công cụ có biểu tượng hình chiếc phễu chuyên dùng để lọc dữ liệu theo tiêu chí mà không làm mất hàng là gì? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["AutoFilter", "Lọc dữ liệu", "đáp án B"]
+    }
+  ]
+}
