@@ -952,6 +952,12 @@ function doNavigateSubSection(sectionId, type) {
     };
     requestAnimationFrame(() => setTimeout(performScroll, 80));
   }
+  if (window.innerWidth < 1024) {
+    const ws = document.getElementById("appWorkspace");
+    if (ws) ws.classList.remove("mobile-drawer-open");
+    const bd = document.getElementById("mobileDrawerBackdrop");
+    if (bd) bd.classList.remove("active");
+  }
   renderCurriculumTree();
 }
 
@@ -1619,8 +1625,30 @@ function setupSidebarCollapse() {
   const btnCollapseAll = document.getElementById("btnCollapseAllTree");
   const btnExpandAll = document.getElementById("btnExpandAllTree");
 
+  const closeMobileDrawer = () => {
+    if (!workspace) return;
+    workspace.classList.remove("mobile-drawer-open");
+    const backdrop = document.getElementById("mobileDrawerBackdrop");
+    if (backdrop) backdrop.classList.remove("active");
+  };
+
+  const openMobileDrawer = () => {
+    if (!workspace) return;
+    workspace.classList.add("mobile-drawer-open");
+    const backdrop = document.getElementById("mobileDrawerBackdrop");
+    if (backdrop) backdrop.classList.add("active");
+  };
+
   const toggleSidebar = (forceCollapse) => {
     if (!workspace) return;
+    if (window.innerWidth < 1024) {
+      if (workspace.classList.contains("mobile-drawer-open")) {
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+      return;
+    }
     const willCollapse = (typeof forceCollapse === "boolean")
       ? forceCollapse
       : !workspace.classList.contains("sidebar-collapsed");
@@ -1634,6 +1662,44 @@ function setupSidebarCollapse() {
       }
     }
   };
+
+  const btnCloseDrawer = document.getElementById("btnCloseSidebarDrawer");
+  const drawerBackdrop = document.getElementById("mobileDrawerBackdrop");
+  if (btnCloseDrawer) btnCloseDrawer.addEventListener("click", closeMobileDrawer);
+  if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeMobileDrawer);
+
+  const btnDrawerDash = document.getElementById("btnDrawerNavDashboard");
+  const btnDrawerTutor = document.getElementById("btnDrawerNavTutor");
+  const btnDrawerMgmt = document.getElementById("btnDrawerNavStudentMgmt");
+  const btnDrawerOut = document.getElementById("btnDrawerSignOut");
+
+  if (btnDrawerDash) {
+    btnDrawerDash.addEventListener("click", () => {
+      closeMobileDrawer();
+      const b = document.getElementById("btnNavDashboard");
+      if (b) b.click();
+    });
+  }
+  if (btnDrawerTutor) {
+    btnDrawerTutor.addEventListener("click", () => {
+      closeMobileDrawer();
+      const b = document.getElementById("btnHeaderTutor");
+      if (b) b.click();
+    });
+  }
+  if (btnDrawerMgmt) {
+    btnDrawerMgmt.addEventListener("click", () => {
+      closeMobileDrawer();
+      const b = document.getElementById("btnNavStudentMgmt");
+      if (b) b.click();
+    });
+  }
+  if (btnDrawerOut) {
+    btnDrawerOut.addEventListener("click", () => {
+      closeMobileDrawer();
+      handleStudentLogout();
+    });
+  }
 
   if (btnToggleSidebar) btnToggleSidebar.addEventListener("click", () => toggleSidebar());
   if (btnCollapseSidebar) btnCollapseSidebar.addEventListener("click", () => toggleSidebar(true));
@@ -4093,6 +4159,15 @@ function updateHeaderStudentAuthUI() {
     }
   }
 
+  const btnDrawerMgmt = document.getElementById("btnDrawerNavStudentMgmt");
+  const btnDrawerOut = document.getElementById("btnDrawerSignOut");
+  if (btnDrawerMgmt) {
+    btnDrawerMgmt.classList.toggle("hidden", !isTeacherUnlocked);
+  }
+  if (btnDrawerOut) {
+    btnDrawerOut.classList.toggle("hidden", !studentAuthState.isLoggedIn && !isTeacherUnlocked);
+  }
+
   // Luôn cập nhật khóa khối học tương ứng
   applyGradeLocking();
 }
@@ -4172,11 +4247,6 @@ function openStudentLoginPortal() {
 }
 
 function closeStudentLoginPortal() {
-  // Chỉ đóng cổng đăng nhập khi học sinh ĐÃ ĐĂNG NHẬP THÀNH CÔNG (Xóa bỏ hoàn toàn chế độ khách)
-  if (!studentAuthState.isLoggedIn) {
-    console.warn("Chế độ khách đã bị vô hiệu hóa. Học sinh bắt buộc phải đăng nhập bằng tài khoản Google.");
-    return;
-  }
   const portal = document.getElementById("studentLoginPortal");
   if (!portal) return;
   portal.classList.add("hidden");

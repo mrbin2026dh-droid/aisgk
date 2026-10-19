@@ -179,13 +179,41 @@
     </div>
   </header>
 
+  <!-- Backdrop làm mờ khi mở Mobile Drawer -->
+  <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop"></div>
+
   <!-- ========================================================================
        MAIN APP WORKSPACE: BỐ CỤC SÂN KHẤU RỘNG RÃI & RESPONSIVE
        ======================================================================== -->
   <main class="app-workspace tutor-open" id="appWorkspace">
 
-    <!-- --- CỘT TRÁI: DANH SÁCH BÀI HỌC VÀ CÁC MỤC (ACCORDION TREE KHOA HỌC) --- -->
+    <!-- --- CỘT TRÁI: DANH SÁCH BÀI HỌC VÀ CÁC MỤC (ACCORDION TREE KHOA HỌC & MOBILE DRAWER) --- -->
     <aside class="roadmap-sidebar" id="roadmapSidebar" aria-label="Mục lục bài học">
+      <!-- Header Mobile Drawer (Hiện trên màn hình di động khi bấm ☰ như XAI247) -->
+      <div class="sidebar-drawer-mobile-header" id="sidebarDrawerMobileHeader">
+        <div class="drawer-brand-group">
+          <div class="drawer-brand-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10M6 10h10"/>
+            </svg>
+          </div>
+          <span class="drawer-brand-title">AI SGK TIN HỌC</span>
+        </div>
+        <button type="button" class="btn-close-drawer" id="btnCloseSidebarDrawer" aria-label="Đóng menu">✕</button>
+      </div>
+
+      <!-- Khối chọn Lớp trong Drawer trên Mobile -->
+      <div class="drawer-section drawer-grades-section">
+        <div class="drawer-section-title">CHỌN KHỐI LỚP</div>
+        <div class="drawer-grade-pills">
+          <button class="header-grade-pill active" data-grade="6" type="button">LỚP 6</button>
+          <button class="header-grade-pill" data-grade="7" type="button">LỚP 7</button>
+          <button class="header-grade-pill" data-grade="8" type="button">LỚP 8</button>
+          <button class="header-grade-pill" data-grade="9" type="button">LỚP 9</button>
+        </div>
+      </div>
+
       <div class="sidebar-nav-header">
         <div class="sidebar-nav-top-row">
           <div class="sidebar-nav-badge">
@@ -219,6 +247,23 @@
         <div class="sidebar-progress-subtext" id="roadmapProgressSubtext">
           Đã hoàn thành 2/8 bài
         </div>
+      </div>
+
+      <!-- Danh mục Tính năng nhanh trong Drawer trên Mobile -->
+      <div class="drawer-section drawer-actions-section">
+        <div class="drawer-section-title">CHỨC NĂNG</div>
+        <button type="button" class="drawer-nav-item" id="btnDrawerNavDashboard">
+          <span class="drawer-nav-icon">🏠</span> <span>Trang chủ học sinh</span>
+        </button>
+        <button type="button" class="drawer-nav-item" id="btnDrawerNavTutor">
+          <span class="drawer-nav-icon">💡</span> <span>Gia sư Socrates</span>
+        </button>
+        <button type="button" class="drawer-nav-item" id="btnDrawerNavStudentMgmt">
+          <span class="drawer-nav-icon">👥</span> <span>Quản lý học sinh</span>
+        </button>
+        <button type="button" class="drawer-nav-item drawer-nav-signout" id="btnDrawerSignOut">
+          <span class="drawer-nav-icon">🚪</span> <span>Đăng xuất / Thoát</span>
+        </button>
       </div>
     </aside>
 
@@ -1180,351 +1225,118 @@
   </div>
 
   <!-- ========================================================================
-       CỔNG ĐĂNG NHẬP DÀNH CHO HỌC SINH (GOOGLE AUTHENTICATION & KHÁM PHÁ AI)
-       Khớp 100% bản vẽ thiết kế: 2 Cột (Hero Mascot + Card Đăng nhập Google)
+       CỔNG ĐĂNG NHẬP PHÂN QUYỀN HỌC SINH & GIÁO VIÊN
+       Thiết kế Tinh giản Chuẩn SaaS Mobile-First (Lấy cảm hứng từ XAI247)
        ======================================================================== -->
-  <section id="studentLoginPortal" class="student-login-portal hidden" role="dialog" aria-modal="true" aria-label="Cổng đăng nhập học sinh">
-    <div class="sl-portal-wrapper">
-      <!-- Header Cổng Học Sinh -->
-      <header class="sl-portal-header">
-        <div class="sl-header-left">
-          <div class="sl-brand-logo-squircle" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+  <section id="studentLoginPortal" class="student-login-portal hidden" role="dialog" aria-modal="true" aria-label="Cổng đăng nhập hệ thống">
+    <div class="sl-auth-container">
+      <div class="sl-auth-card">
+        <!-- Nút đóng góc phải -->
+        <button type="button" class="sl-auth-close-btn" id="btnCloseLoginPortal" aria-label="Đóng cửa sổ" title="Đóng">✕</button>
+
+        <!-- Brand Icon & Header -->
+        <div class="sl-auth-brand-wrap">
+          <div class="sl-auth-logo-badge" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
               <path d="M6 6h10M6 10h10"/>
             </svg>
           </div>
-          <span class="sl-brand-text">AI SGK TIN HỌC THCS</span>
-          <span class="sl-divider-pipe" aria-hidden="true">|</span>
-          <span class="sl-badge-pill" id="slPortalRoleBadge">CỔNG PHÂN QUYỀN HỆ THỐNG</span>
+          <h1 class="sl-auth-title">Đăng nhập</h1>
+          <p class="sl-auth-subtitle">Chào mừng trở lại.</p>
         </div>
 
-        <div class="sl-header-right" style="display: flex; align-items: center; gap: 10px;">
-          <div class="sl-slogan-box">
-            <svg class="sl-cap-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-            <span>Kiến thức hôm nay • Kỹ năng ngày mai</span>
-          </div>
-          <button type="button" class="sl-close-btn" id="btnCloseLoginPortal" aria-label="Đóng cổng đăng nhập" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all 0.2s;">
-            ✕
+        <!-- Role Tabs Switcher (Segmented Control) -->
+        <div class="sl-role-tabs" id="slRoleTabs" role="tablist" aria-label="Vai trò đăng nhập">
+          <button type="button" class="sl-role-tab active" id="slTabStudent" role="tab" aria-selected="true" data-role="student">
+            <span class="sl-role-tab-icon">👨‍🎓</span>
+            <span class="sl-role-tab-text">Học sinh</span>
+          </button>
+          <button type="button" class="sl-role-tab" id="slTabTeacher" role="tab" aria-selected="false" data-role="teacher">
+            <span class="sl-role-tab-icon">👨‍🏫</span>
+            <span class="sl-role-tab-text">Giáo viên</span>
           </button>
         </div>
-      </header>
 
-      <!-- Nội dung chính 2 Cột Sân khấu -->
-      <div class="sl-main-stage">
-        <!-- CỘT TRÁI: HERO & GIỚI THIỆU GIÁ TRỊ & ROBOT MASCOT -->
-        <div class="sl-hero-col">
-          <!-- Tiêu đề Chào mừng -->
-          <div class="sl-hero-welcome-block">
-            <div class="sl-welcome-icon-box" aria-hidden="true">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                <path d="M6 6h10M6 10h10"/>
-              </svg>
-            </div>
-            <div class="sl-welcome-headings">
-              <span class="sl-welcome-lead">Chào mừng em đến với</span>
-              <h1 class="sl-hero-brand-name">AI SGK Tin học THCS</h1>
+        <!-- PANEL 1: HỌC SINH -->
+        <div id="slPanelStudent" class="sl-role-panel">
+          <!-- Nút Google Sign-In nổi bật -->
+          <button id="btnGoogleSignIn" class="sl-google-btn" type="button" aria-label="Đăng nhập bằng tài khoản Google">
+            <svg class="sl-google-svg" width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.02 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span>Tiếp tục với Google</span>
+          </button>
+
+          <div class="sl-auth-divider">
+            <span>hoặc chọn lớp học</span>
+          </div>
+
+          <!-- Chọn Khối Lớp -->
+          <div class="sl-form-group">
+            <label class="sl-form-label">Khối lớp học tập:</label>
+            <div class="sl-grade-selector" id="slGradeSelector" role="radiogroup" aria-label="Chọn khối lớp">
+              <button type="button" class="sl-grade-pill" data-grade="6">Khối 6</button>
+              <button type="button" class="sl-grade-pill" data-grade="7">Khối 7</button>
+              <button type="button" class="sl-grade-pill" data-grade="8">Khối 8</button>
+              <button type="button" class="sl-grade-pill active" data-grade="9">Khối 9</button>
             </div>
           </div>
 
-          <p class="sl-hero-tagline">
-            <span>Học tập thông minh</span> • <span>Luyện tập chủ động</span> • <span>Khám phá cùng gia sư AI</span>
-          </p>
-
-          <!-- Robot Mascot 3D Illustration Vector & Orbital Badges -->
-          <div class="sl-mascot-showcase" aria-label="Mô phỏng 3D Gia sư Robot Công nghệ">
-            <!-- Quỹ đạo hào quang ánh sáng -->
-            <div class="sl-mascot-glow-bg"></div>
-
-            <!-- Các hạt tri thức lơ lửng xung quanh Robot -->
-            <div class="sl-orbit-chip sl-orbit-code" title="Lập trình & Thuật toán">
-              <span>&lt;/&gt;</span>
-            </div>
-            <div class="sl-orbit-chip sl-orbit-bulb" title="Tư duy Sáng tạo">
-              <span>💡</span>
-            </div>
-            <div class="sl-orbit-chip sl-orbit-globe" title="Mạng máy tính & Internet">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            </div>
-            <div class="sl-orbit-chip sl-orbit-book" title="Sách giáo khoa số hóa">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-            </div>
-
-            <!-- Chú Robot AI 3D Vector sống động -->
-            <div class="sl-robot-scene">
-              <!-- Cây xanh góc bàn -->
-              <div class="sl-desk-plant" aria-hidden="true">
-                <div class="sl-plant-pot"></div>
-                <div class="sl-plant-leaf sl-leaf-1"></div>
-                <div class="sl-plant-leaf sl-leaf-2"></div>
-                <div class="sl-plant-leaf sl-leaf-3"></div>
-              </div>
-
-              <!-- Nhân vật Robot Socrates -->
-              <div class="sl-robot-avatar">
-                <!-- Mũ cử nhân tốt nghiệp -->
-                <div class="sl-robot-cap">
-                  <div class="sl-cap-mortarboard"></div>
-                  <div class="sl-cap-tassel"></div>
-                  <div class="sl-cap-base"></div>
-                </div>
-
-                <!-- Đầu Robot công nghệ -->
-                <div class="sl-robot-head">
-                  <!-- Tai nghe / Antenna phát sóng -->
-                  <div class="sl-ear sl-ear-left"></div>
-                  <div class="sl-ear sl-ear-right"></div>
-                  <!-- Màn hình mắt LED mỉm cười -->
-                  <div class="sl-robot-visor">
-                    <span class="sl-robot-eye sl-eye-left">^</span>
-                    <span class="sl-robot-eye sl-eye-right">^</span>
-                  </div>
-                </div>
-
-                <!-- Cánh tay vẫy chào / Like -->
-                <div class="sl-robot-arm-thumbsup">👍</div>
-
-                <!-- Thân Robot -->
-                <div class="sl-robot-body">
-                  <div class="sl-body-light"></div>
-                </div>
-              </div>
-
-              <!-- Máy tính xách tay phát sáng -->
-              <div class="sl-laptop-device" aria-hidden="true">
-                <div class="sl-laptop-screen">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-                </div>
-                <div class="sl-laptop-base"></div>
-              </div>
-
-              <!-- Chồng sách TIN HỌC -->
-              <div class="sl-book-stack" aria-hidden="true">
-                <div class="sl-book sl-book-blue">
-                  <span>TIN HỌC</span>
-                </div>
-                <div class="sl-book sl-book-green"></div>
-                <div class="sl-book sl-book-purple"></div>
-              </div>
+          <!-- Nhập Mã Lớp -->
+          <div class="sl-form-group">
+            <label for="slInputClassCode" class="sl-form-label">Lớp:</label>
+            <div class="sl-input-wrap">
+              <input type="text" id="slInputClassCode" class="sl-input" placeholder="Ví dụ: 9A, 9B, 6A" value="9A" maxlength="15" autocomplete="off">
             </div>
           </div>
 
-          <!-- 3 Thẻ Tính Năng Nổi Bật (Chân trang cột trái) -->
-          <div class="sl-feature-cards-row">
-            <!-- Thẻ 1 -->
-            <div class="sl-feature-card">
-              <div class="sl-fc-icon-wrap sl-fc-blue" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
-              </div>
-              <div class="sl-fc-content">
-                <div class="sl-fc-title">Học theo SGK</div>
-                <div class="sl-fc-desc">Nội dung bám sát chương trình Tin học THCS</div>
-              </div>
-            </div>
+          <!-- Điều khoản -->
+          <label class="sl-checkbox-row">
+            <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
+            <span class="sl-checkbox-custom" aria-hidden="true"></span>
+            <span class="sl-checkbox-text">Đồng ý với <a href="javascript:void(0)" class="sl-link" id="slLinkTerms">điều khoản học tập</a></span>
+          </label>
 
-            <!-- Thẻ 2 -->
-            <div class="sl-feature-card">
-              <div class="sl-fc-icon-wrap sl-fc-purple" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </div>
-              <div class="sl-fc-content">
-                <div class="sl-fc-title">Luyện tập tương tác</div>
-                <div class="sl-fc-desc">Bài tập đa dạng, có phản hồi ngay lập tức</div>
-              </div>
-            </div>
-
-            <!-- Thẻ 3 -->
-            <div class="sl-feature-card">
-              <div class="sl-fc-icon-wrap sl-fc-cyan" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
-              </div>
-              <div class="sl-fc-content">
-                <div class="sl-fc-title">Gia sư Socrates</div>
-                <div class="sl-fc-desc">Hỗ trợ 24/7, hướng dẫn từng bước</div>
-              </div>
-            </div>
+          <div class="sl-auth-footer-help">
+            <span>Gặp sự cố? <a href="javascript:void(0)" class="sl-link" id="slLinkTeacherHelp">Hỏi giáo viên</a></span>
           </div>
         </div>
 
-        <!-- CỘT PHẢI: THẺ ĐĂNG NHẬP PHÂN QUYỀN (HỌC SINH & GIÁO VIÊN) -->
-        <div class="sl-card-col">
-          <div class="sl-auth-card">
-            <!-- BỘ CHỌN VAI TRÒ PHÂN QUYỀN (HỌC SINH / GIÁO VIÊN) -->
-            <div class="sl-role-tabs" id="slRoleTabs" role="tablist" aria-label="Lựa chọn vai trò đăng nhập">
-              <button type="button" class="sl-role-tab active" id="slTabStudent" role="tab" aria-selected="true" data-role="student">
-                <span class="sl-role-tab-icon">👨‍🎓</span>
-                <span class="sl-role-tab-text">Học sinh</span>
-              </button>
-              <button type="button" class="sl-role-tab" id="slTabTeacher" role="tab" aria-selected="false" data-role="teacher">
-                <span class="sl-role-tab-icon">👨‍🏫</span>
-                <span class="sl-role-tab-text">Giáo viên / Quản trị</span>
-              </button>
-            </div>
-
-            <!-- PANEL 1: ĐĂNG NHẬP HỌC SINH -->
-            <div id="slPanelStudent" class="sl-role-panel">
-              <div class="sl-auth-card-header">
-                <div class="sl-auth-icon-circle" aria-hidden="true">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                </div>
-                <h2 class="sl-auth-heading">Đăng nhập dành cho học sinh</h2>
-              </div>
-
-              <p class="sl-auth-subheading">
-                Sử dụng tài khoản Google để lưu tiến độ và kết quả học tập cá nhân
-              </p>
-
-              <!-- Chọn Khối Lớp Học của em -->
-              <div class="sl-input-group">
-                <label class="sl-input-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                    <path d="M6 6h10M6 10h10"/>
-                  </svg>
-                  <span>Khối lớp học tập của em:</span>
-                </label>
-                <div class="sl-grade-selector" id="slGradeSelector" role="radiogroup" aria-label="Chọn khối lớp học">
-                  <button type="button" class="sl-grade-pill" data-grade="6">Khối 6</button>
-                  <button type="button" class="sl-grade-pill" data-grade="7">Khối 7</button>
-                  <button type="button" class="sl-grade-pill" data-grade="8">Khối 8</button>
-                  <button type="button" class="sl-grade-pill active" data-grade="9">Khối 9</button>
-                </div>
-              </div>
-
-              <!-- Nhập Mã Lớp (Nếu giáo viên yêu cầu) -->
-              <div class="sl-input-group">
-                <label for="slInputClassCode" class="sl-input-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                  </svg>
-                  <span>Mã lớp (Ví dụ: 9A, 9B, 6A)</span>
-                </label>
-                <div class="sl-input-wrapper">
-                  <input type="text" id="slInputClassCode" class="sl-input-field" placeholder="Nhập mã lớp (Ví dụ: 9A, 9B, 6A)" value="9A" maxlength="15" autocomplete="off">
-                  <span class="sl-input-key-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3"/></svg>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Nút Đăng nhập Tiếp tục với Google -->
-              <button id="btnGoogleSignIn" class="sl-google-btn" type="button" aria-label="Đăng nhập bằng tài khoản Google">
-                <svg class="sl-google-svg" width="22" height="22" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.02 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                </svg>
-                <span>Tiếp tục với Google</span>
-              </button>
-
-              <!-- Checkbox Đồng ý Hướng dẫn Sử dụng -->
-              <label class="sl-checkbox-row">
-                <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
-                <span class="sl-checkbox-custom" aria-hidden="true"></span>
-                <span class="sl-checkbox-text">
-                  Em đã đọc và đồng ý với <a href="javascript:void(0)" class="sl-link" id="slLinkTerms">hướng dẫn sử dụng</a>
-                </span>
-              </label>
-
-              <!-- Ghi chú Quyền riêng tư & An toàn -->
-              <div class="sl-notice-box">
-                <svg class="sl-notice-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                <span>Tài khoản Google lưu dữ liệu học tập và bảo vệ quyền lợi học sinh</span>
-              </div>
-
-              <!-- Trợ giúp khi gặp sự cố -->
-              <div class="sl-help-row">
-                <svg class="sl-help-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-                <span>Gặp sự cố khi đăng nhập? <a href="javascript:void(0)" class="sl-link" id="slLinkTeacherHelp">Hỏi giáo viên</a></span>
-              </div>
-            </div>
-
-            <!-- PANEL 2: ĐĂNG NHẬP GIÁO VIÊN & QUẢN TRỊ -->
-            <div id="slPanelTeacher" class="sl-role-panel hidden">
-              <div class="sl-auth-card-header">
-                <div class="sl-auth-icon-circle sl-icon-teacher" aria-hidden="true">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                  </svg>
-                </div>
-                <h2 class="sl-auth-heading">Đăng nhập Giáo viên & Quản trị</h2>
-              </div>
-
-              <p class="sl-auth-subheading">
-                Dành cho Thầy/Cô quản lý học sinh các khối 6-9 và biên soạn nội dung SGK
-              </p>
-
-              <!-- Form nhập PIN Giáo viên -->
-              <div class="sl-input-group">
-                <label for="slTeacherPinInput" class="sl-input-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  <span>Mã PIN Xác thực Giáo viên:</span>
-                </label>
-                <div class="sl-input-wrapper">
-                  <input type="password" id="slTeacherPinInput" class="sl-input-field" placeholder="Nhập mã PIN bảo mật Giáo viên..." autocomplete="current-password">
-                  <button type="button" class="sl-toggle-pin-btn" id="slBtnTogglePin" aria-label="Ẩn hoặc hiện mã PIN" title="Ẩn/Hiện mã PIN">👁</button>
-                </div>
-              </div>
-
-              <!-- Nút Điền nhanh mã PIN mẫu -->
-              <div class="sl-quick-pin-box">
-                <span class="sl-quick-pin-label">Mã PIN mặc định: <code>Tch-8b6657ed96b64ad2</code></span>
-                <button type="button" class="sl-quick-pin-btn" id="slBtnUseSamplePin">Điền mã này</button>
-              </div>
-
-              <!-- Thông báo phản hồi kết quả xác thực PIN -->
-              <div id="slTeacherAuthMsg" class="sl-auth-msg hidden" role="alert"></div>
-
-              <!-- Nút Đăng nhập Giáo viên -->
-              <button id="slBtnTeacherLogin" class="sl-teacher-submit-btn" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                  <circle cx="7.5" cy="15.5" r="5.5"/>
-                  <path d="m21 2-9.6 9.6M15.5 7.5l3 3"/>
-                </svg>
-                <span>Đăng nhập Quyền Giáo viên</span>
-              </button>
-
-              <div class="sl-notice-box" style="margin-top: 1rem;">
-                <svg class="sl-notice-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                <span>Khi đăng nhập Giáo viên, toàn bộ các Khối 6, 7, 8, 9 sẽ được mở khóa và có quyền Quản lý học sinh</span>
-              </div>
-            </div>
-
-            <!-- Ghi chú bảo mật xác thực bắt buộc -->
-            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
-              <span>🔒 Hệ thống phân quyền an toàn theo chức năng học tập & sư phạm</span>
+        <!-- PANEL 2: GIÁO VIÊN & QUẢN TRỊ -->
+        <div id="slPanelTeacher" class="sl-role-panel hidden">
+          <div class="sl-form-group">
+            <label for="slTeacherPinInput" class="sl-form-label">Mã PIN xác thực Giáo viên:</label>
+            <div class="sl-input-wrap">
+              <input type="password" id="slTeacherPinInput" class="sl-input" placeholder="Nhập mã PIN..." autocomplete="current-password">
+              <button type="button" class="sl-toggle-pin-btn" id="slBtnTogglePin" aria-label="Ẩn hoặc hiện mã PIN" title="Ẩn/Hiện mã PIN">👁</button>
             </div>
           </div>
+
+          <!-- Điền nhanh mã PIN -->
+          <div class="sl-quick-pin-row">
+            <span class="sl-quick-pin-hint">Mặc định: <code>Tch-8b6657ed96b64ad2</code></span>
+            <button type="button" class="sl-quick-pin-btn" id="slBtnUseSamplePin">Điền mã này</button>
+          </div>
+
+          <!-- Thông báo lỗi PIN -->
+          <div id="slTeacherAuthMsg" class="sl-auth-msg hidden" role="alert"></div>
+
+          <!-- Nút Đăng nhập Giáo viên -->
+          <button id="slBtnTeacherLogin" class="sl-submit-btn" type="button">
+            <span>Đăng nhập quyền Giáo viên</span>
+          </button>
+
+          <p class="sl-teacher-hint">Khi đăng nhập Giáo viên, tất cả Khối 6-9 sẽ được mở khóa hoàn toàn.</p>
         </div>
+
       </div>
     </div>
   </section>
+
 
   <!-- MÀN HÌNH KHÓA BẢO MẬT: KHI GIÁO VIÊN CHẶN HỌC SINH (IS_BLOCKED = TRUE) -->
   <div id="studentBlockedOverlay" class="student-blocked-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="sboTitle">
