@@ -1668,38 +1668,7 @@ function setupSidebarCollapse() {
   if (btnCloseDrawer) btnCloseDrawer.addEventListener("click", closeMobileDrawer);
   if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeMobileDrawer);
 
-  const btnDrawerDash = document.getElementById("btnDrawerNavDashboard");
-  const btnDrawerTutor = document.getElementById("btnDrawerNavTutor");
-  const btnDrawerMgmt = document.getElementById("btnDrawerNavStudentMgmt");
-  const btnDrawerOut = document.getElementById("btnDrawerSignOut");
 
-  if (btnDrawerDash) {
-    btnDrawerDash.addEventListener("click", () => {
-      closeMobileDrawer();
-      const b = document.getElementById("btnNavDashboard");
-      if (b) b.click();
-    });
-  }
-  if (btnDrawerTutor) {
-    btnDrawerTutor.addEventListener("click", () => {
-      closeMobileDrawer();
-      const b = document.getElementById("btnHeaderTutor");
-      if (b) b.click();
-    });
-  }
-  if (btnDrawerMgmt) {
-    btnDrawerMgmt.addEventListener("click", () => {
-      closeMobileDrawer();
-      const b = document.getElementById("btnNavStudentMgmt");
-      if (b) b.click();
-    });
-  }
-  if (btnDrawerOut) {
-    btnDrawerOut.addEventListener("click", () => {
-      closeMobileDrawer();
-      handleStudentLogout();
-    });
-  }
 
   if (btnToggleSidebar) btnToggleSidebar.addEventListener("click", () => toggleSidebar());
   if (btnCollapseSidebar) btnCollapseSidebar.addEventListener("click", () => toggleSidebar(true));
@@ -4096,11 +4065,6 @@ function updateHeaderStudentAuthUI() {
   const switchTeacherMenu = document.getElementById("stdMenuSwitchTeacher");
   const exitTeacherMenu = document.getElementById("stdMenuExitTeacher");
   const headerGradeTabs = document.querySelector(".header-grade-tabs");
-  const drawerUserCard = document.getElementById("drawerUserCard");
-  const drawerUserName = document.getElementById("drawerUserName");
-  const drawerUserAvatar = document.getElementById("drawerUserAvatar");
-  const drawerUserTag = document.getElementById("drawerUserTag");
-  const drawerGradesSection = document.getElementById("drawerGradesSection") || document.querySelector(".drawer-grades-section");
 
   const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
 
@@ -4121,22 +4085,7 @@ function updateHeaderStudentAuthUI() {
       }
     }
 
-    // Cập nhật thông tin học sinh trong Mobile Drawer
-    if (drawerUserCard) {
-      drawerUserCard.classList.remove("hidden");
-      if (drawerUserName) drawerUserName.textContent = displayName;
-      if (drawerUserAvatar && stdAvatar) drawerUserAvatar.src = stdAvatar.src;
-      if (drawerUserTag) {
-        drawerUserTag.textContent = isTeacherUnlocked ? "Giáo viên Tin học" : `Lớp ${studentAuthState.classCode || "9A"} • Tin học ${studentAuthState.grade || 9}`;
-      }
-    }
-    if (drawerGradesSection) {
-      if (isTeacherUnlocked) {
-        drawerGradesSection.classList.remove("hidden");
-      } else {
-        drawerGradesSection.classList.add("hidden");
-      }
-    }
+
     const displayEmail = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
     if (stdName) stdName.textContent = displayName;
     if (ddName) ddName.textContent = displayName;
@@ -4176,8 +4125,7 @@ function updateHeaderStudentAuthUI() {
     if (userBadge) userBadge.classList.add("hidden");
     if (btnDirectSignOut) btnDirectSignOut.classList.add("hidden");
     if (headerGradeTabs) headerGradeTabs.classList.remove("hidden");
-    if (drawerUserCard) drawerUserCard.classList.add("hidden");
-    if (drawerGradesSection) drawerGradesSection.classList.remove("hidden");
+
 
     if (isTeacherUnlocked) {
       if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");
@@ -4194,14 +4142,7 @@ function updateHeaderStudentAuthUI() {
     }
   }
 
-  const btnDrawerMgmt = document.getElementById("btnDrawerNavStudentMgmt");
-  const btnDrawerOut = document.getElementById("btnDrawerSignOut");
-  if (btnDrawerMgmt) {
-    btnDrawerMgmt.classList.toggle("hidden", !isTeacherUnlocked);
-  }
-  if (btnDrawerOut) {
-    btnDrawerOut.classList.toggle("hidden", !studentAuthState.isLoggedIn && !isTeacherUnlocked);
-  }
+
 
   // Luôn cập nhật khóa khối học tương ứng
   applyGradeLocking();

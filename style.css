@@ -5843,7 +5843,6 @@ button, input, textarea, select {
 @media (min-width: 1024px) {
   .sidebar-drawer-mobile-header,
   .drawer-grades-section,
-  .drawer-actions-section,
   .mobile-drawer-backdrop {
     display: none !important;
   }
@@ -5961,55 +5960,6 @@ button, input, textarea, select {
     color: #fff;
   }
 
-  /* Thẻ thông tin học sinh trong Mobile Drawer */
-  .drawer-user-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    margin: 10px 12px 4px 12px;
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.85));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    flex-shrink: 0;
-  }
-  .drawer-user-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #38bdf8;
-    background: #0284c7;
-    flex-shrink: 0;
-  }
-  .drawer-user-meta {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    flex: 1;
-  }
-  .drawer-user-name {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: #f8fafc;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .drawer-user-badge-tag {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.12);
-    padding: 2px 8px;
-    border-radius: 9999px;
-    width: fit-content;
-    margin-top: 3px;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-  }
-
   /* Khối Drawer Section */
   .drawer-section {
     padding: 12px 14px;
@@ -6048,58 +5998,6 @@ button, input, textarea, select {
     background: rgba(56, 189, 248, 0.15) !important;
     border-color: #38bdf8 !important;
     color: #38bdf8 !important;
-  }
-
-  .drawer-nav-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid transparent;
-    border-radius: 10px;
-    color: #cbd5e1;
-    font-size: 0.88rem;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    box-sizing: border-box;
-    margin-bottom: 4px;
-    min-height: 44px;
-  }
-  .drawer-nav-item:hover, .drawer-nav-item:focus-visible {
-    background: rgba(56, 189, 248, 0.08);
-    border-color: rgba(56, 189, 248, 0.2);
-    color: #38bdf8;
-    transform: translateX(2px);
-  }
-  .drawer-nav-icon {
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    flex-shrink: 0;
-  }
-
-  .drawer-logout-section {
-    margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: none;
-    padding: 12px 14px;
-  }
-  .drawer-nav-signout {
-    color: #f87171 !important;
-    background: rgba(239, 68, 68, 0.08) !important;
-    border: 1px solid rgba(239, 68, 68, 0.2) !important;
-    margin-bottom: 0 !important;
-  }
-  .drawer-nav-signout:hover {
-    background: rgba(239, 68, 68, 0.18) !important;
-    border-color: #ef4444 !important;
-    color: #fca5a5 !important;
   }
 
   /* Đơn giản hóa Top Header trên màn hình di động (< 1024px) - Triệt tiêu 100% bẫy tràn (Hình 2) */
