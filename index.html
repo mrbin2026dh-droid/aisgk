@@ -80,7 +80,13 @@
     </div>
 
     <div class="header-actions">
-      <!-- Nút Mở Gia Sư Socrates (Đặt trên Header - Triệt tiêu xung đột góc dưới) -->
+      <!-- Nút Trang chủ Học sinh (Hình 1) -->
+      <button class="header-tutor-btn" id="btnNavDashboard" aria-label="Trang chủ học sinh" title="Về trang chủ học sinh">
+        <span class="tutor-btn-icon" aria-hidden="true">🏠</span>
+        <span class="tutor-btn-text">Trang chủ</span>
+      </button>
+
+      <!-- Nút Mở Gia Sư Socrates -->
       <button class="header-tutor-btn active" id="btnHeaderTutor" aria-label="Mở Gia sư AI Socrates" aria-controls="socratesPopupCard" aria-expanded="true">
         <span class="tutor-btn-icon" aria-hidden="true">💡</span>
         <span class="tutor-btn-text">Gia sư Socrates</span>
@@ -98,11 +104,38 @@
         <span>Quản lý học sinh</span>
       </button>
 
-      <!-- Nút Đăng nhập Học sinh (Cổng học sinh Google) -->
-      <button class="header-student-login-btn" id="btnHeaderStudentAuth" aria-label="Cổng đăng nhập học sinh" title="Đăng nhập Google dành cho Học sinh">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span id="headerStudentAuthText">Đăng nhập</span>
-      </button>
+      <!-- Khối Hồ Sơ Học Sinh (Góc phải - Khớp 100% Hình 1) -->
+      <div class="header-student-profile-wrap" id="headerStudentProfileWrap">
+        <!-- Nút Đăng nhập Học sinh (khi chưa đăng nhập) -->
+        <button class="header-student-login-btn" id="btnHeaderStudentAuth" aria-label="Cổng đăng nhập học sinh" title="Đăng nhập Google dành cho Học sinh">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="headerStudentAuthText">Đăng nhập</span>
+        </button>
+
+        <!-- Thẻ Học sinh thật khi đã đăng nhập (Khớp 100% góc phải Hình 1) -->
+        <div class="std-user-badge hidden" id="stdUserBadge" role="button" tabindex="0" aria-label="Tài khoản học sinh" title="Tùy chọn tài khoản">
+          <img id="stdUserAvatar" class="std-user-avatar" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="Avatar" />
+          <div class="std-user-text">
+            <span class="std-user-name" id="stdUserName">Nguyễn Minh Anh</span>
+            <span class="std-user-role" id="stdUserRole">Học sinh lớp 9A</span>
+          </div>
+          <span class="std-user-arrow" aria-hidden="true">▾</span>
+        </div>
+
+        <!-- Menu thả xuống của học sinh -->
+        <div class="std-user-dropdown hidden" id="stdUserDropdown">
+          <div class="std-dropdown-header">
+            <strong id="stdDropdownFullName">Học sinh</strong>
+            <span id="stdDropdownEmail">email@gmail.com</span>
+          </div>
+          <div class="std-dropdown-item" id="btnStdOpenDashboard">
+            <span>🏠 Trang chủ học sinh</span>
+          </div>
+          <div class="std-dropdown-item text-danger" id="btnStdSignOut">
+            <span>🚪 Đăng xuất tài khoản</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Nút Chuyển Trang Giáo Viên Soạn Bài (Bảo vệ bằng PIN) -->
       <button class="header-teacher-btn" id="btnOpenTeacher" aria-label="Khu vực giáo viên soạn bài" title="Dành cho Giáo viên">
@@ -163,8 +196,192 @@
         <span>Mục lục 17 bài</span>
       </button>
 
+      <!-- VIEW 0: SÂN KHẤU TRANG CHỦ HỌC SINH (KHỚP 100% HÌNH 1) -->
+      <section id="dashboardView" class="student-dashboard-view active" aria-label="Bảng tổng quan học sinh">
+        <!-- Banner Hero Chào Mừng -->
+        <div class="std-hero-banner">
+          <div class="std-hero-avatar-wrap">
+            <div class="std-hero-robot-glow"></div>
+            <div class="std-hero-robot-icon">🤖</div>
+          </div>
+          <div class="std-hero-text">
+            <h1 class="std-hero-title">Chào <span id="stdHeroName">Minh Anh</span>!</h1>
+            <p class="std-hero-subtitle">Tiếp tục hành trình chinh phục Tin học nhé.</p>
+          </div>
+          <div class="std-hero-tech-decor" aria-hidden="true">
+            <svg class="std-tech-laptop" width="130" height="90" viewBox="0 0 130 90" fill="none">
+              <rect x="25" y="10" width="80" height="52" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="33" y="18" width="64" height="36" rx="2" fill="#0369a1" fill-opacity="0.3"/>
+              <path d="M50 36h30M55 42h20" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+              <path d="M10 66h110a6 6 0 0 1 6 6v2H4v-2a6 6 0 0 1 6-6z" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+              <circle cx="95" cy="25" r="3" fill="#38bdf8"/>
+              <circle cx="115" cy="45" r="2" fill="#38bdf8" fill-opacity="0.6"/>
+              <circle cx="15" cy="35" r="2" fill="#38bdf8" fill-opacity="0.4"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 4 Thẻ Chỉ số KPI -->
+        <div class="std-kpi-grid">
+          <!-- KPI 1: Tiến độ học tập -->
+          <div class="std-kpi-card std-kpi-progress">
+            <div class="std-donut-circle" id="stdKpiDonut">
+              <span id="stdKpiProgressPercent">25%</span>
+            </div>
+            <div class="std-kpi-info">
+              <span class="std-kpi-label">Tiến độ học tập</span>
+              <span class="std-kpi-desc" id="stdKpiLessonsRatio">Đã học 2/8 bài</span>
+            </div>
+          </div>
+
+          <!-- KPI 2: Bài đã hoàn thành -->
+          <div class="std-kpi-card std-kpi-completed">
+            <div class="std-kpi-icon-circle bg-emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="std-kpi-info">
+              <span class="std-kpi-label">Bài đã hoàn thành</span>
+              <span class="std-kpi-val" id="stdKpiCompletedVal">2/8</span>
+            </div>
+          </div>
+
+          <!-- KPI 3: Điểm luyện tập -->
+          <div class="std-kpi-card std-kpi-score">
+            <div class="std-kpi-icon-circle bg-purple">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#a855f7" stroke="#a855f7" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="std-kpi-info">
+              <span class="std-kpi-label">Điểm luyện tập</span>
+              <span class="std-kpi-val"><strong id="stdKpiScoreVal">8,4</strong><small>/10</small></span>
+            </div>
+          </div>
+
+          <!-- KPI 4: Chuỗi học tập -->
+          <div class="std-kpi-card std-kpi-streak">
+            <div class="std-kpi-icon-circle bg-amber">
+              <span style="font-size: 1.35rem;">🔥</span>
+            </div>
+            <div class="std-kpi-info">
+              <span class="std-kpi-label">Chuỗi học tập</span>
+              <span class="std-kpi-val" id="stdKpiStreakVal">3 ngày</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối Tiếp tục bài học -->
+        <div class="std-section-card std-continue-card">
+          <div class="std-section-header">
+            <div class="std-sec-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+              <span>Tiếp tục bài học</span>
+            </div>
+            <span class="std-sec-arrow" aria-hidden="true">›</span>
+          </div>
+          <div class="std-continue-body">
+            <div class="std-continue-graphic">
+              <div class="std-graphic-tech-box">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span class="std-dot-orbit d1"></span>
+                <span class="std-dot-orbit d2"></span>
+              </div>
+            </div>
+            <div class="std-continue-details">
+              <div class="std-continue-badge" id="stdContinueLessonBadge">Bài 1 • Thế giới kĩ thuật số</div>
+              <div class="std-continue-next-text" id="stdContinueNextText">Bài tiếp theo: Thiết bị có gắn bộ xử lí thông tin</div>
+              <div class="std-continue-bar-row">
+                <span class="std-bar-label">Tiến độ bài học</span>
+                <div class="std-bar-track">
+                  <div class="std-bar-fill" id="stdContinueBarFill" style="width: 60%;"></div>
+                </div>
+                <span class="std-bar-val" id="stdContinueBarVal">60%</span>
+              </div>
+            </div>
+            <button id="btnStdContinueStudy" class="std-btn-continue" type="button">
+              <span>Tiếp tục học</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Khối Nhiệm vụ của em -->
+        <div class="std-section-block">
+          <div class="std-block-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+            <span>Nhiệm vụ của em</span>
+          </div>
+          <div class="std-tasks-grid">
+            <!-- Nhiệm vụ 1: Luyện tập trắc nghiệm -->
+            <div class="std-task-card" id="stdTaskQuiz" role="button" tabindex="0">
+              <div class="std-task-icon-box bg-blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+              <div class="std-task-info">
+                <strong class="std-task-name">Luyện tập trắc nghiệm</strong>
+                <span class="std-task-desc">Kiểm tra mức độ hiểu bài</span>
+                <span class="std-task-status status-done" id="stdTaskQuizStatus">✓ Đã hoàn thành</span>
+              </div>
+            </div>
+
+            <!-- Nhiệm vụ 2: Bài thực hành -->
+            <div class="std-task-card" id="stdTaskPractice" role="button" tabindex="0">
+              <div class="std-task-icon-box bg-cyan">
+                <span style="font-weight: 700; font-family: monospace;">&lt;/&gt;</span>
+              </div>
+              <div class="std-task-info">
+                <strong class="std-task-name">Bài thực hành</strong>
+                <span class="std-task-desc">Thực hành trên máy tính</span>
+                <span class="std-task-status status-doing" id="stdTaskPracticeStatus">⟳ Đang thực hiện</span>
+              </div>
+            </div>
+
+            <!-- Nhiệm vụ 3: Ôn tập kiến thức -->
+            <div class="std-task-card" id="stdTaskReview" role="button" tabindex="0">
+              <div class="std-task-icon-box bg-indigo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </div>
+              <div class="std-task-info">
+                <strong class="std-task-name">Ôn tập kiến thức</strong>
+                <span class="std-task-desc">Củng cố kiến thức trọng tâm</span>
+                <span class="std-task-status status-todo" id="stdTaskReviewStatus">⧖ Chưa làm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối Thành tích học tập -->
+        <div class="std-section-block">
+          <div class="std-block-title">
+            <span style="font-size: 1.15rem;">🏆</span>
+            <span>Thành tích học tập</span>
+          </div>
+          <div class="std-achievements-grid">
+            <div class="std-achieve-card">
+              <div class="std-achieve-badge-circle bg-gold">
+                <span>🎖️</span>
+              </div>
+              <div class="std-achieve-info">
+                <strong class="std-achieve-title">Hoàn thành 2 bài</strong>
+                <span class="std-achieve-desc">Cố lên! Bạn đã hoàn thành 2/8 bài học.</span>
+              </div>
+              <span class="std-achieve-arrow">›</span>
+            </div>
+
+            <div class="std-achieve-card">
+              <div class="std-achieve-badge-circle bg-orange">
+                <span>🔥</span>
+              </div>
+              <div class="std-achieve-info">
+                <strong class="std-achieve-title">Luyện tập 3 ngày liên tiếp</strong>
+                <span class="std-achieve-desc">Duy trì thói quen học tập thật tốt!</span>
+              </div>
+              <span class="std-achieve-arrow">›</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- VIEW 1: ĐỌC LÝ THUYẾT SGK (CÁC MỤC CÓ MÀU NỀN NHẸ PHÂN BIỆT) -->
-      <article id="theoryView" class="theory-view active" aria-label="Nội dung bài học SGK">
+      <article id="theoryView" class="theory-view" aria-label="Nội dung bài học SGK">
         <div id="theoryContent" class="theory-content">
           <!-- Nội dung Markdown được parse kèm màu nền nhẹ phân tầng -->
           <p>Đang tải nội dung sách giáo khoa...</p>
@@ -517,8 +734,15 @@
                 <option value="completed">Đã hoàn thành</option>
                 <option value="learning">Đang học</option>
                 <option value="needs_support">Cần hỗ trợ</option>
+                <option value="blocked">Bị khóa (Chặn)</option>
               </select>
             </div>
+
+            <!-- Nút Thêm học sinh thủ công -->
+            <button id="smBtnAddStudent" class="btn-primary" type="button" style="padding: 7px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ Thêm học sinh</span>
+            </button>
           </div>
         </div>
 
@@ -559,6 +783,34 @@
           <div class="sm-modal-body" id="smModalBody">
             <!-- Chi tiết tiến độ 5 chủ đề sẽ render vào đây -->
           </div>
+        </div>
+      </div>
+
+      <!-- Modal Thêm học sinh mới thủ công (Giáo viên quản trị) -->
+      <div id="smAddStudentModal" class="sm-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="smAddStudentTitle">
+        <div class="sm-modal-card" style="max-width: 440px;">
+          <div class="sm-modal-header">
+            <h3 class="sm-modal-name" id="smAddStudentTitle">➕ Thêm học sinh vào lớp</h3>
+            <button id="smBtnCloseAddModal" class="sm-modal-close-btn" aria-label="Đóng popup">✕</button>
+          </div>
+          <form id="smAddStudentForm" style="padding: 1.25rem;">
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Họ và tên học sinh *</label>
+              <input type="text" id="smInputStudentName" class="sl-input-field" placeholder="Ví dụ: Trần Văn Nam" required maxlength="50" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Email hoặc Mã học sinh *</label>
+              <input type="text" id="smInputStudentEmail" class="sl-input-field" placeholder="Ví dụ: nam.tran@gmail.com hoặc HS009" required maxlength="60" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+              <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Mã lớp học</label>
+              <input type="text" id="smInputStudentClass" class="sl-input-field" value="9A" required maxlength="10" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" id="smBtnCancelAdd" class="btn-secondary" style="padding: 8px 16px; border-radius: 8px; cursor: pointer;">Hủy bỏ</button>
+              <button type="submit" id="smBtnSubmitAdd" class="btn-primary" style="padding: 8px 20px; border-radius: 8px; cursor: pointer;">Lưu học sinh</button>
+            </div>
+          </form>
         </div>
       </div>
     </section>
@@ -909,9 +1161,6 @@
             </svg>
             <span>Kiến thức hôm nay • Kỹ năng ngày mai</span>
           </div>
-          <button id="btnCloseLoginPortal" class="sl-close-btn" title="Đóng cổng đăng nhập / Trải nghiệm ngay" aria-label="Đóng cổng đăng nhập">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
         </div>
       </header>
 
@@ -1134,17 +1383,32 @@
               <span>Gặp sự cố khi đăng nhập? <a href="javascript:void(0)" class="sl-link" id="slLinkTeacherHelp">Hỏi giáo viên</a></span>
             </div>
 
-            <!-- Nút Bỏ qua đăng nhập để tự học ngay (Chế độ Khách / Khảo sát) -->
-            <div class="sl-bypass-row">
-              <button id="slBtnBypassLogin" type="button" class="sl-bypass-btn">
-                <span>Vào tự học ngay (Chế độ khách)</span> ›
-              </button>
+            <!-- Ghi chú bảo mật xác thực bắt buộc -->
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
+              <span>🔒 Cổng đăng nhập Google đồng bộ tài khoản học sinh lớp học an toàn</span>
             </div>
           </div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- MÀN HÌNH KHÓA BẢO MẬT: KHI GIÁO VIÊN CHẶN HỌC SINH (IS_BLOCKED = TRUE) -->
+  <div id="studentBlockedOverlay" class="student-blocked-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="sboTitle">
+    <div class="sbo-card">
+      <div class="sbo-icon-shield">🚫</div>
+      <h2 id="sboTitle" class="sbo-title">Tài khoản học sinh bị tạm khóa</h2>
+      <p class="sbo-desc">Giáo viên đã tạm dừng quyền truy cập của tài khoản này trên hệ thống lớp học trực tuyến.</p>
+      <div class="sbo-info-box">
+        <div>Học sinh: <strong id="sboStudentName">...</strong></div>
+        <div>Mã lớp: <strong id="sboClassCode">...</strong></div>
+      </div>
+      <p class="sbo-hint">Em vui lòng liên hệ trực tiếp Thầy/Cô phụ trách bộ môn Tin học để được kiểm tra và mở khóa tài khoản nhé.</p>
+      <button id="sboBtnSignOut" class="btn-primary" type="button" style="margin-top: 1.25rem; width: 100%;">
+        Đăng xuất tài khoản
+      </button>
+    </div>
+  </div>
 
   <!-- Firebase App, Auth & Realtime Database SDKs (v10 compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>

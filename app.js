@@ -954,10 +954,10 @@ function doNavigateSubSection(sectionId, type) {
 
 // 5. Khởi chạy Ứng dụng
 document.addEventListener("DOMContentLoaded", () => {
+  initStudentAuthPortal();
   initApp();
   setupEventListeners();
   initStudentManagement();
-  initStudentAuthPortal();
 });
 
 async function initApp() {
@@ -986,13 +986,19 @@ async function initApp() {
       state.lessonId = lessonParam;
       state.expandedLessons.add(lessonParam);
     }
-  } catch {}
+  } catch (urlErr) {
+    console.warn("Lỗi đọc URL params:", urlErr);
+  }
 
   renderCurriculumTree(); // Render ngay lập tức cây mục lục
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  switchView("theory");
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+    switchView("dashboard");
+  } else {
+    switchView("theory");
+  }
   openPopup({ focus: false });
   updateHeaderLessonInfo();
   updateStepperButtons();
@@ -2646,19 +2652,40 @@ function setupEventListeners() {
 // 9. Chuyển đổi View
 function switchView(tabName) {
   state.activeTab = tabName;
+  const dashboardView = document.getElementById("dashboardView");
   const theoryView = document.getElementById("theoryView");
   const quizView = document.getElementById("quizView");
   const completionCard = document.getElementById("completionCard");
   const stepTheory = document.getElementById("stepItemTheory");
   const stepQuiz = document.getElementById("stepItemQuiz");
 
-  if (tabName === "theory") {
+  const studentMgmtStage = document.getElementById("studentManagementStage");
+  if (studentMgmtStage && !studentMgmtStage.classList.contains("hidden")) {
+    studentMgmtStage.classList.add("hidden");
+    const canvas = document.getElementById("focusCanvas");
+    if (canvas) canvas.classList.remove("hidden");
+    const sidebar = document.getElementById("roadmapSidebar");
+    if (sidebar) sidebar.classList.remove("hidden");
+    const btnNav = document.getElementById("btnNavStudentMgmt");
+    if (btnNav) btnNav.classList.remove("active");
+  }
+
+  if (tabName === "dashboard") {
+    if (dashboardView) dashboardView.classList.add("active");
+    if (theoryView) theoryView.classList.remove("active");
+    if (quizView) quizView.classList.remove("active");
+    if (completionCard) completionCard.classList.remove("active");
+    if (stepTheory) stepTheory.classList.remove("active");
+    if (stepQuiz) stepQuiz.classList.remove("active");
+  } else if (tabName === "theory") {
+    if (dashboardView) dashboardView.classList.remove("active");
     if (theoryView) theoryView.classList.add("active");
     if (quizView) quizView.classList.remove("active");
     if (completionCard) completionCard.classList.remove("active");
     if (stepTheory) stepTheory.classList.add("active");
     if (stepQuiz) stepQuiz.classList.remove("active");
   } else {
+    if (dashboardView) dashboardView.classList.remove("active");
     if (theoryView) theoryView.classList.remove("active");
     if (quizView) quizView.classList.add("active");
     if (completionCard) completionCard.classList.remove("active");
@@ -3029,25 +3056,124 @@ class StudentDataAdapter {
   }
 
   async getClassOverview(grade, className) {
-    if (state.teacherToken) {
+    initFirebaseApp();
+
+    // Lấy dữ liệu học sinh thực tế từ Firebase Realtime Database
+    if (typeof firebase !== "undefined" && firebase.database) {
       try {
-        const headers = { "Authorization": `Bearer ${state.teacherToken}` };
-        const res = await fetch(`${API_BASE}/teacher/students-overview/${grade}/${className}`, { headers });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            this.cachedOverview = json.data;
-            return json.data;
-          }
+        const snap = await firebase.database().ref(`students/${className}`).once("value");
+        const students = [];
+
+        if (snap.exists()) {
+          const val = snap.val();
+          Object.entries(val).forEach(([key, s]) => {
+            if (s && typeof s === "object") {
+              const code = s.student_code || (s.email ? s.email.split("@")[0].toUpperCase() : key.substring(0, 6).toUpperCase());
+              const name = s.full_name || s.studentName || s.name || "Học sinh";
+              const progress = typeof s.progress_percent === "number" ? s.progress_percent : (typeof s.progress === "number" ? s.progress : 0);
+              const score = typeof s.average_score === "number" ? s.average_score : (typeof s.score === "number" ? s.score : 0);
+              const isBlocked = !!s.is_blocked;
+              let status = isBlocked ? "blocked" : (s.status || (progress >= 100 ? "completed" : (progress > 0 ? "learning" : "learning")));
+
+              students.push({
+                id: key,
+                student_code: code,
+                full_name: name,
+                email: s.email || "",
+                avatar: s.avatar || s.photoURL || "👦",
+                progress_percent: progress,
+                average_score: score,
+                status: status,
+                is_blocked: isBlocked,
+                topics: s.topics || [
+                  { topic_id: "the_gioi_ki_thuat_so", topic_name: "Thế giới kĩ thuật số", score: score || 8.0, status: "mastered" },
+                  { topic_id: "thong_tin_giai_quyet_van_de", topic_name: "Thông tin trong giải quyết vấn đề", score: score || 8.0, status: "mastered" },
+                  { topic_id: "danh_gia_chat_luong_thong_tin", topic_name: "Đánh giá chất lượng thông tin", score: Math.max(0, (score || 7.5) - 0.5), status: "warning" },
+                  { topic_id: "su_dung_dich_vu_internet", topic_name: "Sử dụng dịch vụ Internet", score: score || 8.0, status: "mastered" },
+                  { topic_id: "phan_mem_ma_nguon_mo", topic_name: "Phần mềm mã nguồn mở", score: score || 8.5, status: "mastered" }
+                ]
+              });
+            }
+          });
         }
+
+        const total = students.length;
+        const completed = students.filter(s => s.status === "completed").length;
+        const learning = students.filter(s => s.status === "learning").length;
+        const needsSupport = students.filter(s => s.status === "needs_support").length;
+        const notStarted = Math.max(0, total - completed - learning - needsSupport);
+        const compPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const avgScore = total > 0 ? Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1)) : 0;
+
+        const overview = {
+          grade: Number(grade),
+          class_name: String(className),
+          semester: "Học kì I (2026 - 2027)",
+          kpi: {
+            total_students: total,
+            completed_count: completed,
+            completed_percent: compPercent,
+            average_score: avgScore,
+            score_delta_month: 0.0,
+            improved_count: Math.max(0, total - needsSupport),
+            improved_percent: total > 0 ? Math.round(((total - needsSupport) / total) * 100) : 0,
+            needs_support_count: needsSupport,
+            needs_support_percent: total > 0 ? Math.round((needsSupport / total) * 100) : 0
+          },
+          topic_averages: {
+            the_gioi_ki_thuat_so: avgScore || 8.0,
+            thong_tin_giai_quyet_van_de: avgScore || 8.0,
+            danh_gia_chat_luong_thong_tin: Math.max(0, avgScore - 0.5) || 7.5,
+            su_dung_dich_vu_internet: avgScore || 8.0,
+            phan_mem_ma_nguon_mo: avgScore || 8.5
+          },
+          donut_progress: {
+            completed: completed,
+            learning: learning,
+            not_started: notStarted
+          },
+          students
+        };
+
+        this.cachedOverview = overview;
+        return overview;
       } catch (err) {
-        console.warn("Lỗi gọi API Backend cho quản lý học sinh:", err);
+        console.warn("Lỗi đọc học sinh từ Firebase Realtime Database:", err);
       }
     }
-    // Fallback: Sử dụng dữ liệu mẫu chuẩn hóa khớp 100% hình 2
-    const mock = this.getMockClassOverview(grade, className);
-    this.cachedOverview = mock;
-    return mock;
+
+    // Khi chưa kết nối được DB hoặc lớp trống: trả về mảng rỗng không chứa dữ liệu mock
+    const emptyOverview = {
+      grade: Number(grade),
+      class_name: String(className),
+      semester: "Học kì I (2026 - 2027)",
+      kpi: {
+        total_students: 0,
+        completed_count: 0,
+        completed_percent: 0,
+        average_score: 0,
+        score_delta_month: 0,
+        improved_count: 0,
+        improved_percent: 0,
+        needs_support_count: 0,
+        needs_support_percent: 0
+      },
+      topic_averages: {
+        the_gioi_ki_thuat_so: 0,
+        thong_tin_giai_quyet_van_de: 0,
+        danh_gia_chat_luong_thong_tin: 0,
+        su_dung_dich_vu_internet: 0,
+        phan_mem_ma_nguon_mo: 0
+      },
+      donut_progress: {
+        completed: 0,
+        learning: 0,
+        not_started: 0
+      },
+      students: []
+    };
+    this.cachedOverview = emptyOverview;
+    return emptyOverview;
   }
 
   async getAIPedagogicalAdvice(grade, className) {
@@ -3072,114 +3198,36 @@ class StudentDataAdapter {
         console.warn("Lỗi gọi Gemini AI phân tích sư phạm:", err);
       }
     }
+
+    const students = this.cachedOverview && this.cachedOverview.students ? this.cachedOverview.students : [];
+    const total = students.length;
+    if (total === 0) {
+      return {
+        general_assessment: `Lớp ${className} hiện chưa có học sinh nào đăng ký hoặc đăng nhập.`,
+        critical_concerns: "Giáo viên vui lòng cung cấp đường link hệ thống để học sinh đăng nhập bằng Google.",
+        actionable_recommendations: [
+          "Bấm '+ Thêm học sinh' để thêm trước danh sách học sinh vào lớp.",
+          "Hướng dẫn học sinh đăng nhập tại trang chủ bằng tài khoản Google trường cấp.",
+          "Theo dõi thời gian thực tiến độ học tập của từng em trên bảng số liệu."
+        ]
+      };
+    }
+
+    const completed = students.filter(s => s.status === "completed").length;
+    const compPercent = Math.round((completed / total) * 100);
+    const avgScore = Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1));
+    const needsSupport = students.filter(s => s.status === "needs_support").length;
+
     return {
-      general_assessment: "Lớp 9A có tiến độ tốt (80%), điểm TB 8,4 – cao hơn 0,6 so với tháng trước.",
-      critical_concerns: "5 học sinh cần được hỗ trợ thêm, đặc biệt ở chủ đề \"Sử dụng dịch vụ Internet\".",
+      general_assessment: `Lớp ${className} có ${total} học sinh, tiến độ hoàn thành đạt ${compPercent}%, điểm trung bình đạt ${avgScore}/10.`,
+      critical_concerns: needsSupport > 0 
+        ? `Có ${needsSupport} học sinh cần được hỗ trợ thêm về các nội dung bài học.`
+        : "Tất cả học sinh trong lớp đều đang duy trì tiến độ học tập tích cực.",
       actionable_recommendations: [
         "Tổ chức buổi ôn tập ngắn 15 phút, bổ sung bài luyện tương tác cho nhóm học sinh còn yếu.",
         "Áp dụng phương pháp đôi bạn cùng tiến: Phân công học sinh xuất sắc kèm cặp các bạn cần hỗ trợ.",
         "Giao thêm 3-5 câu hỏi tình huống thực tế để học sinh rèn luyện phản xạ trước giờ kiểm tra."
       ]
-    };
-  }
-
-  getMockClassOverview(grade, className) {
-    const rawStudents = [
-      ["Nguyễn Minh Anh", "HS001", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Trần Gia Bảo", "HS002", 92, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Lê Khánh Chi", "HS003", 71, 7.8, "needs_support", ["mastered", "mastered", "warning", "not_started", "not_started"]],
-      ["Phạm Đức Duy", "HS004", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Hoàng Ngọc Hà", "HS005", 57, 7.2, "needs_support", ["mastered", "mastered", "warning", "warning", "not_started"]],
-      ["Vũ Hải Đăng", "HS006", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Đỗ Thùy Linh", "HS007", 100, 9.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Bùi Anh Tuấn", "HS008", 88, 8.2, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]],
-      ["Đặng Quang Huy", "HS009", 50, 6.5, "needs_support", ["warning", "warning", "warning", "mastered", "not_started"]],
-      ["Ngô Khánh Linh", "HS010", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Dương Quốc Bảo", "HS011", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Lý Thu Thảo", "HS012", 100, 9.1, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Tạ Minh Khôi", "HS013", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Phan Thanh Trúc", "HS014", 60, 6.8, "needs_support", ["warning", "mastered", "warning", "not_started", "not_started"]],
-      ["Hồ Văn Nam", "HS015", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Mai Phương Thảo", "HS016", 100, 9.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Đinh Trọng Nghĩa", "HS017", 90, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]],
-      ["Lâm Gia Hưng", "HS018", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Võ Quỳnh Như", "HS019", 100, 9.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Trịnh Bá Kiên", "HS020", 45, 6.0, "needs_support", ["warning", "warning", "warning", "warning", "not_started"]],
-      ["Nguyễn Lan Hương", "HS021", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Trần Thanh Tùng", "HS022", 100, 8.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Lê Bảo Ngọc", "HS023", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Phạm Thùy Trang", "HS024", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Hoàng Minh Triết", "HS025", 92, 8.1, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]],
-      ["Vũ Cẩm Ly", "HS026", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Đỗ Nhật Nam", "HS027", 100, 8.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Bùi Yến Nhi", "HS028", 100, 9.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Đặng Tiến Đạt", "HS029", 95, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]],
-      ["Ngô Gia Khiêm", "HS030", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Cao Thái Sơn", "HS031", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Lương Mỹ Hạnh", "HS032", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Chu Đình Trọng", "HS033", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]],
-      ["Nghiêm Xuân Tú", "HS034", 15, 4.5, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]],
-      ["Dương Thùy Chi", "HS035", 15, 5.0, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]]
-    ];
-
-    const topicsMeta = [
-      { id: "the_gioi_ki_thuat_so", name: "Thế giới kĩ thuật số" },
-      { id: "thong_tin_giai_quyet_van_de", name: "Thông tin trong giải quyết vấn đề" },
-      { id: "danh_gia_chat_luong_thong_tin", name: "Đánh giá chất lượng thông tin" },
-      { id: "su_dung_dich_vu_internet", name: "Sử dụng dịch vụ Internet" },
-      { id: "phan_mem_ma_nguon_mo", name: "Phần mềm mã nguồn mở" }
-    ];
-
-    const students = rawStudents.map(([name, code, progress, score, status, states]) => {
-      const topics = topicsMeta.map((t, idx) => {
-        const stateStr = states[idx] || "not_started";
-        const tScore = stateStr === "mastered" ? score : (stateStr === "warning" ? Math.max(0, score - 2.0) : 0);
-        return {
-          topic_id: t.id,
-          topic_name: t.name,
-          score: Number(tScore.toFixed(1)),
-          status: stateStr
-        };
-      });
-      return {
-        id: `hs-${code.toLowerCase()}`,
-        student_code: code,
-        full_name: name,
-        progress_percent: progress,
-        average_score: score,
-        topics,
-        status
-      };
-    });
-
-    return {
-      grade: Number(grade),
-      class_name: String(className),
-      semester: "Học kì I (2026 - 2027)",
-      kpi: {
-        total_students: 35,
-        completed_count: 28,
-        completed_percent: 80.0,
-        average_score: 8.4,
-        score_delta_month: 0.6,
-        improved_count: 30,
-        improved_percent: 86.0,
-        needs_support_count: 5,
-        needs_support_percent: 14.0
-      },
-      topic_averages: {
-        the_gioi_ki_thuat_so: 8.6,
-        thong_tin_giai_quyet_van_de: 8.1,
-        danh_gia_chat_luong_thong_tin: 7.8,
-        su_dung_dich_vu_internet: 8.5,
-        phan_mem_ma_nguon_mo: 8.9
-      },
-      donut_progress: {
-        completed: 28,
-        learning: 5,
-        not_started: 2
-      },
-      students
     };
   }
 }
@@ -3264,6 +3312,81 @@ function initStudentManagement() {
     modalBackdrop.addEventListener("click", (e) => {
       if (e.target === modalBackdrop) {
         closeStudentDetailModal();
+      }
+    });
+  }
+
+  // Khởi tạo Modal Thêm học sinh mới thủ công
+  const btnAdd = document.getElementById("smBtnAddStudent");
+  const modalAdd = document.getElementById("smAddStudentModal");
+  const btnCloseAdd = document.getElementById("smBtnCloseAddModal");
+  const btnCancelAdd = document.getElementById("smBtnCancelAdd");
+  const formAdd = document.getElementById("smAddStudentForm");
+
+  if (btnAdd && modalAdd) {
+    btnAdd.addEventListener("click", () => {
+      const inputClass = document.getElementById("smInputStudentClass");
+      if (inputClass) inputClass.value = studentMgmtState.currentClass || "9A";
+      modalAdd.classList.remove("hidden");
+    });
+  }
+
+  const closeAddModal = () => {
+    if (modalAdd) modalAdd.classList.add("hidden");
+    if (formAdd) formAdd.reset();
+  };
+
+  if (btnCloseAdd) btnCloseAdd.addEventListener("click", closeAddModal);
+  if (btnCancelAdd) btnCancelAdd.addEventListener("click", closeAddModal);
+
+  if (formAdd) {
+    formAdd.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById("smInputStudentName");
+      const inputEmail = document.getElementById("smInputStudentEmail");
+      const inputClass = document.getElementById("smInputStudentClass");
+
+      const nameVal = inputName ? inputName.value.trim() : "";
+      const emailVal = inputEmail ? inputEmail.value.trim() : "";
+      const classVal = (inputClass ? inputClass.value.trim().toUpperCase() : "") || "9A";
+
+      if (!nameVal || !emailVal) {
+        alert("Vui lòng điền đầy đủ họ tên và email/mã học sinh!");
+        return;
+      }
+
+      try {
+        if (typeof firebase !== "undefined" && firebase.database) {
+          const newRef = firebase.database().ref(`students/${classVal}`).push();
+          const studentCode = emailVal.includes("@") ? emailVal.split("@")[0].toUpperCase() : emailVal.toUpperCase();
+          const email = emailVal.includes("@") ? emailVal : `${emailVal.toLowerCase()}@thcs.edu.vn`;
+
+          await newRef.set({
+            uid: newRef.key,
+            student_code: studentCode,
+            full_name: nameVal,
+            email: email,
+            avatar: "👦",
+            class_code: classVal,
+            progress_percent: 0,
+            average_score: 0,
+            status: "learning",
+            is_blocked: false,
+            created_at: new Date().toISOString()
+          });
+
+          closeAddModal();
+          alert(`Đã thêm thành công học sinh "${nameVal}" vào lớp ${classVal}!`);
+          studentMgmtState.currentClass = classVal;
+          const classSelect = document.getElementById("smClassSelect");
+          if (classSelect) classSelect.value = classVal;
+          await loadStudentManagementData();
+        } else {
+          alert("Chưa kết nối được Firebase Realtime Database.");
+        }
+      } catch (err) {
+        console.error("Lỗi thêm học sinh:", err);
+        alert(`Lỗi thêm học sinh: ${err.message || "Vui lòng thử lại"}`);
       }
     });
   }
@@ -3421,7 +3544,8 @@ function filterAndRenderStudentTable() {
       student.full_name.toLowerCase().includes(searchQuery) ||
       student.student_code.toLowerCase().includes(searchQuery);
 
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "blocked" ? student.is_blocked : (!student.is_blocked && student.status === statusFilter));
 
     return matchesSearch && matchesStatus;
   });
@@ -3447,7 +3571,7 @@ function renderStudentTable(students) {
   const avatars = ["👦", "👧", "🧑", "🧒"];
 
   const rows = students.map((hs, index) => {
-    const avatar = avatars[index % avatars.length];
+    const avatar = hs.avatar && hs.avatar.length <= 4 ? hs.avatar : avatars[index % avatars.length];
 
     // Tạo 5 icon mức độ thành thạo
     const topicIcons = (hs.topics || []).map(t => {
@@ -3464,13 +3588,21 @@ function renderStudentTable(students) {
     }).join("");
 
     let statusBadge = "";
-    if (hs.status === "completed") {
+    if (hs.is_blocked) {
+      statusBadge = '<span class="sm-status-badge sm-badge-blocked">🚫 Bị khóa</span>';
+    } else if (hs.status === "completed") {
       statusBadge = '<span class="sm-status-badge sm-badge-completed">Hoàn thành</span>';
     } else if (hs.status === "learning") {
       statusBadge = '<span class="sm-status-badge sm-badge-learning">Đang học</span>';
     } else {
       statusBadge = '<span class="sm-status-badge sm-badge-needs_support">Cần hỗ trợ</span>';
     }
+
+    const blockBtnTitle = hs.is_blocked ? "Mở khóa tài khoản học sinh" : "Tạm khóa (chặn) tài khoản";
+    const blockBtnClass = hs.is_blocked ? "sm-action-icon-btn btn-block is-blocked btn-block-student" : "sm-action-icon-btn btn-block btn-block-student";
+    const blockIconSvg = hs.is_blocked 
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`;
 
     return `
       <tr data-student-id="${hs.id}">
@@ -3504,8 +3636,11 @@ function renderStudentTable(students) {
             <button class="sm-action-icon-btn btn-view-student" data-index="${index}" title="Xem chi tiết học sinh" aria-label="Xem chi tiết ${hs.full_name}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-            <button class="sm-action-icon-btn" title="Biểu đồ cá nhân" aria-label="Biểu đồ học sinh">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <button class="${blockBtnClass}" data-index="${index}" title="${blockBtnTitle}" aria-label="${blockBtnTitle}">
+              ${blockIconSvg}
+            </button>
+            <button class="sm-action-icon-btn btn-delete btn-delete-student" data-index="${index}" title="Xóa tài khoản khỏi danh sách" aria-label="Xóa học sinh ${hs.full_name}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
           </div>
         </td>
@@ -3513,15 +3648,70 @@ function renderStudentTable(students) {
     `;
   }).join("");
 
-  tbody.innerHTML = rows /* sanitize */;
+  tbody.innerHTML = /* sanitize */ rows;
 
   // Gắn sự kiện nút xem chi tiết từng học sinh
   tbody.querySelectorAll(".btn-view-student").forEach(btn => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", () => {
       const idx = parseInt(btn.getAttribute("data-index"), 10);
       const student = students[idx];
       if (student) {
         openStudentDetailModal(student);
+      }
+    });
+  });
+
+  // Gắn sự kiện Chặn / Mở khóa học sinh (Realtime Firebase)
+  tbody.querySelectorAll(".btn-block-student").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const idx = parseInt(btn.getAttribute("data-index"), 10);
+      const student = students[idx];
+      if (!student) return;
+
+      const willBlock = !student.is_blocked;
+      const actionText = willBlock ? "TẠM KHÓA / CHẶN" : "MỞ KHÓA";
+      if (!confirm(`Thầy/Cô có chắc chắn muốn ${actionText} tài khoản của em "${student.full_name}" không?\n\n${willBlock ? "Học sinh sẽ bị tạm dừng truy cập ngay lập tức." : "Học sinh sẽ được phép tiếp tục học tập."}`)) {
+        return;
+      }
+
+      try {
+        if (typeof firebase !== "undefined" && firebase.database) {
+          await firebase.database().ref(`students/${studentMgmtState.currentClass}/${student.id}`).update({
+            is_blocked: willBlock,
+            blocked_at: willBlock ? new Date().toISOString() : null
+          });
+          await loadStudentManagementData();
+        } else {
+          alert("Không thể kết nối với cơ sở dữ liệu Firebase Realtime Database.");
+        }
+      } catch (err) {
+        console.error("Lỗi cập nhật trạng thái khóa học sinh:", err);
+        alert(`Lỗi: ${err.message || "Vui lòng thử lại"}`);
+      }
+    });
+  });
+
+  // Gắn sự kiện Xóa học sinh khỏi lớp (Realtime Firebase)
+  tbody.querySelectorAll(".btn-delete-student").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const idx = parseInt(btn.getAttribute("data-index"), 10);
+      const student = students[idx];
+      if (!student) return;
+
+      if (!confirm(`Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN học sinh "${student.full_name}" khỏi danh sách lớp ${studentMgmtState.currentClass} không?\n\nLưu ý: Toàn bộ tiến độ và kết quả làm bài của học sinh sẽ bị xóa khỏi hệ thống và không thể phục hồi.`)) {
+        return;
+      }
+
+      try {
+        if (typeof firebase !== "undefined" && firebase.database) {
+          await firebase.database().ref(`students/${studentMgmtState.currentClass}/${student.id}`).remove();
+          await loadStudentManagementData();
+        } else {
+          alert("Không thể kết nối với cơ sở dữ liệu Firebase Realtime Database.");
+        }
+      } catch (err) {
+        console.error("Lỗi xóa học sinh khỏi database:", err);
+        alert(`Lỗi: ${err.message || "Vui lòng thử lại"}`);
       }
     });
   });
@@ -3668,8 +3858,11 @@ const studentAuthState = {
   studentEmail: "",
   studentAvatar: "",
   classCode: "9A",
-  uid: ""
+  uid: "",
+  isBlocked: false
 };
+
+let studentBlockListenerUnsub = null;
 
 function loadStoredStudentAuth() {
   try {
@@ -3687,18 +3880,76 @@ function loadStoredStudentAuth() {
 }
 
 function updateHeaderStudentAuthUI() {
-  const btn = document.getElementById("btnHeaderStudentAuth");
-  const text = document.getElementById("headerStudentAuthText");
-  if (!btn || !text) return;
+  const profileWrap = document.getElementById("headerStudentProfileWrap");
+  const stdAvatar = document.getElementById("stdUserAvatar");
+  const stdName = document.getElementById("stdUserName");
+  const ddName = document.getElementById("stdDropdownUserName");
+  const ddEmail = document.getElementById("stdDropdownUserEmail");
+  const heroName = document.getElementById("stdHeroGreetingName");
 
   if (studentAuthState.isLoggedIn) {
-    btn.classList.add("logged-in");
-    btn.title = `Tài khoản: ${studentAuthState.studentName} (${studentAuthState.studentEmail}) - Bấm để đăng xuất`;
-    text.textContent = `👦 ${studentAuthState.studentName || "Học sinh"} (${studentAuthState.classCode || "9A"})`;
+    if (profileWrap) profileWrap.classList.remove("hidden");
+    const displayName = studentAuthState.studentName || "Học sinh";
+    const displayEmail = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
+    if (stdName) stdName.textContent = displayName;
+    if (ddName) ddName.textContent = displayName;
+    if (ddEmail) ddEmail.textContent = displayEmail;
+    if (heroName) heroName.textContent = displayName;
+    if (stdAvatar) {
+      if (studentAuthState.studentAvatar && studentAuthState.studentAvatar.startsWith("http")) {
+        stdAvatar.src = studentAuthState.studentAvatar;
+      } else {
+        stdAvatar.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName) + "&background=0284c7&color=fff";
+      }
+    }
   } else {
-    btn.classList.remove("logged-in");
-    btn.title = "Cổng đăng nhập Google dành cho Học sinh";
-    text.textContent = "Đăng nhập";
+    if (profileWrap) profileWrap.classList.add("hidden");
+  }
+}
+
+function checkAndListenStudentStatus(classCode, uid) {
+  if (studentBlockListenerUnsub) {
+    studentBlockListenerUnsub();
+    studentBlockListenerUnsub = null;
+  }
+  if (!window.firebase || !firebase.database) return;
+
+  const studentRef = firebase.database().ref(`students/${classCode}/${uid}`);
+  const callback = (snapshot) => {
+    const val = snapshot.val();
+    if (val && val.is_blocked) {
+      studentAuthState.isBlocked = true;
+      showStudentBlockedOverlay(studentAuthState.studentName, classCode);
+    } else {
+      studentAuthState.isBlocked = false;
+      hideStudentBlockedOverlay();
+    }
+  };
+
+  studentRef.on("value", callback);
+  studentBlockListenerUnsub = () => studentRef.off("value", callback);
+}
+
+function showStudentBlockedOverlay(name, classCode) {
+  const overlay = document.getElementById("studentBlockedOverlay");
+  const elName = document.getElementById("sboStudentName");
+  const elClass = document.getElementById("sboClassCode");
+  if (!overlay) return;
+  if (elName) elName.textContent = name || studentAuthState.studentName || "Học sinh";
+  if (elClass) elClass.textContent = classCode || studentAuthState.classCode || "9A";
+  overlay.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function hideStudentBlockedOverlay() {
+  const overlay = document.getElementById("studentBlockedOverlay");
+  if (!overlay) return;
+  overlay.classList.add("hidden");
+  const portal = document.getElementById("studentLoginPortal");
+  if (portal && !portal.classList.contains("hidden")) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
   }
 }
 
@@ -3714,6 +3965,11 @@ function openStudentLoginPortal() {
 }
 
 function closeStudentLoginPortal() {
+  // Chỉ đóng cổng đăng nhập khi học sinh ĐÃ ĐĂNG NHẬP THÀNH CÔNG (Xóa bỏ hoàn toàn chế độ khách)
+  if (!studentAuthState.isLoggedIn) {
+    console.warn("Chế độ khách đã bị vô hiệu hóa. Học sinh bắt buộc phải đăng nhập bằng tài khoản Google.");
+    return;
+  }
   const portal = document.getElementById("studentLoginPortal");
   if (!portal) return;
   portal.classList.add("hidden");
@@ -3741,52 +3997,91 @@ async function handleStudentGoogleSignIn() {
     initFirebaseApp();
 
     if (typeof firebase !== "undefined" && firebase.auth) {
+      // Ghi nhớ phiên đăng nhập vĩnh viễn trên trình duyệt
+      try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch (persErr) {
+        console.warn("Lỗi thiết lập persistence:", persErr);
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
 
+      // Kiểm tra trạng thái Khóa / Chặn từ cơ sở dữ liệu Realtime
+      let isBlocked = false;
+      if (firebase.database) {
+        try {
+          const snap = await firebase.database().ref(`students/${classCodeVal}/${user.uid}`).once("value");
+          const existing = snap.val();
+          if (existing && existing.is_blocked) {
+            isBlocked = true;
+          }
+        } catch (dbChkErr) {
+          console.warn("Lỗi kiểm tra chặn:", dbChkErr);
+        }
+      }
+
       studentAuthState.isLoggedIn = true;
       studentAuthState.uid = user.uid;
       studentAuthState.studentName = user.displayName || "Học sinh";
       studentAuthState.studentEmail = user.email || "";
-      studentAuthState.studentAvatar = user.photoURL || "👦";
+      studentAuthState.studentAvatar = user.photoURL || "";
       studentAuthState.classCode = classCodeVal;
+      studentAuthState.isBlocked = isBlocked;
 
-      // Đồng bộ thông tin học sinh lên Realtime Database
+      // Lưu vào localStorage để ghi nhớ tự động vĩnh viễn (Persistent Login)
+      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+      updateHeaderStudentAuthUI();
+
+      if (isBlocked) {
+        portalDirectClose();
+        showStudentBlockedOverlay(user.displayName, classCodeVal);
+        checkAndListenStudentStatus(classCodeVal, user.uid);
+        return;
+      }
+
+      // Đồng bộ thông tin học sinh lên Realtime Database (không ghi đè is_blocked nếu đã có)
       if (firebase.database) {
         try {
+          const studentCode = user.email ? user.email.split("@")[0].toUpperCase() : user.uid.substring(0, 6).toUpperCase();
           await firebase.database().ref(`students/${classCodeVal}/${user.uid}`).update({
             uid: user.uid,
+            student_code: studentCode,
             full_name: user.displayName || "Học sinh",
             email: user.email || "",
             avatar: user.photoURL || "",
             class_code: classCodeVal,
+            is_blocked: false,
             last_active: new Date().toISOString()
           });
         } catch (dbErr) {
           console.warn("Lỗi lưu hồ sơ học sinh lên database:", dbErr);
         }
       }
+
+      checkAndListenStudentStatus(classCodeVal, user.uid);
     } else {
-      // Fallback khi chạy offline / demo
+      // Fallback khi không có kết nối Firebase Auth
       await new Promise(r => setTimeout(r, 400));
       studentAuthState.isLoggedIn = true;
       studentAuthState.uid = "std_" + Math.random().toString(36).substring(2, 9);
       studentAuthState.studentName = "Nguyễn Minh Khang";
       studentAuthState.studentEmail = "minhkhang.hs@thcs.edu.vn";
-      studentAuthState.studentAvatar = "👦";
+      studentAuthState.studentAvatar = "";
       studentAuthState.classCode = classCodeVal;
+      studentAuthState.isBlocked = false;
+      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+      updateHeaderStudentAuthUI();
     }
 
-    localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
-    updateHeaderStudentAuthUI();
-    closeStudentLoginPortal();
-    alert(`🎉 Chào mừng em ${studentAuthState.studentName} (Lớp ${studentAuthState.classCode}) đã đăng nhập thành công vào AI SGK Tin học THCS!`);
+    portalDirectClose();
+    switchView("dashboard");
   } catch (err) {
     console.error("Lỗi đăng nhập Google:", err);
     if (err.code === "auth/popup-closed-by-user") {
-      // Người dùng chủ động đóng popup
+      // Học sinh đóng popup
     } else if (err.code === "auth/unauthorized-domain") {
       alert(`Tên miền hiện tại (${window.location.hostname}) chưa được thêm vào mục Authorized Domains trên Firebase Console.\n\nThầy/Cô hãy vào Firebase Console > Authentication > Settings > Authorized domains và thêm "${window.location.hostname}" nhé!`);
     } else {
@@ -3808,17 +4103,30 @@ async function handleStudentGoogleSignIn() {
   }
 }
 
+function portalDirectClose() {
+  const portal = document.getElementById("studentLoginPortal");
+  if (portal) portal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
 function handleStudentLogout() {
   if (confirm(`Em có muốn đăng xuất tài khoản "${studentAuthState.studentName}" không?`)) {
+    if (studentBlockListenerUnsub) {
+      studentBlockListenerUnsub();
+      studentBlockListenerUnsub = null;
+    }
     studentAuthState.isLoggedIn = false;
     studentAuthState.studentName = "";
     studentAuthState.studentEmail = "";
     studentAuthState.uid = "";
+    studentAuthState.isBlocked = false;
     localStorage.removeItem("ai_sgk_student_auth");
     if (window.firebase && window.firebase.auth) {
       window.firebase.auth().signOut().catch(() => {});
     }
     updateHeaderStudentAuthUI();
+    hideStudentBlockedOverlay();
+    openStudentLoginPortal();
   }
 }
 
@@ -3826,25 +4134,96 @@ function initStudentAuthPortal() {
   initFirebaseApp();
   loadStoredStudentAuth();
 
-  const btnHeader = document.getElementById("btnHeaderStudentAuth");
-  if (btnHeader) {
-    btnHeader.addEventListener("click", () => {
-      if (studentAuthState.isLoggedIn) {
-        handleStudentLogout();
-      } else {
-        openStudentLoginPortal();
+  // Kiểm tra phiên đăng nhập đã ghi nhớ hoặc hiển thị Cổng Đăng Nhập (Triệt tiêu chế độ khách)
+  if (studentAuthState.isLoggedIn && studentAuthState.uid) {
+    checkAndListenStudentStatus(studentAuthState.classCode, studentAuthState.uid);
+    portalDirectClose();
+  } else {
+    // Khi chưa đăng nhập, bắt buộc học sinh phải đăng nhập qua Google
+    openStudentLoginPortal();
+  }
+
+  // Tự động phục hồi phiên nếu Firebase Auth còn token lưu trong IndexedDB/LocalStorage
+  if (typeof firebase !== "undefined" && firebase.auth) {
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user && !studentAuthState.isLoggedIn) {
+        studentAuthState.isLoggedIn = true;
+        studentAuthState.uid = user.uid;
+        studentAuthState.studentName = user.displayName || "Học sinh";
+        studentAuthState.studentEmail = user.email || "";
+        studentAuthState.studentAvatar = user.photoURL || "";
+        localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+        updateHeaderStudentAuthUI();
+        checkAndListenStudentStatus(studentAuthState.classCode, user.uid);
+        portalDirectClose();
+        switchView("dashboard");
       }
     });
   }
 
-  const btnClose = document.getElementById("btnCloseLoginPortal");
-  if (btnClose) {
-    btnClose.addEventListener("click", closeStudentLoginPortal);
+  // Nút Trang chủ (Dashboard) trên Header
+  const btnNavDash = document.getElementById("btnNavDashboard");
+  if (btnNavDash) {
+    btnNavDash.addEventListener("click", () => {
+      switchView("dashboard");
+    });
   }
 
-  const btnBypass = document.getElementById("slBtnBypassLogin");
-  if (btnBypass) {
-    btnBypass.addEventListener("click", closeStudentLoginPortal);
+  // Nút Tiếp tục học ngay trên Thẻ bài học Dashboard
+  const btnContinue = document.getElementById("btnContinueLessonAction");
+  if (btnContinue) {
+    btnContinue.addEventListener("click", () => {
+      switchView("theory");
+    });
+  }
+
+  // Header Student Profile Badge & Dropdown
+  const profileWrap = document.getElementById("headerStudentProfileWrap");
+  const userBadge = document.getElementById("stdUserBadge");
+  const userDropdown = document.getElementById("stdUserDropdown");
+  const btnSignOut = document.getElementById("btnStdSignOut");
+  const btnGoDash = document.getElementById("btnStdGoDashboard");
+  const btnSboSignOut = document.getElementById("sboBtnSignOut");
+
+  if (userBadge && profileWrap && userDropdown) {
+    userBadge.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = profileWrap.classList.toggle("open");
+      userDropdown.classList.toggle("hidden", !isOpen);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!profileWrap.contains(e.target)) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+    });
+  }
+
+  if (btnGoDash) {
+    btnGoDash.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      switchView("dashboard");
+    });
+  }
+
+  if (btnSignOut) {
+    btnSignOut.addEventListener("click", () => {
+      if (profileWrap && userDropdown) {
+        profileWrap.classList.remove("open");
+        userDropdown.classList.add("hidden");
+      }
+      handleStudentLogout();
+    });
+  }
+
+  if (btnSboSignOut) {
+    btnSboSignOut.addEventListener("click", () => {
+      handleStudentLogout();
+    });
   }
 
   const btnGoogle = document.getElementById("btnGoogleSignIn");
@@ -3865,10 +4244,4 @@ function initStudentAuthPortal() {
       alert("HỖ TRỢ ĐĂNG NHẬP:\n\nNếu em gặp sự cố đăng nhập Google hoặc chưa có tài khoản, hãy báo trực tiếp cho Giáo viên bộ môn Tin học tại lớp để được cấp mã lớp và hướng dẫn đăng nhập.");
     });
   }
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeStudentLoginPortal();
-    }
-  });
 }

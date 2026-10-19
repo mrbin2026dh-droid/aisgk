@@ -5427,5 +5427,554 @@ button, input, textarea, select {
   }
 }
 
+/* ==========================================================================
+   HEADER STUDENT PROFILE BADGE & DROPDOWN
+   ========================================================================== */
+.header-student-profile-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.header-student-profile-wrap.hidden {
+  display: none !important;
+}
+.std-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e293b;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 12px 4px 5px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #f8fafc;
+  outline: none;
+}
+.std-user-badge:hover {
+  background: #334155;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+.std-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0284c7;
+  display: block;
+}
+.std-user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.std-user-arrow {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+.header-student-profile-wrap.open .std-user-arrow {
+  transform: rotate(180deg);
+}
+
+.std-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  padding: 8px 0;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+.std-user-dropdown.hidden {
+  display: none !important;
+}
+.std-dropdown-header {
+  padding: 8px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.std-dropdown-user-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+.std-dropdown-user-email {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.std-dropdown-menu {
+  list-style: none;
+  padding: 6px 0 0;
+  margin: 0;
+}
+.std-dropdown-item {
+  width: 100%;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.std-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+.std-dropdown-item.text-danger {
+  color: #f87171;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+}
+.std-dropdown-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   VIEW 0: TRANG TỔNG QUAN HỌC SINH (STUDENT DASHBOARD - HÌNH 1)
+   ========================================================================== */
+.student-dashboard-view {
+  display: none;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  animation: fadeIn 0.25s ease-out;
+}
+.student-dashboard-view.active {
+  display: block;
+}
+
+/* Hero Greeting */
+.std-hero-banner {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.std-hero-greeting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.std-hero-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #38bdf8;
+  background: #0284c7;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+}
+.std-hero-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0 0 4px;
+  font-family: var(--font-display, inherit);
+}
+.std-hero-sub {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0;
+}
+.std-hero-streak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* 4 Thẻ KPI Chỉ số */
+.std-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.std-kpi-card {
+  background: #111827;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+}
+.std-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+.std-kpi-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.std-kpi-icon-wrap.bg-blue { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); }
+.std-kpi-icon-wrap.bg-green { background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3); }
+.std-kpi-icon-wrap.bg-purple { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+.std-kpi-icon-wrap.bg-orange { background: rgba(251, 146, 60, 0.15); border: 1px solid rgba(251, 146, 60, 0.3); }
+
+.std-kpi-num {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.1;
+  font-family: var(--font-display, inherit);
+}
+.std-kpi-lbl {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+/* Các Block Section */
+.std-section-block {
+  margin-bottom: 28px;
+}
+.std-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 14px;
+  font-family: var(--font-display, inherit);
+}
+
+/* Thẻ Tiếp tục bài học */
+.std-continue-card {
+  background: #111827;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: var(--shadow-card);
+}
+.std-continue-left {
+  flex: 1;
+}
+.std-continue-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin-bottom: 6px;
+}
+.std-continue-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 4px;
+}
+.std-continue-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+.std-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.std-progress-bar-bg {
+  flex: 1;
+  max-width: 320px;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.std-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+.std-progress-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Nhiệm vụ của em */
+.std-tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.std-task-card {
+  background: #111827;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.std-task-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+}
+.std-task-status-circle {
+  font-size: 1.1rem;
+  margin-top: 1px;
+}
+.std-task-body {
+  flex: 1;
+}
+.std-task-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.std-task-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 8px;
+}
+.std-task-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.std-task-badge.badge-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.std-task-badge.badge-new {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.std-task-badge.badge-upcoming {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Thành tích học tập */
+.std-achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.std-achieve-card {
+  background: #111827;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.std-achieve-badge-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.std-achieve-badge-circle.bg-gold {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+.std-achieve-badge-circle.bg-orange {
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+.std-achieve-info {
+  flex: 1;
+}
+.std-achieve-title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.std-achieve-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+.std-achieve-arrow {
+  font-size: 1.2rem;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   MÀN HÌNH KHÓA TÀI KHOẢN HỌC SINH (IS_BLOCKED = TRUE)
+   ========================================================================== */
+.student-blocked-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.student-blocked-overlay.hidden {
+  display: none !important;
+}
+.sbo-card {
+  background: #1e293b;
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  border-radius: 16px;
+  max-width: 460px;
+  width: 100%;
+  padding: 32px 28px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(239, 68, 68, 0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+.sbo-icon-shield {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.sbo-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f87171;
+  margin: 0 0 10px;
+  font-family: var(--font-display, inherit);
+}
+.sbo-desc {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.sbo-info-box {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sbo-info-box strong {
+  color: #f8fafc;
+}
+.sbo-hint {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Nút Block và Delete trong bảng quản lý học sinh */
+.sm-action-icon-btn.btn-block:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+.sm-action-icon-btn.btn-block.is-blocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: #f87171;
+}
+.sm-action-icon-btn.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: #f87171;
+}
+.sm-badge-blocked {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive Dashboard */
+@media (max-width: 900px) {
+  .std-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .std-tasks-grid {
+    grid-template-columns: 1fr;
+  }
+  .std-achievements-grid {
+    grid-template-columns: 1fr;
+  }
+  .std-continue-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+@media (max-width: 540px) {
+  .std-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .std-hero-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
 
 
