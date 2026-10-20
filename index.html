@@ -965,8 +965,8 @@
           <div class="exam-title-group">
             <div class="exam-title-badge">📝</div>
             <div>
-              <h1 class="exam-heading">Quản trị Bài kiểm tra</h1>
-              <p class="exam-subheading">Đăng đề trắc nghiệm, tải file Excel mẫu, import câu hỏi và giám sát phổ điểm</p>
+              <h1 class="exam-heading">Quản lý bài kiểm tra</h1>
+              <p class="exam-subheading">Quản lý đề thi, nạp file Excel và theo dõi kết quả</p>
             </div>
           </div>
           <div class="exam-actions-group">
@@ -1023,7 +1023,7 @@
             <div class="exam-title-badge">🎯</div>
             <div>
               <h1 class="exam-heading">Bài kiểm tra của em</h1>
-              <p class="exam-subheading">Làm bài kiểm tra, theo dõi phổ điểm, xếp hạng thi đua và chẩn đoán năng lực cùng Gia sư Socrates</p>
+              <p class="exam-subheading">Làm bài thi, xem bảng điểm và nhận xét của AI</p>
             </div>
           </div>
           <div class="student-exam-header-meta">
@@ -1143,7 +1143,7 @@
           <div class="exam-history-layout">
             <!-- Cột trái: Lịch sử các lần làm bài -->
             <div class="exam-history-main-card">
-              <h3 class="exam-section-title">Lịch sử bài kiểm tra đã hoàn thành</h3>
+              <h3 class="exam-section-title">Lịch sử bài kiểm tra</h3>
               <div class="exam-history-list" id="studentExamHistoryList">
                 <!-- Render các mục lịch sử bài thi -->
               </div>
@@ -1151,7 +1151,7 @@
 
             <!-- Cột phải: Chẩn đoán AI Socrates & Lỗ hổng kiến thức -->
             <div class="exam-history-side-card">
-              <h3 class="exam-section-title">Chẩn đoán Sư phạm AI Socrates</h3>
+              <h3 class="exam-section-title">Đánh giá năng lực của AI</h3>
               <div class="socrates-history-summary" id="studentSocratesSummaryBox">
                 <!-- Render tổng hợp lời khuyên từ Socrates -->
               </div>
@@ -1226,7 +1226,7 @@
               <span class="score-label">Điểm</span>
             </div>
             <div class="exam-result-meta">
-              <h2 class="result-title" id="resultExamTitle">Kết quả: Kiểm tra 15 phút</h2>
+              <h2 class="result-title" id="resultExamTitle">Kết quả bài thi</h2>
               <div class="result-stats-row">
                 <span class="stat-pill success" id="resultCorrectCount">✔ 8/10 câu đúng</span>
                 <span class="stat-pill info" id="resultPercentRatio">⚡ Đạt 85%</span>
@@ -1241,8 +1241,8 @@
             <div class="ai-feedback-header">
               <div class="ai-feedback-avatar">🤖</div>
               <div>
-                <h3 class="ai-feedback-title">Gia sư AI Socrates • Phân tích năng lực</h3>
-                <p class="ai-feedback-desc">Nhận xét điểm mạnh và điều chỉnh kiến thức chưa vững</p>
+                <h3 class="ai-feedback-title">Nhận xét của Gia sư AI</h3>
+                <p class="ai-feedback-desc">Phân tích kết quả và gợi ý ôn tập</p>
               </div>
             </div>
             <div class="ai-feedback-content" id="resultAIFeedbackText">
@@ -1251,7 +1251,7 @@
 
             <!-- Khối đề xuất các mục SGK cần ôn lại -->
             <div class="exam-recommendations-box" id="resultRecommendationsBox">
-              <h4 class="recommend-heading">📖 Các mục SGK Thầy Socrates đề xuất em ôn lại ngay:</h4>
+              <h4 class="recommend-heading">📖 Nội dung SGK cần ôn tập:</h4>
               <div class="recommend-list" id="resultRecommendList">
                 <!-- Render các mục SGK kèm nút bấm [Mở bài học ngay] -->
               </div>
@@ -1260,7 +1260,7 @@
 
           <!-- Xem lại chi tiết từng câu hỏi đúng/sai -->
           <div class="exam-review-section">
-            <h3 class="review-heading">Xem lại chi tiết bài làm:</h3>
+            <h3 class="review-heading">Chi tiết bài làm:</h3>
             <div class="review-questions-list" id="resultReviewQuestionsList">
               <!-- Render từng câu hỏi kèm đáp án của em, đáp án đúng và giải thích -->
             </div>
@@ -1279,7 +1279,7 @@
     <div id="examCreateModal" class="exam-modal-backdrop hidden" role="dialog" aria-modal="true">
       <div class="exam-modal-card">
         <div class="exam-modal-header">
-          <h2 class="exam-modal-title">Soạn & Đăng Bài Kiểm Tra</h2>
+          <h2 class="exam-modal-title">Soạn bài kiểm tra</h2>
           <button type="button" id="btnExamCloseCreateModal" class="exam-modal-close" aria-label="Đóng">&times;</button>
         </div>
         <div class="exam-modal-body">
@@ -1404,8 +1404,8 @@
       <div class="exam-modal-card lg">
         <div class="exam-modal-header">
           <div>
-            <h2 class="exam-modal-title" id="teacherResultsExamTitle">Bảng Điểm & Kết Quả Học Sinh</h2>
-            <p class="exam-subheading" id="teacherResultsExamSub">Danh sách học sinh đã hoàn thành bài kiểm tra</p>
+            <h2 class="exam-modal-title" id="teacherResultsExamTitle">Bảng điểm bài kiểm tra</h2>
+            <p class="exam-subheading" id="teacherResultsExamSub">Danh sách nộp bài và phổ điểm của lớp</p>
           </div>
           <button type="button" id="btnCloseTeacherResultsModal" class="exam-modal-close" aria-label="Đóng">&times;</button>
         </div>

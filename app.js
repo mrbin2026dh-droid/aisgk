@@ -6291,12 +6291,43 @@ function renderTeacherExamCards() {
 
     const header = document.createElement("div");
     header.className = "exam-card-header";
-    header.innerHTML = /* sanitize */ `
-      <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • ${escapeHtml(exam.target_classes ? exam.target_classes.join(', ') : 'Tất cả')}</span>
-      <span class="exam-status-pill ${exam.status === 'published' ? 'open' : 'closed'}">
-        ${exam.status === 'published' ? '● Đang mở' : '○ Đã đóng'}
-      </span>
-    `;
+
+    const tagSpan = document.createElement("span");
+    tagSpan.className = "exam-card-tag";
+    tagSpan.textContent = `Khối ${exam.grade} • ${exam.target_classes ? exam.target_classes.join(', ') : 'Tất cả'}`;
+
+    const toggleWrap = document.createElement("div");
+    toggleWrap.className = "exam-toggle-status-wrap";
+
+    const isPublished = (exam.status === "published");
+    const switchLabel = document.createElement("label");
+    switchLabel.className = "exam-switch-toggle";
+    switchLabel.title = isPublished ? "Gạt để khóa bài thi" : "Gạt để mở bài thi";
+
+    const toggleInput = document.createElement("input");
+    toggleInput.type = "checkbox";
+    toggleInput.checked = isPublished;
+    toggleInput.dataset.examId = exam.exam_id;
+
+    const slider = document.createElement("span");
+    slider.className = "exam-switch-slider";
+
+    switchLabel.appendChild(toggleInput);
+    switchLabel.appendChild(slider);
+
+    const toggleLabel = document.createElement("span");
+    toggleLabel.className = `exam-status-toggle-label ${isPublished ? 'open' : 'closed'}`;
+    toggleLabel.textContent = isPublished ? "● Đang mở" : "🔒 Đã khóa";
+
+    toggleInput.onchange = (e) => {
+      toggleTeacherExamStatus(exam.exam_id, e.target.checked, toggleLabel, switchLabel);
+    };
+
+    toggleWrap.appendChild(switchLabel);
+    toggleWrap.appendChild(toggleLabel);
+
+    header.appendChild(tagSpan);
+    header.appendChild(toggleWrap);
 
     const titleEl = document.createElement("h3");
     titleEl.className = "exam-card-title";
@@ -6343,6 +6374,47 @@ function renderTeacherExamCards() {
     card.appendChild(actionsBar);
     grid.appendChild(card);
   });
+}
+
+// Giáo viên gạt công tắc Mở / Khóa bài thi
+async function toggleTeacherExamStatus(examId, isChecked, labelEl, switchEl) {
+  const newStatus = isChecked ? "published" : "closed";
+  if (labelEl) {
+    labelEl.textContent = isChecked ? "● Đang mở" : "🔒 Đã khóa";
+    labelEl.className = `exam-status-toggle-label ${isChecked ? 'open' : 'closed'}`;
+  }
+  if (switchEl) {
+    switchEl.title = isChecked ? "Gạt để khóa bài thi" : "Gạt để mở bài thi";
+  }
+
+  // Cập nhật trạng thái trong mảng nhớ
+  const target = currentExamList.find(e => e.exam_id === examId);
+  if (target) target.status = newStatus;
+
+  // 1. Đồng bộ lên Firebase Realtime Database
+  try {
+    initFirebaseApp();
+    if (typeof firebase !== "undefined" && firebase.database) {
+      await firebase.database().ref(`exams/${examId}`).update({ status: newStatus });
+      console.log(`✔ [Firebase] Đã cập nhật trạng thái đề thi ${examId} -> ${newStatus}`);
+    }
+  } catch (errFb) {
+    console.debug("Firebase update exam status error:", errFb);
+  }
+
+  // 2. Đồng bộ lên Backend API
+  try {
+    await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-teacher-token": state.teacherToken || "tch_live_session_9a"
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+  } catch (errApi) {
+    console.debug("Backend status update offline:", errApi);
+  }
 }
 
 // Xóa bài kiểm tra
@@ -7359,9 +7431,17 @@ function renderStudentExamCards(exams, subsMap, classCode) {
 
     const sub = subsMap[exam.exam_id];
     const isCompleted = !!sub;
+    const isClosed = (exam.status === "closed");
 
     const header = document.createElement("div");
     header.className = "exam-card-header";
+
+    let statusPillHtml = '';
+    if (isClosed) {
+      statusPillHtml = `<span class="exam-status-pill closed" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">🔒 Thầy/Cô đang khóa đề</span>`;
+    } else {
+      statusPillHtml = `<span class="exam-status-pill open">● Đang mở</span>`;
+    }
 
     if (isCompleted) {
       const evalData = sub.evaluation || {};
@@ -7373,14 +7453,17 @@ function renderStudentExamCards(exams, subsMap, classCode) {
 
       header.innerHTML = /* sanitize */ `
         <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
-        <span class="exam-completed-badge ${badgeClass}">
-          ✔ Đã làm: ${scoreNum.toFixed(1)}/10đ
-        </span>
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          ${statusPillHtml}
+          <span class="exam-completed-badge ${badgeClass}">
+            ✔ Đã làm: ${scoreNum.toFixed(1)}/10đ
+          </span>
+        </div>
       `;
     } else {
       header.innerHTML = /* sanitize */ `
         <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
-        <span class="exam-status-pill open">● Đang mở</span>
+        ${statusPillHtml}
       `;
     }
 
@@ -7408,30 +7491,58 @@ function renderStudentExamCards(exams, subsMap, classCode) {
     const actionsBar = document.createElement("div");
     actionsBar.className = "exam-card-actions-bar";
 
-    if (isCompleted) {
-      const btnReview = document.createElement("button");
-      btnReview.type = "button";
-      btnReview.className = "btn-exam-review";
-      btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm & Lời khuyên AI</span>`;
-      btnReview.onclick = () => reviewStudentExam(exam.exam_id);
+    if (isClosed) {
+      if (isCompleted) {
+        const btnReview = document.createElement("button");
+        btnReview.type = "button";
+        btnReview.className = "btn-exam-review";
+        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm & Lời khuyên AI</span>`;
+        btnReview.onclick = () => reviewStudentExam(exam.exam_id);
 
-      const btnRetake = document.createElement("button");
-      btnRetake.type = "button";
-      btnRetake.className = "btn-exam-retake";
-      btnRetake.innerHTML = /* sanitize */ `<span>🔄 Làm lại bài thi</span>`;
-      btnRetake.onclick = () => startStudentExam(exam.exam_id);
+        const btnRetakeLocked = document.createElement("button");
+        btnRetakeLocked.type = "button";
+        btnRetakeLocked.className = "btn-exam-disabled";
+        btnRetakeLocked.disabled = true;
+        btnRetakeLocked.title = "Thầy/Cô hiện đang tạm khóa đề thi này, không thể làm lại lúc này.";
+        btnRetakeLocked.innerHTML = /* sanitize */ `<span>🔒 Đang khóa đề thi</span>`;
 
-      actionsBar.appendChild(btnReview);
-      actionsBar.appendChild(btnRetake);
+        actionsBar.appendChild(btnReview);
+        actionsBar.appendChild(btnRetakeLocked);
+      } else {
+        const btnDisabled = document.createElement("button");
+        btnDisabled.type = "button";
+        btnDisabled.className = "btn-exam-disabled";
+        btnDisabled.disabled = true;
+        btnDisabled.title = "Thầy/Cô hiện đang tạm khóa đề thi này. Vui lòng đợi mở đề!";
+        btnDisabled.innerHTML = /* sanitize */ `<span>🔒 Đề thi đang khóa</span>`;
+        actionsBar.appendChild(btnDisabled);
+      }
     } else {
-      const btnStart = document.createElement("button");
-      btnStart.type = "button";
-      btnStart.className = "btn-exam-primary";
-      btnStart.style.width = "100%";
-      btnStart.innerHTML = /* sanitize */ `<span>▶ Vào làm bài ngay</span>`;
-      btnStart.onclick = () => startStudentExam(exam.exam_id);
+      if (isCompleted) {
+        const btnReview = document.createElement("button");
+        btnReview.type = "button";
+        btnReview.className = "btn-exam-review";
+        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm & Lời khuyên AI</span>`;
+        btnReview.onclick = () => reviewStudentExam(exam.exam_id);
 
-      actionsBar.appendChild(btnStart);
+        const btnRetake = document.createElement("button");
+        btnRetake.type = "button";
+        btnRetake.className = "btn-exam-retake";
+        btnRetake.innerHTML = /* sanitize */ `<span>🔄 Làm lại bài thi</span>`;
+        btnRetake.onclick = () => startStudentExam(exam.exam_id);
+
+        actionsBar.appendChild(btnReview);
+        actionsBar.appendChild(btnRetake);
+      } else {
+        const btnStart = document.createElement("button");
+        btnStart.type = "button";
+        btnStart.className = "btn-exam-primary";
+        btnStart.style.width = "100%";
+        btnStart.innerHTML = /* sanitize */ `<span>▶ Vào làm bài ngay</span>`;
+        btnStart.onclick = () => startStudentExam(exam.exam_id);
+
+        actionsBar.appendChild(btnStart);
+      }
     }
 
     card.appendChild(header);
@@ -7755,6 +7866,26 @@ async function reviewStudentExam(examId) {
 // NẠP DANH SÁCH BÀI KIỂM TRA & DỮ LIỆU THỐNG KÊ CỦA HỌC SINH
 // ---------------------------------------------------------------------------
 
+// Lắng nghe trạng thái mở/khóa đề thi từ Giáo viên trong thời gian thực
+function listenRealtimeExamStatusForStudents() {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return;
+  if (window._examStatusListening) return;
+  window._examStatusListening = true;
+  try {
+    firebase.database().ref("exams").on("child_changed", (snap) => {
+      const val = snap.val();
+      if (!val || !val.exam_id) return;
+      const studentView = document.getElementById("examStudentView");
+      if (studentView && !studentView.classList.contains("hidden")) {
+        loadStudentExams();
+      }
+    });
+  } catch (errListener) {
+    console.debug("listenRealtimeExamStatus error:", errListener);
+  }
+}
+
 async function loadStudentExams() {
   const grid = document.getElementById("examStudentGrid");
   if (!grid) return;
@@ -7794,7 +7925,7 @@ async function loadStudentExams() {
         if (String(e.grade) !== String(grade) && e.grade !== 0) return false;
         const targets = e.target_classes || [];
         if (targets.length > 0 && !targets.includes("Tất cả") && !targets.includes(classCode)) return false;
-        return e.status === "published";
+        return e.status !== "draft";
       });
     }
 
@@ -7858,6 +7989,7 @@ async function loadStudentExams() {
 
   // 6. Gắn sự kiện chuyển tab và bộ lọc
   initStudentExamTabEvents();
+  listenRealtimeExamStatusForStudents();
 }
 
 
@@ -7917,6 +8049,12 @@ async function startStudentExam(examId) {
         delete q.giai_thich;
         delete q.giai_thich_su_pham;
       });
+    }
+
+        // Chốt chặn kiểm tra trạng thái khóa đề thi từ Giáo viên
+    if (fullExamData && (fullExamData.status === "closed" || fullExamData.status === "draft")) {
+      alert("🔒 Bài kiểm tra này hiện đang được Thầy/Cô tạm khóa.\n\nEm vui lòng đợi Giáo viên mở đề thi để làm bài nhé!");
+      return;
     }
 
     if (!examData || !examData.questions || examData.questions.length === 0) {
