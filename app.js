@@ -7851,9 +7851,11 @@ function renderStudentExamCards(exams, subsMap, classCode) {
         const btnDisabled = document.createElement("button");
         btnDisabled.type = "button";
         btnDisabled.className = "btn-exam-disabled";
-        btnDisabled.disabled = true;
         btnDisabled.title = "Thầy/Cô hiện đang tạm khóa đề thi này. Vui lòng đợi mở đề!";
         btnDisabled.innerHTML = /* sanitize */ `<span>🔒 Đề thi đang khóa</span>`;
+        btnDisabled.onclick = () => {
+          alert("🔒 Bài kiểm tra này hiện đang được Thầy/Cô tạm khóa.\n\nEm vui lòng đợi Giáo viên mở đề thi để làm bài nhé!");
+        };
         actionsBar.appendChild(btnDisabled);
       }
     } else {
