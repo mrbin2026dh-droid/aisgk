@@ -3351,56 +3351,45 @@ class StudentDataAdapter {
   }
 
   async getAIPedagogicalAdvice(grade, className) {
-    if (state.teacherToken) {
-      try {
-        const headers = {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${state.teacherToken}`
-        };
-        const res = await fetch(`${API_BASE}/teacher/analyze-class`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ grade: Number(grade), class_name: String(className) })
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.advice) {
-            return json.advice;
-          }
-        }
-      } catch (err) {
-        console.warn("Lỗi gọi Gemini AI phân tích sư phạm:", err);
-      }
-    }
-
     const students = this.cachedOverview && this.cachedOverview.students ? this.cachedOverview.students : [];
     const total = students.length;
     if (total === 0) {
       return {
         general_assessment: `Lớp ${className} hiện chưa có học sinh nào đăng ký hoặc đăng nhập.`,
-        critical_concerns: "Giáo viên vui lòng cung cấp đường link hệ thống để học sinh đăng nhập bằng Google.",
+        critical_concerns: "Giáo viên vui lòng cung cấp mã lớp để học sinh đăng nhập bằng Google hoặc Mã học sinh phòng LAN.",
         actionable_recommendations: [
-          "Bấm '+ Thêm học sinh' để thêm trước danh sách học sinh vào lớp.",
-          "Hướng dẫn học sinh đăng nhập tại trang chủ bằng tài khoản Google trường cấp.",
-          "Theo dõi thời gian thực tiến độ học tập của từng em trên bảng số liệu."
+          "Bấm '+ Thêm học sinh' để cấp mã số máy cho phòng máy LAN.",
+          "Hướng dẫn học sinh mở tab 'Mã HS (LAN)' để vào học ngay.",
+          "Theo dõi thời gian thực đèn trạng thái Trực tuyến của cả lớp."
         ]
       };
     }
 
-    const completed = students.filter(s => s.status === "completed").length;
+    const completed = students.filter(s => s.status === "completed" || s.progress_percent >= 100).length;
+    const notStarted = students.filter(s => s.progress_percent === 0).length;
     const compPercent = Math.round((completed / total) * 100);
     const avgScore = Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1));
-    const needsSupport = students.filter(s => s.status === "needs_support").length;
+    const needsSupport = students.filter(s => s.status === "needs_support" || (s.average_score > 0 && s.average_score < 5.0)).length;
+
+    let general = "";
+    let concerns = "";
+    if (avgScore === 0 && compPercent === 0) {
+      general = `Lớp ${className} có ${total} học sinh. Các em mới tham gia lớp học và chưa hoàn thành bài luyện tập nào (Tiến độ 0%, Điểm TB 0/10).`;
+      concerns = `Hiện tại có ${notStarted} học sinh chưa bắt đầu làm bài. Giáo viên nên hướng dẫn các em mở bài 1 để làm quen với hệ thống.`;
+    } else {
+      general = `Lớp ${className} có ${total} học sinh, tiến độ hoàn thành đạt ${compPercent}%, điểm trung bình toàn lớp đạt ${avgScore}/10.`;
+      concerns = needsSupport > 0 
+        ? `Có ${needsSupport} học sinh cần được hỗ trợ thêm do điểm trung bình dưới 5.0.`
+        : "Tất cả học sinh trong lớp đều đang duy trì kết quả học tập tốt.";
+    }
 
     return {
-      general_assessment: `Lớp ${className} có ${total} học sinh, tiến độ hoàn thành đạt ${compPercent}%, điểm trung bình đạt ${avgScore}/10.`,
-      critical_concerns: needsSupport > 0 
-        ? `Có ${needsSupport} học sinh cần được hỗ trợ thêm về các nội dung bài học.`
-        : "Tất cả học sinh trong lớp đều đang duy trì tiến độ học tập tích cực.",
+      general_assessment: general,
+      critical_concerns: concerns,
       actionable_recommendations: [
         "Tổ chức buổi ôn tập ngắn 15 phút, bổ sung bài luyện tương tác cho nhóm học sinh còn yếu.",
         "Áp dụng phương pháp đôi bạn cùng tiến: Phân công học sinh xuất sắc kèm cặp các bạn cần hỗ trợ.",
-        "Giao thêm 3-5 câu hỏi tình huống thực tế để học sinh rèn luyện phản xạ trước giờ kiểm tra."
+        "Giao thêm câu hỏi tình huống thực tế để học sinh rèn luyện phản xạ trước giờ kiểm tra."
       ]
     };
   }
