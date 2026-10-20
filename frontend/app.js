@@ -7159,30 +7159,56 @@ async function startStudentExam(examId) {
     let examData = null;
     let fullExamData = null;
 
+    // 1. Ưu tiên tải trực tiếp từ Firebase Realtime Database
     try {
-      const res = await fetch(`${getExamApiRoot()}/exams/${examId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.exam) examData = data.exam;
+      initFirebaseApp();
+      if (typeof firebase !== "undefined" && firebase.database) {
+        const snap = await firebase.database().ref(`exams/${examId}`).once("value");
+        if (snap.exists()) {
+          const fbVal = snap.val();
+          if (fbVal && fbVal.questions && fbVal.questions.length > 0) {
+            fullExamData = JSON.parse(JSON.stringify(fbVal));
+            examData = JSON.parse(JSON.stringify(fbVal));
+          }
+        }
       }
-    } catch (errApi) {
-      console.debug("API fetch exam failed, trying fallback:", errApi);
+    } catch (errFb) {
+      console.debug("Firebase fetch exam error:", errFb);
     }
 
+    // 2. Thử tải từ Backend API
+    if (!examData) {
+      try {
+        const res = await fetch(`${getExamApiRoot()}/exams/${examId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.exam) {
+            examData = data.exam;
+            fullExamData = data.exam;
+          }
+        }
+      } catch (errApi) {
+        console.debug("API fetch exam failed, trying fallback:", errApi);
+      }
+    }
+
+    // 3. Dự phòng từ bộ nhớ trình duyệt & file mẫu
     if (!examData) {
       const fallbackList = await getFallbackExams();
       const found = fallbackList.find(e => e.exam_id === examId);
       if (found) {
         fullExamData = JSON.parse(JSON.stringify(found));
         examData = JSON.parse(JSON.stringify(found));
-        // Ẩn đáp án đúng trên màn hình học sinh để tránh gian lận F12
-        if (examData.questions) {
-          examData.questions.forEach(q => {
-            delete q.dap_an_dung;
-            delete q.giai_thich;
-          });
-        }
       }
+    }
+
+    // Ẩn đáp án đúng trên màn hình học sinh để tránh gian lận F12
+    if (examData && examData.questions) {
+      examData.questions.forEach(q => {
+        delete q.dap_an_dung;
+        delete q.giai_thich;
+        delete q.giai_thich_su_pham;
+      });
     }
 
     if (!examData || !examData.questions || examData.questions.length === 0) {
