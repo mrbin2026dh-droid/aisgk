@@ -7841,9 +7841,12 @@ function renderStudentExamCards(exams, subsMap, classCode) {
         const btnRetakeLocked = document.createElement("button");
         btnRetakeLocked.type = "button";
         btnRetakeLocked.className = "btn-exam-disabled";
-        btnRetakeLocked.disabled = true;
+        
         btnRetakeLocked.title = "Thầy/Cô hiện đang tạm khóa đề thi này, không thể làm lại lúc này.";
         btnRetakeLocked.innerHTML = /* sanitize */ `<span>🔒 Đang khóa đề thi</span>`;
+        btnRetakeLocked.onclick = () => {
+          alert("🔒 Bài kiểm tra này hiện đang được Thầy/Cô tạm khóa.\n\nEm vui lòng đợi Giáo viên mở đề thi để làm bài nhé!");
+        };
 
         actionsBar.appendChild(btnReview);
         actionsBar.appendChild(btnRetakeLocked);
