@@ -1016,22 +1016,152 @@
         </div>
       </div>
 
-      <!-- 2. GIAO DIỆN DANH SÁCH BÀI KIỂM TRA DÀNH CHO HỌC SINH -->
+            <!-- 2. GIAO DIỆN DANH SÁCH BÀI KIỂM TRA DÀNH CHO HỌC SINH (EDTECH SAAS ANALYTICS & RANKING) -->
       <div id="examStudentView" class="exam-subview hidden">
         <div class="exam-topbar">
           <div class="exam-title-group">
             <div class="exam-title-badge">🎯</div>
             <div>
               <h1 class="exam-heading">Bài kiểm tra của em</h1>
-              <p class="exam-subheading">Tham gia làm các bài kiểm tra trắc nghiệm được Thầy/Cô giao cho lớp</p>
+              <p class="exam-subheading">Làm bài kiểm tra, theo dõi phổ điểm, xếp hạng thi đua và chẩn đoán năng lực cùng Gia sư Socrates</p>
+            </div>
+          </div>
+          <div class="student-exam-header-meta">
+            <span class="exam-class-pill" id="studentExamClassPill">Lớp 9A • Khối 9</span>
+          </div>
+        </div>
+
+        <!-- DẢI THẺ KPI THỐNG KÊ CÁ NHÂN (STUDENT EXAM KPI BAR) -->
+        <div class="student-exam-kpi-bar" id="studentExamKpiBar">
+          <div class="student-kpi-card">
+            <div class="kpi-icon-wrap blue">📝</div>
+            <div class="kpi-content">
+              <span class="kpi-label">Bài thi hoàn thành</span>
+              <div class="kpi-value-row">
+                <span class="kpi-number" id="kpiStudentCompletedExams">0/0</span>
+                <span class="kpi-subtext" id="kpiStudentCompletionRate">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="student-kpi-card">
+            <div class="kpi-icon-wrap emerald">⭐</div>
+            <div class="kpi-content">
+              <span class="kpi-label">Điểm trung bình</span>
+              <div class="kpi-value-row">
+                <span class="kpi-number" id="kpiStudentAvgScore">--</span>
+                <span class="kpi-subtext">thang 10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="student-kpi-card">
+            <div class="kpi-icon-wrap amber">🏆</div>
+            <div class="kpi-content">
+              <span class="kpi-label">Thứ hạng trong lớp</span>
+              <div class="kpi-value-row">
+                <span class="kpi-number" id="kpiStudentClassRank">#--</span>
+                <span class="kpi-subtext" id="kpiStudentTotalInClass">trong lớp</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="student-kpi-card">
+            <div class="kpi-icon-wrap purple">⚡</div>
+            <div class="kpi-content">
+              <span class="kpi-label">Tỷ lệ làm đúng</span>
+              <div class="kpi-value-row">
+                <span class="kpi-number" id="kpiStudentCorrectRate">--%</span>
+                <span class="kpi-subtext" id="kpiStudentCorrectRatio">0/0 câu</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Lưới danh sách bài kiểm tra học sinh -->
-        <div class="exam-student-grid" id="examStudentGrid">
-          <!-- Render danh sách đề thi học sinh có thể làm -->
+        <!-- THANH TAB ĐIỀU HƯỚNG THÔNG MINH -->
+        <div class="student-exam-nav-tabs" role="tablist">
+          <button type="button" class="exam-tab-btn active" id="tabBtnExamsList" role="tab" aria-selected="true" aria-controls="tabStudentExamsList">
+            <span>📋 Đề thi được giao</span>
+            <span class="tab-count-badge" id="badgeStudentExamsCount">0</span>
+          </button>
+          <button type="button" class="exam-tab-btn" id="tabBtnLeaderboard" role="tab" aria-selected="false" aria-controls="tabStudentLeaderboard">
+            <span>🏆 Bảng xếp hạng lớp</span>
+          </button>
+          <button type="button" class="exam-tab-btn" id="tabBtnHistory" role="tab" aria-selected="false" aria-controls="tabStudentExamHistory">
+            <span>📊 Lịch sử & Đánh giá năng lực</span>
+          </button>
         </div>
+
+        <!-- TAB 1: LƯỚI ĐỀ THI ĐƯỢC GIAO -->
+        <div class="student-tab-panel" id="tabStudentExamsList" role="tabpanel">
+          <div class="exam-student-grid" id="examStudentGrid">
+            <!-- Render danh sách đề thi học sinh có thể làm -->
+          </div>
+        </div>
+
+        <!-- TAB 2: BẢNG XẾP HẠNG LỚP (CLASS LEADERBOARD) -->
+        <div class="student-tab-panel hidden" id="tabStudentLeaderboard" role="tabpanel">
+          <div class="leaderboard-control-row">
+            <div class="leaderboard-filter-group">
+              <label for="selectLeaderboardExam" class="leaderboard-filter-label">Chọn bài kiểm tra:</label>
+              <select id="selectLeaderboardExam" class="exam-select">
+                <option value="all">Tổng hợp tất cả bài kiểm tra (Điểm trung bình)</option>
+              </select>
+            </div>
+            <div class="leaderboard-last-updated" id="leaderboardLastUpdated">Dữ liệu thời gian thực từ Firebase</div>
+          </div>
+
+          <!-- Bục vinh danh Top 3 (Podium) -->
+          <div class="leaderboard-podium-wrap" id="leaderboardPodium">
+            <!-- Render Top 3 học sinh điểm cao nhất -->
+          </div>
+
+          <!-- Bảng chi tiết toàn bộ học sinh trong lớp -->
+          <div class="leaderboard-table-card">
+            <div class="table-responsive">
+              <table class="exam-results-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px; text-align: center;">Hạng</th>
+                    <th>Học sinh</th>
+                    <th>Điểm số</th>
+                    <th>Số câu đúng</th>
+                    <th>Thời gian làm</th>
+                    <th>Thời gian nộp</th>
+                  </tr>
+                </thead>
+                <tbody id="studentLeaderboardTableBody">
+                  <!-- Render danh sách bảng xếp hạng -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: LỊCH SỬ LÀM BÀI & PHÂN TÍCH LỖ HỔNG KIẾN THỨC -->
+        <div class="student-tab-panel hidden" id="tabStudentExamHistory" role="tabpanel">
+          <div class="exam-history-layout">
+            <!-- Cột trái: Lịch sử các lần làm bài -->
+            <div class="exam-history-main-card">
+              <h3 class="exam-section-title">Lịch sử bài kiểm tra đã hoàn thành</h3>
+              <div class="exam-history-list" id="studentExamHistoryList">
+                <!-- Render các mục lịch sử bài thi -->
+              </div>
+            </div>
+
+            <!-- Cột phải: Chẩn đoán AI Socrates & Lỗ hổng kiến thức -->
+            <div class="exam-history-side-card">
+              <h3 class="exam-section-title">Chẩn đoán Sư phạm AI Socrates</h3>
+              <div class="socrates-history-summary" id="studentSocratesSummaryBox">
+                <!-- Render tổng hợp lời khuyên từ Socrates -->
+              </div>
+              <div class="weak-topics-summary-box" id="studentExamWeakTopicsBox">
+                <!-- Render các chủ đề yếu cần khắc phục -->
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- 3. SÂN KHẤU LÀM BÀI KIỂM TRA (IMMERSIVE EXAM ARENA >= 85vh - 100% RESPONSIVE MOBILE) -->
