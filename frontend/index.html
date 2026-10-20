@@ -86,6 +86,13 @@
         <span class="tutor-btn-text">Trang chủ</span>
       </button>
 
+      <!-- 1b. Nút Bài kiểm tra (Assessment Center - Dành cho Giáo viên & Học sinh) -->
+      <button class="header-tutor-btn" id="btnNavExamHub" aria-label="Bài kiểm tra" title="Trung tâm bài kiểm tra trắc nghiệm">
+        <span class="tutor-btn-icon" aria-hidden="true">📝</span>
+        <span class="tutor-btn-text">Kiểm tra</span>
+        <span class="exam-badge-dot hidden" id="examBadgeDot" title="Có bài kiểm tra mới"></span>
+      </button>
+
       <!-- 2. Nút Quản lý Học sinh (Dashboard Sư phạm - Dành cho Giáo viên) -->
       <button class="header-student-mgmt-btn hidden" id="btnNavStudentMgmt" aria-label="Quản lý học sinh" title="Dashboard Quản lý Học sinh & AI Sư phạm">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -132,6 +139,11 @@
             <li>
               <button type="button" class="std-dropdown-item" id="btnStdOpenDashboard">
                 <span>🏠</span> <span>Trang chủ học tập</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="std-dropdown-item" id="btnStdOpenExamHub">
+                <span>📝</span> <span>Bài kiểm tra trắc nghiệm</span>
               </button>
             </li>
             <li id="stdMenuTeacherSection" class="hidden">
@@ -941,6 +953,295 @@
       </div>
     </section>
 
+    <!-- ========================================================================
+         SÂN KHẤU BÀI KIỂM TRA TRẮC NGHIỆM (ONLINE ASSESSMENT CENTER)
+         Hỗ trợ: Giáo viên Đăng đề / Upload Excel / Bảng điểm
+                 Học sinh Làm bài thi Mobile Responsive / AI Nhận xét & Đề xuất SGK
+         ======================================================================== -->
+    <section class="exam-stage hidden" id="examStage" aria-label="Trung tâm bài kiểm tra trắc nghiệm">
+      <!-- 1. GIAO DIỆN QUẢN TRỊ BÀI KIỂM TRA CỦA GIÁO VIÊN -->
+      <div id="examTeacherView" class="exam-subview hidden">
+        <div class="exam-topbar">
+          <div class="exam-title-group">
+            <div class="exam-title-badge">📝</div>
+            <div>
+              <h1 class="exam-heading">Quản trị Bài kiểm tra</h1>
+              <p class="exam-subheading">Đăng đề trắc nghiệm, tải file Excel mẫu, import câu hỏi và giám sát phổ điểm</p>
+            </div>
+          </div>
+          <div class="exam-actions-group">
+            <button type="button" id="btnExamDownloadTemplate" class="btn-exam-secondary" title="Tải file mẫu Excel chuẩn để soạn đề">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Xuất file Excel mẫu</span>
+            </button>
+            <button type="button" id="btnExamUploadExcel" class="btn-exam-primary" title="Tải đề kiểm tra từ file Excel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Tải lên từ Excel</span>
+            </button>
+            <button type="button" id="btnExamCreateManual" class="btn-exam-accent" title="Tạo bài kiểm tra thủ công">
+              <span>+ Soạn đề mới</span>
+            </button>
+            <input type="file" id="examExcelFileInput" accept=".xlsx, .xls" style="display: none;" />
+          </div>
+        </div>
+
+        <!-- Bộ lọc giáo viên -->
+        <div class="exam-filter-bar">
+          <div class="exam-filter-item">
+            <label for="examFilterGrade">Khối:</label>
+            <select id="examFilterGrade" class="exam-select">
+              <option value="all">Tất cả khối</option>
+              <option value="6">Khối 6</option>
+              <option value="7">Khối 7</option>
+              <option value="8">Khối 8</option>
+              <option value="9" selected>Khối 9</option>
+            </select>
+          </div>
+          <div class="exam-filter-item">
+            <label for="examFilterClass">Lớp:</label>
+            <select id="examFilterClass" class="exam-select">
+              <option value="all">Tất cả các lớp</option>
+              <option value="9A">Lớp 9A</option>
+              <option value="9B">Lớp 9B</option>
+              <option value="9C">Lớp 9C</option>
+              <option value="6A">Lớp 6A</option>
+              <option value="6B">Lớp 6B</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Danh sách bài kiểm tra của giáo viên -->
+        <div class="exam-grid-container" id="examTeacherGrid">
+          <!-- Render danh sách thẻ bài kiểm tra qua JavaScript -->
+        </div>
+      </div>
+
+      <!-- 2. GIAO DIỆN DANH SÁCH BÀI KIỂM TRA DÀNH CHO HỌC SINH -->
+      <div id="examStudentView" class="exam-subview hidden">
+        <div class="exam-topbar">
+          <div class="exam-title-group">
+            <div class="exam-title-badge">🎯</div>
+            <div>
+              <h1 class="exam-heading">Bài kiểm tra của em</h1>
+              <p class="exam-subheading">Tham gia làm các bài kiểm tra trắc nghiệm được Thầy/Cô giao cho lớp</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lưới danh sách bài kiểm tra học sinh -->
+        <div class="exam-student-grid" id="examStudentGrid">
+          <!-- Render danh sách đề thi học sinh có thể làm -->
+        </div>
+      </div>
+
+      <!-- 3. SÂN KHẤU LÀM BÀI KIỂM TRA (IMMERSIVE EXAM ARENA >= 85vh - 100% RESPONSIVE MOBILE) -->
+      <div id="examTakingView" class="exam-taking-view hidden">
+        <!-- Top bar phòng thi -->
+        <div class="taking-header">
+          <div class="taking-meta">
+            <span class="taking-badge-tag" id="takingExamTag">Tin học 9</span>
+            <h2 class="taking-exam-title" id="takingExamTitle">Kiểm tra 15 phút</h2>
+          </div>
+          <div class="taking-timer-wrap">
+            <span class="taking-timer-icon">⏱</span>
+            <span class="taking-timer-label">Còn lại:</span>
+            <span class="taking-timer-val" id="takingCountdownVal">15:00</span>
+          </div>
+          <div class="taking-actions">
+            <button type="button" id="btnTakingSubmitExam" class="btn-taking-submit" aria-label="Nộp bài thi">
+              <span>Nộp bài</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question Navigation Matrix -->
+        <div class="taking-palette-card">
+          <div class="taking-palette-header">
+            <span>Danh sách câu hỏi:</span>
+            <span class="taking-palette-count" id="takingAnsweredCount">0/10 câu</span>
+          </div>
+          <div class="taking-palette-buttons" id="takingPaletteContainer">
+            <!-- Render 1..N nút câu hỏi -->
+          </div>
+        </div>
+
+        <!-- Question Card Box -->
+        <div class="taking-question-stage">
+          <div class="taking-question-card" id="takingQuestionCard">
+            <div class="taking-q-num-row">
+              <span class="taking-q-index" id="takingQCurrentIndex">Câu 1 / 10</span>
+              <span class="taking-q-section" id="takingQSectionBadge">Mục 1: Thiết bị có gắn bộ xử lí</span>
+            </div>
+            <div class="taking-q-body" id="takingQQuestionText">
+              Nội dung câu hỏi đang tải...
+            </div>
+            <div class="taking-options-grid" id="takingOptionsContainer">
+              <!-- Render 4 thẻ phương án A, B, C, D to bản chạm nhạy mobile -->
+            </div>
+            <div class="taking-nav-buttons">
+              <button type="button" id="btnTakingPrevQ" class="btn-taking-nav">⬅ Câu trước</button>
+              <button type="button" id="btnTakingNextQ" class="btn-taking-nav primary">Câu tiếp ➡</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. SÂN KHẤU KẾT QUẢ & AI SƯ PHẠM NHẬN XÉT ĐIỀU CHỈNH LỖ HỔNG -->
+      <div id="examResultView" class="exam-result-view hidden">
+        <div class="exam-result-card">
+          <div class="exam-result-hero">
+            <div class="exam-result-score-circle" id="resultScoreCircle">
+              <span class="score-number" id="resultScoreNum">8.5</span>
+              <span class="score-label">Điểm</span>
+            </div>
+            <div class="exam-result-meta">
+              <h2 class="result-title" id="resultExamTitle">Kết quả: Kiểm tra 15 phút</h2>
+              <div class="result-stats-row">
+                <span class="stat-pill success" id="resultCorrectCount">✔ 8/10 câu đúng</span>
+                <span class="stat-pill info" id="resultPercentRatio">⚡ Đạt 85%</span>
+                <span class="stat-pill warning" id="resultTimeSpent">⏱ 11 phút 20 giây</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Khối AI Socrates Nhận xét Sư phạm -->
+          <div class="exam-ai-feedback-box">
+            <div class="ai-feedback-header">
+              <div class="ai-feedback-avatar">🤖</div>
+              <div>
+                <h3 class="ai-feedback-title">Gia sư AI Socrates • Phân tích năng lực</h3>
+                <p class="ai-feedback-desc">Nhận xét điểm mạnh và điều chỉnh kiến thức chưa vững</p>
+              </div>
+            </div>
+            <div class="ai-feedback-content" id="resultAIFeedbackText">
+              Đang phân tích kết quả...
+            </div>
+
+            <!-- Khối đề xuất các mục SGK cần ôn lại -->
+            <div class="exam-recommendations-box" id="resultRecommendationsBox">
+              <h4 class="recommend-heading">📖 Các mục SGK Thầy Socrates đề xuất em ôn lại ngay:</h4>
+              <div class="recommend-list" id="resultRecommendList">
+                <!-- Render các mục SGK kèm nút bấm [Mở bài học ngay] -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Xem lại chi tiết từng câu hỏi đúng/sai -->
+          <div class="exam-review-section">
+            <h3 class="review-heading">Xem lại chi tiết bài làm:</h3>
+            <div class="review-questions-list" id="resultReviewQuestionsList">
+              <!-- Render từng câu hỏi kèm đáp án của em, đáp án đúng và giải thích -->
+            </div>
+          </div>
+
+          <div class="result-footer-actions">
+            <button type="button" id="btnResultBackToList" class="btn-exam-primary">
+              <span>Quay lại danh sách bài kiểm tra</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL SOẠN / TẢI ĐỀ THI EXCEL CỦA GIÁO VIÊN -->
+    <div id="examCreateModal" class="exam-modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="exam-modal-card">
+        <div class="exam-modal-header">
+          <h2 class="exam-modal-title">Soạn & Đăng Bài Kiểm Tra</h2>
+          <button type="button" id="btnExamCloseCreateModal" class="exam-modal-close" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="exam-modal-body">
+          <div class="exam-form-row">
+            <div class="exam-form-group flex-2">
+              <label for="examFormTitle">Tiêu đề bài kiểm tra (*):</label>
+              <input type="text" id="examFormTitle" class="exam-input" placeholder="Ví dụ: Kiểm tra 15 phút - Bài 1 & 2" />
+            </div>
+            <div class="exam-form-group">
+              <label for="examFormGrade">Khối lớp (*):</label>
+              <select id="examFormGrade" class="exam-select">
+                <option value="6">Khối 6</option>
+                <option value="7">Khối 7</option>
+                <option value="8">Khối 8</option>
+                <option value="9" selected>Khối 9</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="exam-form-row">
+            <div class="exam-form-group">
+              <label for="examFormClass">Lớp áp dụng (*):</label>
+              <select id="examFormClass" class="exam-select">
+                <option value="Tất cả">Tất cả các lớp</option>
+                <option value="9A">Lớp 9A</option>
+                <option value="9B">Lớp 9B</option>
+                <option value="9C">Lớp 9C</option>
+                <option value="6A">Lớp 6A</option>
+                <option value="6B">Lớp 6B</option>
+              </select>
+            </div>
+            <div class="exam-form-group">
+              <label for="examFormDuration">Thời gian làm bài (Phút):</label>
+              <input type="number" id="examFormDuration" class="exam-input" value="15" min="5" max="90" />
+            </div>
+          </div>
+
+          <!-- Khu vực xem trước câu hỏi từ Excel hoặc thêm thủ công -->
+          <div class="exam-questions-preview-box">
+            <div class="preview-box-header">
+              <span id="previewQuestionsCount">Danh sách câu hỏi (0 câu)</span>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="btnModalUploadExcel" class="btn-exam-secondary sm">
+                  <span>📤 Nạp từ Excel</span>
+                </button>
+                <button type="button" id="btnModalAddQuestion" class="btn-exam-secondary sm">
+                  <span>+ Thêm câu hỏi</span>
+                </button>
+              </div>
+            </div>
+            <div class="preview-questions-list" id="modalQuestionsList">
+              <p class="preview-empty-hint">Chưa có câu hỏi nào. Bạn có thể nhấn <strong>"Nạp từ Excel"</strong> để tải đề lên nhanh chóng hoặc thêm câu hỏi thủ công.</p>
+            </div>
+          </div>
+        </div>
+        <div class="exam-modal-footer">
+          <button type="button" id="btnExamCancelCreate" class="btn-exam-secondary">Hủy bỏ</button>
+          <button type="button" id="btnExamSaveAndPublish" class="btn-exam-accent">Đăng bài kiểm tra ngay</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL THEO DÕI BẢNG ĐIỂM BÀI KIỂM TRA CỦA GIÁO VIÊN -->
+    <div id="examTeacherResultsModal" class="exam-modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="exam-modal-card lg">
+        <div class="exam-modal-header">
+          <div>
+            <h2 class="exam-modal-title" id="teacherResultsExamTitle">Bảng Điểm & Kết Quả Học Sinh</h2>
+            <p class="exam-subheading" id="teacherResultsExamSub">Danh sách học sinh đã hoàn thành bài kiểm tra</p>
+          </div>
+          <button type="button" id="btnCloseTeacherResultsModal" class="exam-modal-close" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="exam-modal-body">
+          <div class="table-responsive">
+            <table class="exam-results-table">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Học sinh</th>
+                  <th>Lớp</th>
+                  <th>Điểm số</th>
+                  <th>Số câu đúng</th>
+                  <th>Thời gian nộp</th>
+                </tr>
+              </thead>
+              <tbody id="teacherResultsTableBody">
+                <!-- Render danh sách bài nộp -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ========================================================================
@@ -1424,6 +1725,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <!-- Logic Ứng dụng & Hiệu ứng Đánh máy Typewriter -->
+  <!-- Thu vien SheetJS doc/xuat Excel truc tiep tren Client (Ho tro GitHub Pages & Offline) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <script src="app.js?v=6.0"></script>
   <!-- MODAL THÔNG TIN TÀI KHOẢN: ĐỔI HỌ TÊN & MẬT KHẨU (HÌNH 2) -->
   <div class="modal-overlay hidden" id="modalStudentEditProfile" role="dialog" aria-modal="true" aria-labelledby="modalEditProfileTitle">

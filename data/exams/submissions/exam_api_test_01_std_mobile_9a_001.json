@@ -1,0 +1,57 @@
+{
+  "exam_id": "exam_api_test_01",
+  "student_id": "std_mobile_9a_001",
+  "student_name": "Trần Hoàng Nam",
+  "class_code": "9A",
+  "grade": 9,
+  "answers": {
+    "q1": "A",
+    "q2": "B"
+  },
+  "evaluation": {
+    "score": 10.0,
+    "total_questions": 2,
+    "correct_count": 2,
+    "percentage": 100,
+    "ai_evaluation": {
+      "overall_comment": "Xuất sắc! Em đã nắm rất vững toàn bộ kiến thức trọng tâm của bài kiểm tra. Hãy tiếp tục phát huy nhé!",
+      "weak_topics": {},
+      "recommendations": []
+    },
+    "details": [
+      {
+        "id": "q1",
+        "cau_hoi": "Bộ phận nào là bộ não của máy tính?",
+        "lua_chon": {
+          "A": "CPU",
+          "B": "RAM",
+          "C": "Màn hình",
+          "D": "Bàn phím"
+        },
+        "user_choice": "A",
+        "correct_choice": "A",
+        "is_correct": true,
+        "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+        "giai_thich_su_pham": "CPU là khối điều khiển và tính toán trung tâm.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Thiết bị có gắn bộ xử lí"
+      },
+      {
+        "id": "q2",
+        "cau_hoi": "Đâu là vật mang tin?",
+        "lua_chon": {
+          "A": "Ý nghĩ trong đầu",
+          "B": "Vở ghi bài",
+          "C": "Ánh sáng đỏ",
+          "D": "Tiếng còi"
+        },
+        "user_choice": "B",
+        "correct_choice": "B",
+        "is_correct": true,
+        "muc_sgk": "Mục 2: Vật mang tin",
+        "giai_thich_su_pham": "Vở ghi là vật thể vật lý chứa dữ liệu.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Vật mang tin"
+      }
+    ],
+    "submitted_at": "2026-10-20T11:37:46.323337"
+  }
+}

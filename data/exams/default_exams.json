@@ -1,0 +1,231 @@
+{
+  "exams": [
+    {
+      "exam_id": "exam_9_1792470901504",
+      "title": "Kiểm tra 15 phút - Bài 1 & 2 (Tin học 9)",
+      "grade": 9,
+      "target_classes": [
+        "9A"
+      ],
+      "duration_minutes": 15,
+      "start_time": "",
+      "end_time": "",
+      "status": "published",
+      "created_at": "2026-10-20T04:35:01.504Z",
+      "questions": [
+        {
+          "id": "q_manual_1792470901069_1",
+          "cau_hoi": "Câu hỏi 1: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        },
+        {
+          "id": "q_manual_1792470901286_2",
+          "cau_hoi": "Câu hỏi 2: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_9_1792470964449",
+      "title": "Kiểm tra 15 phút - Bài 1 & 2 (Tin học 9)",
+      "grade": 9,
+      "target_classes": [
+        "9A"
+      ],
+      "duration_minutes": 15,
+      "start_time": "",
+      "end_time": "",
+      "status": "published",
+      "created_at": "2026-10-20T04:36:04.449Z",
+      "questions": [
+        {
+          "id": "q_manual_1792470963992_1",
+          "cau_hoi": "Câu hỏi 1: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        },
+        {
+          "id": "q_manual_1792470964216_2",
+          "cau_hoi": "Câu hỏi 2: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_9_1792471058332",
+      "title": "Kiểm tra 15 phút - Bài 1 & 2 (Tin học 9)",
+      "grade": 9,
+      "target_classes": [
+        "9A"
+      ],
+      "duration_minutes": 15,
+      "start_time": "",
+      "end_time": "",
+      "status": "published",
+      "created_at": "2026-10-20T04:37:38.332Z",
+      "questions": [
+        {
+          "id": "q_manual_1792471057865_1",
+          "cau_hoi": "Câu hỏi 1: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        },
+        {
+          "id": "q_manual_1792471058099_2",
+          "cau_hoi": "Câu hỏi 2: Điền nội dung câu hỏi trắc nghiệm vào đây?",
+          "lua_chon": {
+            "A": "Phương án lựa chọn A",
+            "B": "Phương án lựa chọn B",
+            "C": "Phương án lựa chọn C",
+            "D": "Phương án lựa chọn D"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục kiến thức SGK",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Giải thích phương án đúng theo SGK.",
+          "goi_y_khi_sai": ""
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_api_test_01",
+      "title": "Kiểm tra 15 phút - Tin học 9",
+      "grade": 9,
+      "target_classes": [
+        "9A",
+        "9B"
+      ],
+      "duration_minutes": 15,
+      "start_time": "",
+      "end_time": "",
+      "status": "published",
+      "created_at": "2026-10-20T11:26:30.129968",
+      "questions": [
+        {
+          "id": "q1",
+          "cau_hoi": "Bộ phận nào là bộ não của máy tính?",
+          "lua_chon": {
+            "A": "CPU",
+            "B": "RAM",
+            "C": "Màn hình",
+            "D": "Bàn phím"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "CPU là khối điều khiển và tính toán trung tâm.",
+          "goi_y_khi_sai": ""
+        },
+        {
+          "id": "q2",
+          "cau_hoi": "Đâu là vật mang tin?",
+          "lua_chon": {
+            "A": "Ý nghĩ trong đầu",
+            "B": "Vở ghi bài",
+            "C": "Ánh sáng đỏ",
+            "D": "Tiếng còi"
+          },
+          "dap_an_dung": "B",
+          "muc_sgk": "Mục 2: Vật mang tin",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Vở ghi là vật thể vật lý chứa dữ liệu.",
+          "goi_y_khi_sai": ""
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_test_unit_01",
+      "title": "Đề kiểm tra thử nghiệm",
+      "grade": 9,
+      "target_classes": [
+        "9A",
+        "9B"
+      ],
+      "duration_minutes": 15,
+      "start_time": "",
+      "end_time": "",
+      "status": "published",
+      "created_at": "2026-10-20T11:24:58.554058",
+      "questions": [
+        {
+          "id": "q_test_1",
+          "cau_hoi": "CPU là gì?",
+          "lua_chon": {
+            "A": "Bộ xử lý trung tâm",
+            "B": "Màn hình",
+            "C": "Bàn phím",
+            "D": "Chuột"
+          },
+          "dap_an_dung": "A",
+          "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "CPU là bộ não của máy tính",
+          "goi_y_khi_sai": ""
+        },
+        {
+          "id": "q_test_2",
+          "cau_hoi": "Thông tin khác Dữ liệu ở điểm nào?",
+          "lua_chon": {
+            "A": "Không khác",
+            "B": "Thông tin là ý nghĩa rút ra",
+            "C": "Dữ liệu sinh ra từ thông tin",
+            "D": "Là một"
+          },
+          "dap_an_dung": "B",
+          "muc_sgk": "Mục 2: Thông tin và dữ liệu",
+          "trang_sgk": 0,
+          "giai_thich_su_pham": "Thông tin là ý nghĩa hiểu biết",
+          "goi_y_khi_sai": ""
+        }
+      ]
+    }
+  ]
+}
