@@ -926,22 +926,25 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;">
               <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #38bdf8; margin-bottom: 6px;">Mã học sinh (LAN / Offline) *</label>
-                <input type="text" id="smEditStudentCode" class="sl-input-field" placeholder="Ví dụ: HS01 hoặc MAY01" required maxlength="30" style="width: 100%; box-sizing: border-box; text-transform: uppercase; font-weight: 700;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #38bdf8; margin-bottom: 6px;">Mã học sinh (6 chữ số) *</label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="text" id="smEditStudentCode" class="sl-input-field" placeholder="Ví dụ: 123456" required maxlength="6" pattern="[0-9]*" inputmode="numeric" style="flex: 1; box-sizing: border-box; text-align: center; font-weight: 700; letter-spacing: 2px;">
+                  <button type="button" id="btnGenEditCode" class="btn-secondary" style="padding: 0 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;" title="Tạo mã 6 số ngẫu nhiên">🎲</button>
+                </div>
               </div>
               <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Mật khẩu / PIN LAN</label>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Mật khẩu (nếu có)</label>
                 <input type="text" id="smEditStudentPassword" class="sl-input-field" placeholder="Mặc định: 123456" maxlength="30" style="width: 100%; box-sizing: border-box;">
               </div>
             </div>
 
             <div style="margin-bottom: 1.25rem;">
-              <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Email tài khoản Google (nếu có)</label>
+              <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">Email tài khoản Google / Facebook (nếu có)</label>
               <input type="text" id="smEditStudentEmail" class="sl-input-field" placeholder="Ví dụ: nam.tran@thcs.edu.vn" maxlength="60" style="width: 100%; box-sizing: border-box;">
             </div>
 
             <p style="font-size: 0.78rem; color: #94a3b8; line-height: 1.45; margin: 0 0 1.25rem 0; background: rgba(56, 189, 248, 0.08); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #38bdf8;">
-              💡 <strong>Lưu ý phòng LAN:</strong> Học sinh có thể dùng <strong>Mã học sinh</strong> và <strong>Mật khẩu LAN</strong> ở trên để đăng nhập trực tiếp tại phòng máy trường học mà không cần Internet hay tài khoản Google.
+              💡 <strong>Lưu ý:</strong> Học sinh có thể dùng <strong>Mã HS 6 chữ số</strong> ở trên để nhập và vào học ngay tại Cổng Đăng nhập. Giáo viên có thể bấm nút 🎲 để sinh mã ngẫu nhiên hoặc điều chỉnh theo ý muốn.
             </p>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -1796,9 +1799,9 @@
             <span class="sl-role-tab-icon">👨‍🎓</span>
             <span class="sl-role-tab-text">Google</span>
           </button>
-          <button type="button" class="sl-role-tab" id="slTabLanStudent" role="tab" aria-selected="false" data-role="lan" title="Đăng nhập bằng Mã học sinh cho phòng máy LAN không cần Internet">
-            <span class="sl-role-tab-icon">💻</span>
-            <span class="sl-role-tab-text">Mã HS (LAN)</span>
+          <button type="button" class="sl-role-tab" id="slTabLanStudent" role="tab" aria-selected="false" data-role="lan" title="Đăng nhập bằng Mã học sinh 6 chữ số">
+            <span class="sl-role-tab-icon">🎓</span>
+            <span class="sl-role-tab-text">Mã HS</span>
           </button>
           <button type="button" class="sl-role-tab" id="slTabTeacher" role="tab" aria-selected="false" data-role="teacher" title="Cổng dành cho Giáo viên">
             <span class="sl-role-tab-icon">👨‍🏫</span>
@@ -1806,9 +1809,9 @@
           </button>
         </div>
 
-        <!-- PANEL 1: HỌC SINH -->
+        <!-- PANEL 1: HỌC SINH (GOOGLE & FACEBOOK) -->
         <div id="slPanelStudent" class="sl-role-panel">
-          <!-- Nút Google Sign-In nổi bật -->
+          <!-- Nút Google Sign-In -->
           <button id="btnGoogleSignIn" class="sl-google-btn" type="button" aria-label="Đăng nhập bằng tài khoản Google">
             <svg class="sl-google-svg" width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -1819,8 +1822,16 @@
             <span>Tiếp tục với Google</span>
           </button>
 
+          <!-- Nút Facebook Sign-In -->
+          <button id="btnFacebookSignIn" class="sl-facebook-btn" type="button" aria-label="Đăng nhập bằng tài khoản Facebook">
+            <svg class="sl-facebook-svg" width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Tiếp tục với Facebook</span>
+          </button>
+
           <div class="sl-auth-divider">
-            <span>hoặc chọn lớp học</span>
+            <span>hoặc chọn khối lớp học tập</span>
           </div>
 
           <!-- Chọn Khối Lớp -->
@@ -1834,22 +1845,17 @@
             </div>
           </div>
 
-          <div class="sl-form-group" style="margin-top: 0.85rem;">
-            <label for="slInputGoogleClass" class="sl-form-label">Lớp học của em:</label>
-            <div class="sl-input-wrap">
-              <input type="text" id="slInputGoogleClass" class="sl-input" placeholder="Ví dụ: 9A, 9B, 6A..." maxlength="10" style="text-transform: uppercase; font-weight: 700;">
-            </div>
+          <!-- Điều khoản (Căn giữa hoàn hảo) -->
+          <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 1rem;">
+            <label class="sl-checkbox-row" style="margin-top: 0; justify-content: center; text-align: center;">
+              <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
+              <span class="sl-checkbox-custom" aria-hidden="true"></span>
+              <span class="sl-checkbox-text">Đồng ý với <a href="javascript:void(0)" class="sl-link" id="slLinkTerms">điều khoản học tập</a></span>
+            </label>
           </div>
-
-          <!-- Điều khoản -->
-          <label class="sl-checkbox-row">
-            <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
-            <span class="sl-checkbox-custom" aria-hidden="true"></span>
-            <span class="sl-checkbox-text">Đồng ý với <a href="javascript:void(0)" class="sl-link" id="slLinkTerms">điều khoản học tập</a></span>
-          </label>
         </div>
 
-        <!-- PANEL LAN: HỌC SINH ĐĂNG NHẬP BẰNG MÃ (PHÒNG MÁY KHÔNG CẦN INTERNET) -->
+        <!-- PANEL 2: HỌC SINH ĐĂNG NHẬP BẰNG MÃ HS 6 CHỮ SỐ -->
         <div id="slPanelLanStudent" class="sl-role-panel hidden">
           <div class="sl-form-group">
             <label class="sl-form-label">Chọn Khối lớp:</label>
@@ -1861,28 +1867,19 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin-bottom: 1rem;">
-            <div>
-              <label for="slInputLanClass" class="sl-form-label">Lớp học:</label>
-              <input type="text" id="slInputLanClass" class="sl-input" placeholder="Lớp (VD: 9A)" maxlength="6" style="text-transform: uppercase; font-weight: 700; text-align: center;">
+          <div class="sl-form-group" style="margin-top: 1rem;">
+            <label for="slInputStudentPasscode" class="sl-form-label">Mã HS (6 chữ số):</label>
+            <div class="sl-input-wrap">
+              <input type="text" id="slInputStudentPasscode" class="sl-input" placeholder="Nhập mã 6 chữ số..." maxlength="6" pattern="[0-9]*" inputmode="numeric" style="text-align: center; font-size: 1.35rem; font-weight: 700; letter-spacing: 5px;" autocomplete="one-time-code" required>
             </div>
-            <div>
-              <label for="slInputLanStudentCode" class="sl-form-label">Mã học sinh / Số máy:</label>
-              <input type="text" id="slInputLanStudentCode" class="sl-input" placeholder="Ví dụ: HS01 hoặc MAY01" autocomplete="username" style="text-transform: uppercase; font-weight: 700;">
-            </div>
-          </div>
-
-          <div class="sl-form-group">
-            <label for="slInputLanPassword" class="sl-form-label">Mật khẩu (nếu có):</label>
-            <input type="password" id="slInputLanPassword" class="sl-input" placeholder="Mặc định: 123456 (hoặc để trống)" autocomplete="current-password">
+            <p style="text-align: center; font-size: 0.8rem; color: #94a3b8; margin: 6px 0 0;">Mã 6 chữ số do Giáo viên cấp để vào học</p>
           </div>
 
           <div id="slLanAuthMsg" class="sl-auth-msg hidden" role="alert"></div>
 
-          <button id="slBtnLanLogin" class="sl-submit-btn" type="button" style="margin-top: 0.5rem; background: linear-gradient(135deg, #0284c7, #0369a1);">
-            <span>🚀 Vào học ngay (Phòng LAN)</span>
+          <button id="slBtnLanLogin" class="sl-submit-btn" type="button" style="margin-top: 0.85rem; background: linear-gradient(135deg, #0284c7, #0369a1);">
+            <span>🚀 Vào học</span>
           </button>
-          <p class="sl-teacher-hint" style="text-align: center; margin-top: 8px;">Dành riêng cho học sinh tại phòng máy trường học không có kết nối Google.</p>
         </div>
 
         <!-- PANEL 2: GIÁO VIÊN & QUẢN TRỊ -->

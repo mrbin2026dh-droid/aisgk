@@ -3661,7 +3661,7 @@ function openEditStudentModal(student) {
   if (idInp) idInp.value = student.id;
   if (classInp) classInp.value = studentMgmtState.currentClass || "9A";
   if (nameInp) nameInp.value = student.full_name || "";
-  if (codeInp) codeInp.value = student.student_code || "";
+  if (codeInp) codeInp.value = student.student_code || String(Math.floor(100000 + Math.random() * 900000));
   if (passInp) passInp.value = student.password || "123456";
   if (emailInp) emailInp.value = student.email || "";
 
@@ -3669,6 +3669,15 @@ function openEditStudentModal(student) {
 }
 
 function initEditStudentModal() {
+  const btnGenCode = document.getElementById("btnGenEditCode");
+  if (btnGenCode) {
+    btnGenCode.addEventListener("click", () => {
+      const codeInp = document.getElementById("smEditStudentCode");
+      if (codeInp) {
+        codeInp.value = String(Math.floor(100000 + Math.random() * 900000));
+      }
+    });
+  }
   const modal = document.getElementById("smEditStudentModal");
   const btnClose = document.getElementById("smBtnCloseEditModal");
   const btnCancel = document.getElementById("smBtnCancelEdit");
@@ -4634,6 +4643,7 @@ function checkAndListenStudentStatus(classCode, uid) {
 
   studentRef.on("value", callback);
   studentBlockListenerUnsub = () => studentRef.off("value", callback);
+  initStudentPresence(classCode, uid);
 }
 
 function showStudentBlockedOverlay(name, classCode) {
@@ -4662,10 +4672,6 @@ function hideStudentBlockedOverlay() {
 function openStudentLoginPortal() {
   const portal = document.getElementById("studentLoginPortal");
   if (!portal) return;
-  const inputClass = document.getElementById("slInputGoogleClass") || document.getElementById("slInputClassCode") || document.getElementById("slInputLanClass");
-  if (inputClass && studentAuthState.classCode) {
-    inputClass.value = studentAuthState.classCode;
-  }
   portal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -4681,20 +4687,13 @@ async function handleStudentGoogleSignIn() {
     return;
   }
 
-  const inputClassEl = document.getElementById("slInputGoogleClass") || document.getElementById("slInputClassCode");
   let selectedGrade = 9;
-  const activeGradePill = document.querySelector(".sl-grade-pill.active");
+  const activeGradePill = document.querySelector("#slGradeSelector .sl-grade-pill.active") || document.querySelector(".sl-grade-pill.active");
   if (activeGradePill && activeGradePill.dataset.grade) {
     selectedGrade = parseInt(activeGradePill.dataset.grade, 10);
   }
 
-  let classCodeVal = (inputClassEl ? inputClassEl.value.trim().toUpperCase() : "");
-  if (!classCodeVal) {
-    classCodeVal = `${selectedGrade}A`;
-  } else {
-    const match = classCodeVal.match(/^(\d+)/);
-    if (match) selectedGrade = parseInt(match[1], 10);
-  }
+  let classCodeVal = `${selectedGrade}A`;
 
   if (btn) {
     btn.disabled = true;
@@ -4840,6 +4839,132 @@ async function handleStudentGoogleSignIn() {
     }
   }
 }
+
+// Đăng nhập Học sinh bằng Facebook (OAuth Firebase & Hướng dẫn Cấu hình)
+async function handleStudentFacebookSignIn() {
+  const btn = document.getElementById("btnFacebookSignIn");
+  const chkAgree = document.getElementById("slChkAgreeTerms");
+
+  if (chkAgree && !chkAgree.checked) {
+    alert("Em vui lòng đánh dấu đồng ý với hướng dẫn sử dụng trước khi tiếp tục nhé!");
+    return;
+  }
+
+  let selectedGrade = 9;
+  const activeGradePill = document.querySelector("#slGradeSelector .sl-grade-pill.active") || document.querySelector(".sl-grade-pill.active");
+  if (activeGradePill && activeGradePill.dataset.grade) {
+    selectedGrade = parseInt(activeGradePill.dataset.grade, 10);
+  }
+
+  let classCodeVal = `${selectedGrade}A`;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span style="display:inline-block; animation: spin 1s infinite linear;">⏳</span> <span>Đang kết nối Facebook...</span>` /* sanitize */;
+  }
+
+  try {
+    initFirebaseApp();
+
+    if (typeof firebase !== "undefined" && firebase.auth) {
+      try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch (persErr) {
+        console.warn("Lỗi thiết lập persistence:", persErr);
+      }
+
+      let user = null;
+      try {
+        const provider = new firebase.auth.FacebookAuthProvider();
+        provider.addScope("email");
+        provider.addScope("public_profile");
+        provider.setCustomParameters({ display: "popup" });
+        const result = await firebase.auth().signInWithPopup(provider);
+        user = result.user;
+      } catch (fbErr) {
+        console.warn("Facebook OAuth Error:", fbErr);
+        const code = fbErr.code || "";
+        if (code.includes("operation-not-supported") || code.includes("configuration-not-found") || code.includes("auth-domain") || code.includes("invalid-api-key")) {
+          alert("ℹ️ Hướng dẫn tích hợp Facebook Login:\n\nĐể học sinh đăng nhập trực tiếp qua tài khoản Facebook cá nhân, Thầy/Cô hãy cấu hình Facebook App ID & App Secret tại Firebase Console (Authentication > Sign-in method > Facebook).\n\nHệ thống đang cấp phiên đăng nhập thử nghiệm Facebook để em học tập ngay bây giờ!");
+          user = {
+            uid: "fb_user_" + Math.random().toString(36).substring(2, 9),
+            displayName: "Học sinh Facebook",
+            email: "student.fb@thcs.edu.vn",
+            photoURL: ""
+          };
+        } else if (code.includes("popup-closed-by-user")) {
+          return;
+        } else {
+          throw fbErr;
+        }
+      }
+
+      if (firebase.database) {
+        try {
+          const stdTreeSnap = await firebase.database().ref("students").once("value");
+          if (stdTreeSnap.exists()) {
+            const allStudents = stdTreeSnap.val();
+            for (const [_cKey, cList] of Object.entries(allStudents)) {
+              if (cList && cList[user.uid]) {
+                const existingProf = cList[user.uid];
+                if (existingProf.class_code) {
+                  classCodeVal = existingProf.class_code;
+                  if (existingProf.grade) selectedGrade = existingProf.grade;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (scanErr) {
+          console.debug("Existing profile check:", scanErr);
+        }
+      }
+
+      studentAuthState.isLoggedIn = true;
+      studentAuthState.uid = user.uid;
+      studentAuthState.studentName = user.displayName || "Học sinh Facebook";
+      studentAuthState.studentEmail = user.email || "";
+      studentAuthState.studentAvatar = user.photoURL || "";
+      studentAuthState.classCode = classCodeVal;
+      studentAuthState.grade = selectedGrade;
+      studentAuthState.isBlocked = false;
+
+      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+      updateHeaderStudentAuthUI();
+
+      if (firebase.database) {
+        try {
+          const studentCode = user.email ? user.email.split("@")[0].toUpperCase() : user.uid.substring(0, 6).toUpperCase();
+          await firebase.database().ref(`students/${classCodeVal}/${user.uid}`).update({
+            uid: user.uid,
+            student_code: studentCode,
+            full_name: user.displayName || "Học sinh Facebook",
+            email: user.email || "",
+            avatar: user.photoURL || "",
+            class_code: classCodeVal,
+            grade: selectedGrade,
+            provider: "facebook",
+            is_blocked: false,
+            last_active: new Date().toISOString()
+          });
+        } catch (dbErr) {
+          console.warn("Lỗi lưu hồ sơ Facebook:", dbErr);
+        }
+      }
+
+      portalDirectClose();
+    }
+  } catch (err) {
+    console.error("Lỗi đăng nhập Facebook:", err);
+    alert("Lỗi kết nối Facebook: " + (err.message || err));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="sl-facebook-svg" width="20" height="20" viewBox="0 0 24 24" fill="#ffffff"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg><span>Tiếp tục với Facebook</span>` /* sanitize */;
+    }
+  }
+}
+
 
 function portalDirectClose() {
   const portal = document.getElementById("studentLoginPortal");
@@ -5034,8 +5159,8 @@ function initStudentAuthPortal() {
         tabLan.setAttribute("aria-selected", "true");
       }
       if (panelLan) panelLan.classList.remove("hidden");
-      if (roleBadge) roleBadge.textContent = "HỌC SINH PHÒNG MÁY (LAN)";
-      const codeInp = document.getElementById("slInputLanStudentCode");
+      if (roleBadge) roleBadge.textContent = "HỌC SINH (MÃ HS 6 CHỮ SỐ)";
+      const codeInp = document.getElementById("slInputStudentPasscode");
       if (codeInp) setTimeout(() => codeInp.focus(), 120);
     } else {
       if (tabStudent) {
@@ -5051,59 +5176,70 @@ function initStudentAuthPortal() {
   if (tabLan) tabLan.addEventListener("click", () => switchLoginRole("lan"));
   if (tabTeacher) tabTeacher.addEventListener("click", () => switchLoginRole("teacher"));
 
-  // Đăng nhập Học sinh bằng Mã Phòng Máy LAN (Hình 2 - Không cần Internet/Google)
+  // Đăng nhập Học sinh bằng Mã HS 6 chữ số
   async function handleLanStudentLogin() {
     initFirebaseApp();
-    const inputClass = document.getElementById("slInputLanClass");
-    const inputCode = document.getElementById("slInputLanStudentCode");
-    const inputPass = document.getElementById("slInputLanPassword");
+    const inputPasscode = document.getElementById("slInputStudentPasscode");
     const msgEl = document.getElementById("slLanAuthMsg");
     const btnLogin = document.getElementById("slBtnLanLogin");
 
-    const classVal = (inputClass ? inputClass.value.trim().toUpperCase() : "");
-    const codeVal = (inputCode ? inputCode.value.trim().toUpperCase() : "");
-
-    if (!classVal) {
-      if (msgEl) {
-        msgEl.className = "sl-auth-msg error";
-        msgEl.textContent = "Vui lòng nhập tên Lớp của em (ví dụ: 9A, 9B, 6A)!";
-        msgEl.classList.remove("hidden");
-      }
-      if (inputClass) inputClass.focus();
-      return;
-    }
-    const passVal = (inputPass ? inputPass.value.trim() : "");
+    const codeVal = (inputPasscode ? inputPasscode.value.trim().toUpperCase() : "");
 
     if (!codeVal) {
       if (msgEl) {
         msgEl.className = "sl-auth-msg error";
-        msgEl.textContent = "Vui lòng nhập Mã học sinh hoặc số máy!";
+        msgEl.textContent = "Vui lòng nhập Mã học sinh (6 chữ số)!";
         msgEl.classList.remove("hidden");
       }
-      if (inputCode) inputCode.focus();
+      if (inputPasscode) inputPasscode.focus();
       return;
+    }
+
+    if (!/^\d{6}$/.test(codeVal)) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = "Mã học sinh phải là dãy số gồm đúng 6 chữ số!";
+        msgEl.classList.remove("hidden");
+      }
+      if (inputPasscode) inputPasscode.focus();
+      return;
+    }
+
+    let selectedGrade = 9;
+    const activeGradePill = document.querySelector("#slLanGradeSelector .sl-grade-pill.active") || document.querySelector(".sl-grade-pill.active");
+    if (activeGradePill && activeGradePill.dataset.grade) {
+      selectedGrade = parseInt(activeGradePill.dataset.grade, 10);
     }
 
     if (btnLogin) {
       btnLogin.disabled = true;
-      btnLogin.textContent = "⏳ Đang xác thực phòng LAN...";
+      btnLogin.textContent = "⏳ Đang xác thực...";
     }
 
     try {
       let studentData = null;
       let studentUid = null;
+      let studentClass = `${selectedGrade}A`;
 
+      // 1. Quét tìm mã học sinh 6 số trên toàn bộ các lớp trong Firebase Realtime Database
       if (window.firebase && firebase.database) {
         try {
-          const snap = await firebase.database().ref(`students/${classVal}`).once("value");
+          const snap = await firebase.database().ref("students").once("value");
           if (snap.exists()) {
-            const val = snap.val();
-            for (const [key, s] of Object.entries(val)) {
-              if (s && (s.student_code === codeVal || (s.email && s.email.split("@")[0].toUpperCase() === codeVal))) {
-                studentData = s;
-                studentUid = key;
-                break;
+            const allTree = snap.val();
+            for (const [cls, list] of Object.entries(allTree)) {
+              if (list) {
+                for (const [key, s] of Object.entries(list)) {
+                  if (s && (String(s.student_code) === codeVal || String(s.password) === codeVal)) {
+                    studentData = s;
+                    studentUid = key;
+                    studentClass = s.class_code || cls;
+                    if (s.grade) selectedGrade = s.grade;
+                    break;
+                  }
+                }
               }
+              if (studentData) break;
             }
           }
         } catch (dbErr) {
@@ -5111,23 +5247,24 @@ function initStudentAuthPortal() {
         }
       }
 
-      // Nếu chưa có trên Firebase hoặc đang offline: Cấp phiên học sinh hợp lệ
+      // 2. Nếu chưa có trên Firebase: Cấp phiên học sinh mới với mã 6 số này
       if (!studentData) {
-        studentUid = `lan_${classVal}_${codeVal.toLowerCase()}`;
+        studentUid = `std_code_${codeVal}`;
         studentData = {
           full_name: `Học sinh ${codeVal}`,
           student_code: codeVal,
-          class_code: classVal,
-          password: passVal || "123456"
+          class_code: studentClass,
+          grade: selectedGrade
         };
         if (window.firebase && firebase.database) {
           try {
-            await firebase.database().ref(`students/${classVal}/${studentUid}`).set({
+            await firebase.database().ref(`students/${studentClass}/${studentUid}`).set({
               uid: studentUid,
               full_name: studentData.full_name,
               student_code: codeVal,
-              email: `${codeVal.toLowerCase()}@thcs.edu.vn`,
-              class_code: classVal,
+              email: `${codeVal}@thcs.edu.vn`,
+              class_code: studentClass,
+              grade: selectedGrade,
               progress_percent: 0,
               average_score: 0,
               status: "learning",
@@ -5144,58 +5281,26 @@ function initStudentAuthPortal() {
         throw new Error("Tài khoản của em đang bị Giáo viên tạm khóa!");
       }
 
-      if (studentData.password && passVal && studentData.password !== passVal) {
-        throw new Error("Mật khẩu phòng máy không chính xác! Vui lòng hỏi Giáo viên.");
-      }
-
       studentAuthState.isLoggedIn = true;
       studentAuthState.studentName = studentData.full_name || `Học sinh ${codeVal}`;
-      studentAuthState.studentEmail = studentData.email || `${codeVal.toLowerCase()}@thcs.edu.vn`;
+      studentAuthState.studentEmail = studentData.email || `${codeVal}@thcs.edu.vn`;
       studentAuthState.studentCode = codeVal;
       studentAuthState.uid = studentUid;
-      studentAuthState.classCode = classVal;
-      const matchGrade = classVal.match(/^(\d+)/);
-      studentAuthState.grade = matchGrade ? parseInt(matchGrade[1], 10) : 9;
+      studentAuthState.classCode = studentClass;
+      studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = false;
 
-      // Khôi phục tiến trình từ Firebase nếu có
-      if (studentData && studentData.progress) {
-        try {
-          const sKey = `ai_sgk_student_progress_${studentUid}`;
-          localStorage.setItem(sKey, JSON.stringify(studentData.progress));
-        } catch (progStorageErr) {
-          console.warn("Lỗi lưu progress từ Firebase:", progStorageErr);
-        }
-      }
-
-      // Kích hoạt Realtime Presence trên Firebase
-      initStudentPresence(classVal, studentUid);
-
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
-
-      if (msgEl) {
-        msgEl.className = "sl-auth-msg success";
-        msgEl.textContent = "✔ Đăng nhập thành công! Đang chuyển vào bài học...";
-        msgEl.classList.remove("hidden");
-      }
-
       updateHeaderStudentAuthUI();
-      checkAndListenStudentStatus(classVal, studentUid);
 
-      setTimeout(async () => {
-        portalDirectClose();
-        if (state.grade !== studentAuthState.grade) {
-          await switchGrade(studentAuthState.grade);
-        } else {
-          applyGradeLocking();
-        }
-        switchView("dashboard");
-        if (typeof updateStudentDashboardRealData === "function") {
-          updateStudentDashboardRealData();
-        }
-      }, 400);
+      portalDirectClose();
 
+      if (state.grade !== studentAuthState.grade) {
+        await switchGrade(studentAuthState.grade);
+      }
+      switchView("dashboard");
     } catch (err) {
+      console.error("Lỗi đăng nhập Mã HS:", err);
       if (msgEl) {
         msgEl.className = "sl-auth-msg error";
         msgEl.textContent = err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại!";
@@ -5204,27 +5309,35 @@ function initStudentAuthPortal() {
     } finally {
       if (btnLogin) {
         btnLogin.disabled = false;
-        btnLogin.textContent = "🚀 Vào học ngay (Phòng LAN)";
+        btnLogin.textContent = "🚀 Vào học";
       }
     }
+  }
+
+  const btnFacebookSignIn = document.getElementById("btnFacebookSignIn");
+  if (btnFacebookSignIn) {
+    btnFacebookSignIn.addEventListener("click", handleStudentFacebookSignIn);
   }
 
   const btnLanLogin = document.getElementById("slBtnLanLogin");
   if (btnLanLogin) btnLanLogin.addEventListener("click", handleLanStudentLogin);
 
-  // Bộ chọn Khối lớp trong Tab LAN
+  const inputPasscodeEl = document.getElementById("slInputStudentPasscode");
+  if (inputPasscodeEl) {
+    inputPasscodeEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleLanStudentLogin();
+      }
+    });
+  }
+
+  // Bộ chọn Khối lớp trong Tab Mã HS
   const slLanGradePills = document.querySelectorAll("#slLanGradeSelector .sl-grade-pill");
-  const inputLanClass = document.getElementById("slInputLanClass");
   slLanGradePills.forEach(pill => {
     pill.addEventListener("click", () => {
       slLanGradePills.forEach(p => p.classList.remove("active"));
       pill.classList.add("active");
-      const g = pill.dataset.grade;
-      if (inputLanClass && g) {
-        const curVal = inputLanClass.value.trim().toUpperCase();
-        const letter = curVal.replace(/^\d+/, "") || "A";
-        inputLanClass.value = `${g}${letter}`;
-      }
     });
   });
 

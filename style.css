@@ -5021,6 +5021,38 @@ button, input, textarea, select {
   transform: none;
 }
 
+/* Nút Facebook Login */
+.sl-facebook-btn {
+  width: 100%;
+  height: 46px;
+  background: #1877f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+.sl-facebook-btn:hover {
+  background: #166fe5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.35);
+}
+.sl-facebook-btn:active {
+  transform: translateY(0);
+}
+.sl-facebook-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Đường phân cách */
 .sl-auth-divider {
   display: flex;
@@ -5135,11 +5167,14 @@ button, input, textarea, select {
 .sl-checkbox-row {
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 8px;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #94a3b8;
   margin-top: 14px;
   cursor: pointer;
+  width: 100%;
 }
 
 .sl-checkbox-native {
