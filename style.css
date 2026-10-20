@@ -5550,13 +5550,15 @@ button, input, textarea, select {
 }
 
 /* Thích ứng không gian khi mở Gia sư Socrates hoặc màn hình laptop */
-@media (max-width: 1260px) {
+@media (min-width: 769px) and (max-width: 1260px) {
   .std-kpi-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
-.app-workspace.tutor-open .std-kpi-grid {
-  grid-template-columns: repeat(2, 1fr) !important;
+@media (min-width: 769px) {
+  .app-workspace.tutor-open .std-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 /* Các Block Section */
@@ -5978,14 +5980,71 @@ button, input, textarea, select {
     width: 100%;
   }
 }
-@media (max-width: 540px) {
-  .std-kpi-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 768px) {
+  /* Hero Banner gọn gàng, tinh tế trên Mobile */
   .std-hero-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  .std-hero-title {
+    font-size: 1.25rem !important;
+    margin: 0 0 4px !important;
+  }
+  .std-hero-subtitle {
+    font-size: 0.82rem !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+  }
+  .std-hero-tech-decor {
+    display: none !important;
+  }
+
+  /* 4 Thẻ KPI: 1 Cột toàn màn hình, thoáng đãng, triệt tiêu 100% cắt chữ trên điện thoại */
+  .std-kpi-grid,
+  .app-workspace.tutor-open .std-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 20px !important;
+  }
+  .std-kpi-card {
+    padding: 14px 18px !important;
+    min-height: 74px !important;
+    gap: 14px !important;
+    border-radius: 12px !important;
+  }
+  .std-kpi-icon-wrap {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 11px !important;
+    flex-shrink: 0 !important;
+  }
+  .std-kpi-body {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .std-kpi-label {
+    font-size: 0.74rem !important;
+    white-space: normal !important;
+    margin-bottom: 2px !important;
+  }
+  .std-kpi-val {
+    font-size: 1.5rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 2px !important;
+  }
+  .std-kpi-desc {
+    font-size: 0.74rem !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .std-continue-card {
+    padding: 16px 18px !important;
+    margin-bottom: 20px !important;
   }
 }
 
