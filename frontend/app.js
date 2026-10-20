@@ -1781,7 +1781,7 @@ async function switchGrade(newGrade) {
   if (studentAuthState.isLoggedIn && !isTeacherUnlocked) {
     const studentGrade = studentAuthState.grade || 9;
     if (newGrade !== studentGrade) {
-      alert(`🔒 Khối Lớp ${newGrade} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} (Lớp ${studentAuthState.classCode || "9A"}), nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
+      alert(`🔒 Khối Lớp ${newGrade} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} ${studentAuthState.classCode ? ` (Lớp ${studentAuthState.classCode})` : ""}, nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
       return;
     }
   }
@@ -1844,7 +1844,7 @@ function setupEventListeners() {
       const g = parseInt(pill.getAttribute("data-grade"), 10);
       if (pill.classList.contains("locked")) {
         const studentGrade = studentAuthState.grade || 9;
-        alert(`🔒 Khối Lớp ${g} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} (Lớp ${studentAuthState.classCode || "9A"}), nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
+        alert(`🔒 Khối Lớp ${g} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} ${studentAuthState.classCode ? ` (Lớp ${studentAuthState.classCode})` : ""}, nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
         return;
       }
       if (g === 6 || g === 9) {
@@ -4438,7 +4438,7 @@ const studentAuthState = {
   studentName: "",
   studentEmail: "",
   studentAvatar: "",
-  classCode: "9A",
+  classCode: "",
   grade: 9,
   uid: "",
   isBlocked: false
@@ -4524,10 +4524,19 @@ function updateHeaderStudentAuthUI() {
     const displayEmail = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
     if (stdName) stdName.textContent = displayName;
     if (ddName) ddName.textContent = displayName;
-    if (ddEmail) ddEmail.textContent = displayEmail;
+    if (ddEmail) {
+      const classTxt = studentAuthState.classCode ? `Lớp ${studentAuthState.classCode}` : `Khối ${studentAuthState.grade || 9}`;
+      ddEmail.textContent = isTeacherUnlocked ? "Giáo viên Tin học" : `${displayEmail} • ${classTxt}`;
+    }
     if (heroName) heroName.textContent = displayName;
     if (stdRole) {
-      stdRole.textContent = isTeacherUnlocked ? "Giáo viên Tin học" : `Học sinh lớp ${studentAuthState.classCode || "9A"}`;
+      if (isTeacherUnlocked) {
+        stdRole.textContent = "Giáo viên Tin học";
+      } else if (studentAuthState.classCode) {
+        stdRole.textContent = `Học sinh lớp ${studentAuthState.classCode}`;
+      } else {
+        stdRole.textContent = `Học sinh Khối ${studentAuthState.grade || 9}`;
+      }
     }
     if (stdAvatar) {
       if (studentAuthState.studentAvatar && studentAuthState.studentAvatar.startsWith("http")) {
@@ -4633,7 +4642,7 @@ function showStudentBlockedOverlay(name, classCode) {
   const elClass = document.getElementById("sboClassCode");
   if (!overlay) return;
   if (elName) elName.textContent = name || studentAuthState.studentName || "Học sinh";
-  if (elClass) elClass.textContent = classCode || studentAuthState.classCode || "9A";
+  if (elClass) elClass.textContent = classCode || studentAuthState.classCode || "";
   overlay.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -4653,7 +4662,7 @@ function hideStudentBlockedOverlay() {
 function openStudentLoginPortal() {
   const portal = document.getElementById("studentLoginPortal");
   if (!portal) return;
-  const inputClass = document.getElementById("slInputClassCode");
+  const inputClass = document.getElementById("slInputGoogleClass") || document.getElementById("slInputClassCode") || document.getElementById("slInputLanClass");
   if (inputClass && studentAuthState.classCode) {
     inputClass.value = studentAuthState.classCode;
   }
@@ -4666,20 +4675,22 @@ function openStudentLoginPortal() {
 async function handleStudentGoogleSignIn() {
   const btn = document.getElementById("btnGoogleSignIn");
   const chkAgree = document.getElementById("slChkAgreeTerms");
-  const inputClass = document.getElementById("slInputClassCode");
 
   if (chkAgree && !chkAgree.checked) {
     alert("Em vui lòng đánh dấu đồng ý với hướng dẫn sử dụng trước khi tiếp tục nhé!");
     return;
   }
 
-  const classCodeVal = (inputClass ? inputClass.value.trim().toUpperCase() : "") || "9A";
-
-  // Xác định khối lớp được chọn từ nút .sl-grade-pill đang active hoặc từ mã lớp
+  const inputClassEl = document.getElementById("slInputGoogleClass") || document.getElementById("slInputClassCode");
   let selectedGrade = 9;
   const activeGradePill = document.querySelector(".sl-grade-pill.active");
   if (activeGradePill && activeGradePill.dataset.grade) {
     selectedGrade = parseInt(activeGradePill.dataset.grade, 10);
+  }
+
+  let classCodeVal = (inputClassEl ? inputClassEl.value.trim().toUpperCase() : "");
+  if (!classCodeVal) {
+    classCodeVal = `${selectedGrade}A`;
   } else {
     const match = classCodeVal.match(/^(\d+)/);
     if (match) selectedGrade = parseInt(match[1], 10);
@@ -4705,6 +4716,28 @@ async function handleStudentGoogleSignIn() {
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
+
+      // Kiểm tra nếu học sinh đã từng lưu hồ sơ với lớp học thực trên Firebase
+      if (firebase.database) {
+        try {
+          const stdTreeSnap = await firebase.database().ref("students").once("value");
+          if (stdTreeSnap.exists()) {
+            const allStudents = stdTreeSnap.val();
+            for (const [_cKey, cList] of Object.entries(allStudents)) {
+              if (cList && cList[user.uid]) {
+                const existingProf = cList[user.uid];
+                if (existingProf.class_code) {
+                  classCodeVal = existingProf.class_code;
+                  if (existingProf.grade) selectedGrade = existingProf.grade;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (scanErr) {
+          console.debug("Existing profile check:", scanErr);
+        }
+      }
 
       // Kiểm tra trạng thái Khóa / Chặn từ cơ sở dữ liệu Realtime
       let isBlocked = false;
@@ -5027,8 +5060,18 @@ function initStudentAuthPortal() {
     const msgEl = document.getElementById("slLanAuthMsg");
     const btnLogin = document.getElementById("slBtnLanLogin");
 
-    const classVal = (inputClass ? inputClass.value.trim().toUpperCase() : "9A") || "9A";
+    const classVal = (inputClass ? inputClass.value.trim().toUpperCase() : "");
     const codeVal = (inputCode ? inputCode.value.trim().toUpperCase() : "");
+
+    if (!classVal) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = "Vui lòng nhập tên Lớp của em (ví dụ: 9A, 9B, 6A)!";
+        msgEl.classList.remove("hidden");
+      }
+      if (inputClass) inputClass.focus();
+      return;
+    }
     const passVal = (inputPass ? inputPass.value.trim() : "");
 
     if (!codeVal) {
@@ -5370,8 +5413,8 @@ function initStudentAuthPortal() {
   }
 
   // Bộ chọn Khối lớp trong Cổng Đăng nhập (.sl-grade-pill)
-  const slGradePills = document.querySelectorAll(".sl-grade-pill");
-  const inputClassField = document.getElementById("slInputClassCode");
+  const slGradePills = document.querySelectorAll("#slGradeSelector .sl-grade-pill");
+  const inputClassField = document.getElementById("slInputGoogleClass") || document.getElementById("slInputClassCode");
   slGradePills.forEach(pill => {
     pill.addEventListener("click", () => {
       slGradePills.forEach(p => p.classList.remove("active"));
@@ -5483,7 +5526,7 @@ function initStudentAuthPortal() {
   }
 
   // =========================================================================
-  // XỬ LÝ MODAL THÔNG TIN TÀI KHOẢN HỌC SINH (HÌNH 2)
+  // XỬ LÝ MODAL THÔNG TIN TÀI KHOẢN HỌC SINH (ĐỒNG BỘ THẬT LÊN FIREBASE)
   // =========================================================================
   const btnOpenEditProfile = document.getElementById("btnStdOpenEditProfile");
   const modalEditProfile = document.getElementById("modalStudentEditProfile");
@@ -5491,6 +5534,10 @@ function initStudentAuthPortal() {
   const btnCancelEditProfile = document.getElementById("btnCancelEditProfile");
   const btnSaveEditProfile = document.getElementById("btnSaveEditProfile");
   const inputEditName = document.getElementById("inputEditStudentName");
+  const inputEditGrade = document.getElementById("inputEditStudentGrade");
+  const inputEditClass = document.getElementById("inputEditStudentClass");
+  const lblEditCode = document.getElementById("lblEditStudentCode");
+  const lblEditEmail = document.getElementById("lblEditStudentEmail");
   const inputEditNewPass = document.getElementById("inputEditNewPassword");
   const inputEditConfirmPass = document.getElementById("inputEditConfirmPassword");
   const msgEditProfile = document.getElementById("msgEditProfile");
@@ -5506,6 +5553,18 @@ function initStudentAuthPortal() {
         inputEditName.value = studentAuthState.studentName || "";
         setTimeout(() => inputEditName.focus(), 150);
       }
+      if (inputEditGrade) {
+        inputEditGrade.value = String(studentAuthState.grade || 9);
+      }
+      if (inputEditClass) {
+        inputEditClass.value = studentAuthState.classCode || "";
+      }
+      if (lblEditCode) {
+        lblEditCode.textContent = studentAuthState.studentCode || (studentAuthState.uid || "HS001").substring(0, 10);
+      }
+      if (lblEditEmail) {
+        lblEditEmail.textContent = studentAuthState.studentEmail || `${(studentAuthState.uid || "hs").substring(0, 8)}@thcs.edu.vn`;
+      }
       if (inputEditNewPass) inputEditNewPass.value = "";
       if (inputEditConfirmPass) inputEditConfirmPass.value = "";
       if (msgEditProfile) {
@@ -5519,6 +5578,22 @@ function initStudentAuthPortal() {
     if (modalEditProfile) modalEditProfile.classList.add("hidden");
   }
 
+  if (inputEditGrade && inputEditClass) {
+    inputEditGrade.addEventListener("change", () => {
+      const g = inputEditGrade.value;
+      const cur = inputEditClass.value.trim().toUpperCase();
+      const letter = cur.replace(/^\d+/, "") || "A";
+      inputEditClass.value = `${g}${letter}`;
+    });
+    inputEditClass.addEventListener("input", () => {
+      const cur = inputEditClass.value.trim().toUpperCase();
+      const match = cur.match(/^(\d+)/);
+      if (match && ["6", "7", "8", "9"].includes(match[1])) {
+        inputEditGrade.value = match[1];
+      }
+    });
+  }
+
   if (btnOpenEditProfile) {
     btnOpenEditProfile.addEventListener("click", openEditProfileModal);
   }
@@ -5530,7 +5605,7 @@ function initStudentAuthPortal() {
   }
 
   if (btnSaveEditProfile) {
-    btnSaveEditProfile.addEventListener("click", () => {
+    btnSaveEditProfile.addEventListener("click", async () => {
       const newName = inputEditName ? inputEditName.value.trim() : "";
       if (!newName) {
         if (msgEditProfile) {
@@ -5539,6 +5614,23 @@ function initStudentAuthPortal() {
           msgEditProfile.classList.remove("hidden");
         }
         return;
+      }
+
+      let newClass = inputEditClass ? inputEditClass.value.trim().toUpperCase() : "";
+      if (!newClass) {
+        if (msgEditProfile) {
+          msgEditProfile.textContent = "Vui lòng nhập tên lớp của em (ví dụ: 9A, 9B, 6A)!";
+          msgEditProfile.className = "sl-auth-msg error";
+          msgEditProfile.classList.remove("hidden");
+        }
+        return;
+      }
+
+      let newGrade = parseInt(inputEditGrade ? inputEditGrade.value : "9", 10) || 9;
+      const matchG = newClass.match(/^(\d+)/);
+      if (matchG) {
+        newGrade = parseInt(matchG[1], 10);
+        if (inputEditGrade) inputEditGrade.value = String(newGrade);
       }
 
       const newPass = inputEditNewPass ? inputEditNewPass.value : "";
@@ -5561,15 +5653,100 @@ function initStudentAuthPortal() {
           }
           return;
         }
-        studentAuthState.studentPassword = newPass;
       }
 
+      btnSaveEditProfile.disabled = true;
+      btnSaveEditProfile.textContent = "Đang lưu...";
+
+      const oldClass = (studentAuthState.classCode || "").trim().toUpperCase();
+      const uid = studentAuthState.uid || studentAuthState.studentCode || `std_${Date.now()}`;
+
+      // 1. Đồng bộ lên Firebase Realtime Database
+      if (window.firebase && firebase.database) {
+        const db = firebase.database();
+        const updates = {
+          uid: uid,
+          full_name: newName,
+          class_code: newClass,
+          grade: newGrade,
+          updated_at: new Date().toISOString()
+        };
+        if (newPass) updates.password = newPass;
+
+        try {
+          if (oldClass && oldClass !== newClass) {
+            // Chuyển node học sinh từ students/oldClass/uid sang students/newClass/uid
+            const oldRef = db.ref(`students/${oldClass}/${uid}`);
+            const oldSnap = await oldRef.once("value");
+            const existing = oldSnap.exists() ? oldSnap.val() : {};
+            const merged = { ...existing, ...updates };
+            await db.ref(`students/${newClass}/${uid}`).set(merged);
+            await oldRef.remove();
+
+            // Cập nhật các bài nộp thi của học sinh sang mã lớp mới
+            try {
+              const subsSnap = await db.ref("exam_submissions").once("value");
+              if (subsSnap.exists()) {
+                const examsMap = subsSnap.val();
+                for (const [examId, stdSubs] of Object.entries(examsMap)) {
+                  if (stdSubs && stdSubs[uid]) {
+                    await db.ref(`exam_submissions/${examId}/${uid}`).update({
+                      student_name: newName,
+                      class_code: newClass
+                    });
+                  }
+                }
+              }
+            } catch (subErr) {
+              console.warn("Cập nhật bài thi sang lớp mới:", subErr);
+            }
+          } else {
+            await db.ref(`students/${newClass}/${uid}`).update(updates);
+            try {
+              const subsSnap = await db.ref("exam_submissions").once("value");
+              if (subsSnap.exists()) {
+                const examsMap = subsSnap.val();
+                for (const [examId, stdSubs] of Object.entries(examsMap)) {
+                  if (stdSubs && stdSubs[uid]) {
+                    await db.ref(`exam_submissions/${examId}/${uid}`).update({
+                      student_name: newName
+                    });
+                  }
+                }
+              }
+            } catch (subErr) {
+              console.warn("Cập nhật tên học sinh trên bài thi:", subErr);
+            }
+          }
+        } catch (fbErr) {
+          console.warn("Lỗi đồng bộ Firebase:", fbErr);
+        }
+      }
+
+      // 2. Cập nhật Local Storage
       studentAuthState.studentName = newName;
+      studentAuthState.classCode = newClass;
+      studentAuthState.grade = newGrade;
+      if (newPass) studentAuthState.studentPassword = newPass;
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+
+      btnSaveEditProfile.disabled = false;
+      btnSaveEditProfile.textContent = "Lưu thay đổi";
+
+      // 3. Cập nhật giao diện tức thì
       updateHeaderStudentAuthUI();
 
+      const classPill = document.getElementById("studentExamClassPill");
+      if (classPill) {
+        classPill.textContent = `Lớp ${newClass} • Khối ${newGrade}`;
+      }
+
+      if (typeof loadStudentExams === "function") {
+        loadStudentExams();
+      }
+
       if (msgEditProfile) {
-        msgEditProfile.textContent = "✓ Đã cập nhật thông tin thành công!";
+        msgEditProfile.textContent = "✓ Đã cập nhật và đồng bộ thông tin lên hệ thống!";
         msgEditProfile.className = "sl-auth-msg success";
         msgEditProfile.classList.remove("hidden");
       }
@@ -7443,6 +7620,9 @@ function renderStudentExamCards(exams, subsMap, classCode) {
       statusPillHtml = `<span class="exam-status-pill open">● Đang mở</span>`;
     }
 
+    const classDisplay = classCode || studentAuthState.classCode || "";
+    const classLabel = classDisplay ? ` • Lớp ${escapeHtml(classDisplay)}` : "";
+
     if (isCompleted) {
       const evalData = sub.evaluation || {};
       const scoreVal = evalData.score !== undefined ? evalData.score : (sub.score !== undefined ? sub.score : 0);
@@ -7452,8 +7632,8 @@ function renderStudentExamCards(exams, subsMap, classCode) {
       else if (scoreNum >= 5) badgeClass = "medium";
 
       header.innerHTML = /* sanitize */ `
-        <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
-        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)}${classLabel}</span>
+        <div class="exam-header-badges-row">
           ${statusPillHtml}
           <span class="exam-completed-badge ${badgeClass}">
             ✔ Đã làm: ${scoreNum.toFixed(1)}/10đ
@@ -7462,8 +7642,10 @@ function renderStudentExamCards(exams, subsMap, classCode) {
       `;
     } else {
       header.innerHTML = /* sanitize */ `
-        <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
-        ${statusPillHtml}
+        <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)}${classLabel}</span>
+        <div class="exam-header-badges-row">
+          ${statusPillHtml}
+        </div>
       `;
     }
 
@@ -7496,7 +7678,7 @@ function renderStudentExamCards(exams, subsMap, classCode) {
         const btnReview = document.createElement("button");
         btnReview.type = "button";
         btnReview.className = "btn-exam-review";
-        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm & Lời khuyên AI</span>`;
+        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm</span>`;
         btnReview.onclick = () => reviewStudentExam(exam.exam_id);
 
         const btnRetakeLocked = document.createElement("button");
@@ -7522,7 +7704,7 @@ function renderStudentExamCards(exams, subsMap, classCode) {
         const btnReview = document.createElement("button");
         btnReview.type = "button";
         btnReview.className = "btn-exam-review";
-        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm & Lời khuyên AI</span>`;
+        btnReview.innerHTML = /* sanitize */ `<span>👁 Xem lại bài làm</span>`;
         btnReview.onclick = () => reviewStudentExam(exam.exam_id);
 
         const btnRetake = document.createElement("button");
@@ -7581,7 +7763,7 @@ function renderClassLeaderboard(examIdFilter = "all") {
           student_id: sId,
           student_name: sub.student_name || "Học sinh",
           student_code: sub.student_code || "",
-          class_code: sub.class_code || "9A",
+          class_code: sub.class_code || studentAuthState.classCode || "",
           scores_sum: 0,
           completed_count: 0,
           total_correct: 0,
@@ -7622,7 +7804,7 @@ function renderClassLeaderboard(examIdFilter = "all") {
         student_id: s.student_id,
         student_name: s.student_name || "Học sinh",
         student_code: s.student_code || "",
-        class_code: s.class_code || "9A",
+        class_code: s.class_code || studentAuthState.classCode || "",
         score: score,
         score_display: `${score.toFixed(1)} / 10`,
         score_num: score,
@@ -7892,12 +8074,18 @@ async function loadStudentExams() {
   grid.replaceChildren();
 
   const grade = studentAuthState.grade || state.grade || 9;
-  const classCode = studentAuthState.classCode || "9A";
+  const classCode = studentAuthState.classCode || "";
   const studentId = studentAuthState.uid || studentAuthState.studentCode || "std_e2e_student_01";
 
   // Cập nhật nhãn lớp
   const classPill = document.getElementById("studentExamClassPill");
-  if (classPill) classPill.textContent = `Lớp ${classCode} • Khối ${grade}`;
+  if (classPill) {
+    if (classCode) {
+      classPill.textContent = `Lớp ${classCode} • Khối ${grade}`;
+    } else {
+      classPill.textContent = `Khối ${grade}`;
+    }
+  }
 
   // Đặt loading state
   const loadingP = document.createElement("p");
@@ -8287,7 +8475,7 @@ async function submitStudentExam() {
     student_id: studentAuthState.uid || studentAuthState.studentCode || `student_${Date.now()}`,
     student_name: studentAuthState.studentName || "Học sinh",
     student_code: studentAuthState.studentCode || "HS001",
-    class_code: studentAuthState.classCode || "9A",
+    class_code: studentAuthState.classCode || "",
     answers: examTakingState.answers,
     time_spent: timeSpentStr
   };

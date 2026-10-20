@@ -1027,7 +1027,7 @@
             </div>
           </div>
           <div class="student-exam-header-meta">
-            <span class="exam-class-pill" id="studentExamClassPill">Lớp 9A • Khối 9</span>
+            <span class="exam-class-pill" id="studentExamClassPill">Đang tải...</span>
           </div>
         </div>
 
@@ -1834,6 +1834,13 @@
             </div>
           </div>
 
+          <div class="sl-form-group" style="margin-top: 0.85rem;">
+            <label for="slInputGoogleClass" class="sl-form-label">Lớp học của em:</label>
+            <div class="sl-input-wrap">
+              <input type="text" id="slInputGoogleClass" class="sl-input" placeholder="Ví dụ: 9A, 9B, 6A..." maxlength="10" style="text-transform: uppercase; font-weight: 700;">
+            </div>
+          </div>
+
           <!-- Điều khoản -->
           <label class="sl-checkbox-row">
             <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
@@ -1857,7 +1864,7 @@
           <div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin-bottom: 1rem;">
             <div>
               <label for="slInputLanClass" class="sl-form-label">Lớp học:</label>
-              <input type="text" id="slInputLanClass" class="sl-input" value="9A" maxlength="6" style="text-transform: uppercase; font-weight: 700; text-align: center;">
+              <input type="text" id="slInputLanClass" class="sl-input" placeholder="Lớp (VD: 9A)" maxlength="6" style="text-transform: uppercase; font-weight: 700; text-align: center;">
             </div>
             <div>
               <label for="slInputLanStudentCode" class="sl-form-label">Mã học sinh / Số máy:</label>
@@ -1944,14 +1951,14 @@
         <div class="modal-title-group">
           <span class="modal-icon-badge">👤</span>
           <div>
-            <h3 class="modal-title" id="modalEditProfileTitle">Thông tin tài khoản</h3>
-            <p class="modal-subtitle">Đổi họ tên và mật khẩu học sinh</p>
+            <h3 class="modal-title" id="modalEditProfileTitle">Hồ sơ học sinh</h3>
+            <p class="modal-subtitle">Cập nhật họ tên, khối lớp và mật khẩu</p>
           </div>
         </div>
         <button type="button" class="modal-close-btn" id="btnCloseEditProfileModal" aria-label="Đóng">✕</button>
       </div>
 
-      <form class="modal-body" id="formStudentEditProfile" onsubmit="return false;" style="padding: 1.25rem 1.5rem;">
+      <form class="modal-body" id="formStudentEditProfile" onsubmit="return false;" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
         <div class="sl-form-group">
           <label class="sl-form-label" for="inputEditStudentName">Họ và tên học sinh:</label>
           <div class="sl-input-wrap">
@@ -1959,8 +1966,33 @@
           </div>
         </div>
 
-        <div class="sl-form-group" style="margin-top: 1rem;">
-          <label class="sl-form-label" for="inputEditNewPassword">Đổi mật khẩu mới <span style="font-weight: 400; color: #94a3b8; font-size: 0.8rem;">(để trống nếu không đổi)</span>:</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="sl-form-group">
+            <label class="sl-form-label" for="inputEditStudentGrade">Khối lớp:</label>
+            <div class="sl-input-wrap">
+              <select id="inputEditStudentGrade" class="sl-input" style="cursor: pointer;">
+                <option value="6">Khối 6</option>
+                <option value="7">Khối 7</option>
+                <option value="8">Khối 8</option>
+                <option value="9">Khối 9</option>
+              </select>
+            </div>
+          </div>
+          <div class="sl-form-group">
+            <label class="sl-form-label" for="inputEditStudentClass">Lớp học (*):</label>
+            <div class="sl-input-wrap">
+              <input type="text" id="inputEditStudentClass" class="sl-input" placeholder="VD: 9A, 9B..." maxlength="10" style="text-transform: uppercase; font-weight: 700;" required />
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.8rem; color: #64748b; display: flex; justify-content: space-between; align-items: center; padding: 2px 2px;">
+          <span>Mã tài khoản: <strong id="lblEditStudentCode" style="color: #38bdf8;">--</strong></span>
+          <span id="lblEditStudentEmail" style="color: #94a3b8; font-size: 0.75rem;">--</span>
+        </div>
+
+        <div class="sl-form-group">
+          <label class="sl-form-label" for="inputEditNewPassword">Đổi mật khẩu mới <span style="font-weight: 400; color: #94a3b8; font-size: 0.78rem;">(để trống nếu không đổi)</span>:</label>
           <div class="sl-input-wrap">
             <input type="password" id="inputEditNewPassword" class="sl-input" placeholder="Nhập mật khẩu mới..." autocomplete="new-password" />
           </div>
@@ -1973,14 +2005,15 @@
           </div>
         </div>
 
-        <div id="msgEditProfile" class="sl-auth-msg hidden" role="alert" style="margin-top: 0.85rem;"></div>
+        <div id="msgEditProfile" class="sl-auth-msg hidden" role="alert" style="margin-top: 0.25rem;"></div>
 
-        <div class="modal-actions-row" style="display: flex; gap: 10px; margin-top: 1.25rem;">
+        <div class="modal-actions-row" style="display: flex; gap: 10px; margin-top: 0.5rem;">
           <button type="button" class="btn-secondary" id="btnCancelEditProfile" style="flex: 1; padding: 10px; font-weight: 600;">Hủy</button>
           <button type="button" class="btn-primary" id="btnSaveEditProfile" style="flex: 1; padding: 10px; font-weight: 600;">Lưu thay đổi</button>
         </div>
       </form>
     </div>
   </div>
+
 </body>
 </html>

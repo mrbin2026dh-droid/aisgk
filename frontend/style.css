@@ -6361,13 +6361,93 @@ button, input, textarea, select {
 }
 
 /* Modal Thông tin tài khoản Học sinh */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
 .student-edit-modal-card {
-  max-width: 440px !important;
-  width: 90% !important;
+  max-width: 480px !important;
+  width: 92% !important;
   background: #0f172a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 16px !important;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75) !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.student-edit-modal-card .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.student-edit-modal-card .modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.student-edit-modal-card .modal-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.student-edit-modal-card .modal-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.student-edit-modal-card .modal-subtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.student-edit-modal-card .modal-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.student-edit-modal-card .modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 /* ==========================================================================
@@ -6647,8 +6727,14 @@ button, input, textarea, select {
 /* Lưới hiển thị thẻ đề kiểm tra */
 .exam-grid-container, .exam-student-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 1.25rem;
+}
+@media (max-width: 480px) {
+  .exam-grid-container, .exam-student-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 .exam-card-item {
@@ -6671,18 +6757,32 @@ button, input, textarea, select {
 .exam-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.85rem;
 }
 
 .exam-card-tag {
   background: rgba(56, 189, 248, 0.12);
   color: #38bdf8;
   border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.exam-header-badges-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .exam-status-pill {
@@ -7544,8 +7644,9 @@ button, input, textarea, select {
   display: flex;
   gap: 8px;
   width: 100%;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
+  align-items: stretch;
+  margin-top: auto;
+  padding-top: 0.75rem;
 }
 
 .btn-exam-sm-action {
