@@ -1784,7 +1784,11 @@ async function switchGrade(newGrade) {
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  switchView("theory");
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+    switchView("dashboard");
+  } else {
+    switchView("theory");
+  }
   updateHeaderLessonInfo();
   updateStepperButtons();
   renderCatalogModal();
@@ -2842,6 +2846,9 @@ function switchView(tabName) {
     if (completionCard) completionCard.classList.remove("active");
     if (stepTheory) stepTheory.classList.add("active");
     if (stepQuiz) stepQuiz.classList.remove("active");
+    if (typeof recordStudentTheoryRead === "function") {
+      recordStudentTheoryRead(state.grade, state.lessonId);
+    }
   } else {
     if (dashboardView) dashboardView.classList.remove("active");
     if (theoryView) theoryView.classList.remove("active");
@@ -2962,11 +2969,17 @@ function showCompletionScreen() {
   const msgEl = document.getElementById("completionMessage");
 
   if (correctCount === quiz.length) {
-    msgEl.textContent = "Xuất sắc! Em đã nắm chắc kiến thức trọng tâm về Thông tin và Dữ liệu theo chuẩn SGK Tin học 6!";
+    msgEl.textContent = `Xuất sắc! Em đã hoàn thành xuất sắc 100% câu hỏi bài học Tin học ${state.grade}!`;
   } else if (correctCount >= 2) {
-    msgEl.textContent = `Em đã hoàn thành bài luyện tập với ${correctCount}/${quiz.length} câu đúng. Hãy xem lại các câu gợi ý màu hổ phách để ghi nhớ sâu hơn nhé!`;
+    msgEl.textContent = `Em đã hoàn thành bài luyện tập với ${correctCount}/${quiz.length} câu đúng. Hãy xem lại các câu gợi ý để ghi nhớ sâu hơn nhé!`;
   } else {
     msgEl.textContent = "Đừng nản lòng nhé! Em hãy dành ít phút đọc lại Khám phá tri thức rồi bấm 'Làm lại bài luyện tập'.";
+  }
+
+  // Ghi nhận tiến trình học tập thực tế (Triệt tiêu 100% hardcode)
+  if (typeof recordStudentQuizCompletion === "function") {
+    const score10 = Number(((correctCount / quiz.length) * 10).toFixed(1));
+    recordStudentQuizCompletion(state.grade, state.lessonId, score10, correctCount, quiz.length);
   }
 }
 
@@ -4839,6 +4852,16 @@ function initStudentAuthPortal() {
       studentAuthState.grade = matchGrade ? parseInt(matchGrade[1], 10) : 9;
       studentAuthState.isBlocked = false;
 
+      // Khôi phục tiến trình từ Firebase nếu có
+      if (studentData && studentData.progress) {
+        try {
+          const sKey = `ai_sgk_student_progress_${studentUid}`;
+          localStorage.setItem(sKey, JSON.stringify(studentData.progress));
+        } catch (progStorageErr) {
+          console.warn("Lỗi lưu progress từ Firebase:", progStorageErr);
+        }
+      }
+
       // Kích hoạt Realtime Presence trên Firebase
       initStudentPresence(classVal, studentUid);
 
@@ -5329,67 +5352,384 @@ function initStudentAuthPortal() {
 
 
 /* ==========================================================================
-   MODULE: THỐNG KÊ TIẾN ĐỘ THẬT CHO DASHBOARD HỌC SINH (HÌNH 4 - TRIỆT TIÊU MOCK)
+   MODULE: HỆ THỐNG DỮ LIỆU TIẾN TRÌNH HỌC TẬP THỰC TẾ (TRIỆT TIÊU 100% MOCK)
    ========================================================================== */
+
+function getStudentStorageKey() {
+  const id = studentAuthState.uid || studentAuthState.studentCode || (studentAuthState.studentEmail ? studentAuthState.studentEmail.split("@")[0] : "local_student");
+  return `ai_sgk_student_progress_${id}`;
+}
+
+function loadStudentProgressData(grade = (studentAuthState.grade || 9)) {
+  const key = getStudentStorageKey();
+  let data = null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) data = JSON.parse(raw);
+  } catch (e) {
+    console.warn("Lỗi đọc tiến độ học sinh:", e);
+  }
+
+  // CHỈ fallback sang ai_sgk_user_progress nếu là khách chưa đăng nhập tài khoản riêng
+  if (!data && !studentAuthState.isLoggedIn) {
+    try {
+      const fallbackRaw = localStorage.getItem("ai_sgk_user_progress");
+      if (fallbackRaw) {
+        const parsed = JSON.parse(fallbackRaw);
+        if (parsed && parsed[grade]) {
+          data = { grade: grade, lessons: parsed[grade], study_dates: [] };
+        }
+      }
+    } catch (e) {
+      console.warn("Lỗi đọc fallback tiến độ:", e);
+    }
+  }
+
+  if (!data) {
+    data = {
+      grade: grade,
+      study_dates: [],
+      lessons: {}
+    };
+  }
+  return data;
+}
+
+function saveStudentProgressData(data) {
+  const key = getStudentStorageKey();
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    if (!studentAuthState.isLoggedIn) {
+      let allProg = {};
+      try {
+        const raw = localStorage.getItem("ai_sgk_user_progress");
+        if (raw) allProg = JSON.parse(raw);
+      } catch (e) {
+        console.warn("Lỗi đọc allProg:", e);
+      }
+      allProg[data.grade] = data.lessons;
+      localStorage.setItem("ai_sgk_user_progress", JSON.stringify(allProg));
+    }
+  } catch (e) {
+    console.warn("Lỗi lưu tiến độ:", e);
+  }
+
+  syncStudentProgressToFirebase(data);
+}
+
+function calculateStudentStreak(studyDates) {
+  if (!Array.isArray(studyDates) || studyDates.length === 0) return 0;
+  const uniqueDates = Array.from(new Set(studyDates)).sort().reverse();
+  const today = new Date().toISOString().split("T")[0];
+
+  const d0 = new Date(today);
+  let streak = 0;
+  let checkDate = d0;
+
+  if (!uniqueDates.includes(today)) {
+    const yesterday = new Date(d0);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.toISOString().split("T")[0];
+    if (!uniqueDates.includes(yStr)) {
+      return 0;
+    }
+    checkDate = yesterday;
+  }
+
+  let cur = new Date(checkDate);
+  while (true) {
+    const s = cur.toISOString().split("T")[0];
+    if (uniqueDates.includes(s)) {
+      streak++;
+      cur.setDate(cur.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function recordStudentTheoryRead(grade, lessonId) {
+  if (!studentAuthState.isLoggedIn || !lessonId) return;
+  const g = grade || studentAuthState.grade || 9;
+  const data = loadStudentProgressData(g);
+  data.lessons = data.lessons || {};
+  const lid = String(lessonId);
+  if (!data.lessons[lid]) {
+    data.lessons[lid] = { theory_read: false, quiz_completed: false, completed: false };
+  }
+  data.lessons[lid].theory_read = true;
+  data.lessons[lid].updated_at = Date.now();
+
+  const today = new Date().toISOString().split("T")[0];
+  data.study_dates = data.study_dates || [];
+  if (!data.study_dates.includes(today)) {
+    data.study_dates.push(today);
+  }
+
+  saveStudentProgressData(data);
+}
+
+function recordStudentQuizCompletion(grade, lessonId, score10, correctCount, totalQuestions) {
+  if (!studentAuthState.isLoggedIn || !lessonId) return;
+  const g = grade || studentAuthState.grade || 9;
+  const data = loadStudentProgressData(g);
+  data.lessons = data.lessons || {};
+  const lid = String(lessonId);
+  if (!data.lessons[lid]) {
+    data.lessons[lid] = { theory_read: true };
+  }
+  data.lessons[lid].quiz_completed = true;
+  data.lessons[lid].quiz_score = score10;
+  data.lessons[lid].correct_count = correctCount;
+  data.lessons[lid].total_questions = totalQuestions;
+  data.lessons[lid].completed = true;
+  data.lessons[lid].updated_at = Date.now();
+
+  const today = new Date().toISOString().split("T")[0];
+  data.study_dates = data.study_dates || [];
+  if (!data.study_dates.includes(today)) {
+    data.study_dates.push(today);
+  }
+
+  saveStudentProgressData(data);
+  if (typeof updateStudentDashboardRealData === "function") {
+    updateStudentDashboardRealData();
+  }
+}
+
+function syncStudentProgressToFirebase(data) {
+  if (!studentAuthState.isLoggedIn || !studentAuthState.classCode) return;
+  if (typeof firebase === "undefined" || !firebase.database) return;
+
+  const classCode = studentAuthState.classCode;
+  const studentId = studentAuthState.uid || studentAuthState.studentCode;
+  if (!studentId) return;
+
+  try {
+    const currentGrade = data.grade || 9;
+    const currentToc = getCurriculumToc(currentGrade);
+    const totalLessons = currentToc.length || 17;
+
+    const lessonsMap = data.lessons || {};
+    let completedCount = 0;
+    let totalScore = 0;
+    let scoreCount = 0;
+
+    Object.values(lessonsMap).forEach(l => {
+      if (l && l.completed) completedCount++;
+      if (l && typeof l.quiz_score === "number") {
+        totalScore += l.quiz_score;
+        scoreCount++;
+      }
+    });
+
+    const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+    const avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
+
+    firebase.database().ref(`students/${classCode}/${studentId}`).update({
+      progress_percent: progressPercent,
+      average_score: avgScore,
+      completed_lessons: completedCount,
+      progress: data,
+      last_active: Date.now()
+    }).catch(err => {
+      console.warn("Lỗi sync Firebase:", err);
+    });
+  } catch (err) {
+    console.warn("Lỗi syncStudentProgressToFirebase:", err);
+  }
+}
+
 function updateStudentDashboardRealData() {
   if (!studentAuthState.isLoggedIn) return;
 
-  const displayName = studentAuthState.studentName || "Học sinh";
+  const displayName = studentAuthState.studentName || (studentAuthState.studentCode ? `Học sinh ${studentAuthState.studentCode}` : "Học sinh");
   const heroName = document.getElementById("stdHeroName");
   if (heroName) heroName.textContent = displayName;
 
-  let userProgress = {};
-  try {
-    const raw = localStorage.getItem("ai_sgk_user_progress");
-    if (raw) userProgress = JSON.parse(raw);
-  } catch (e) {
-    console.warn('Lỗi đọc tiến độ người dùng:', e);
-  }
-
   const currentGrade = studentAuthState.grade || 9;
-  const gradeLessons = (state.availableLessons || []).filter(l => l.grade === currentGrade);
-  const totalLessons = gradeLessons.length > 0 ? gradeLessons.length : (currentGrade === 9 ? 8 : 14);
+  const currentToc = getCurriculumToc(currentGrade);
+  const totalLessons = (currentToc && currentToc.length > 0) ? currentToc.length : 17;
+
+  const studentData = loadStudentProgressData(currentGrade);
+  const lessonsMap = studentData.lessons || {};
 
   let completedCount = 0;
   let totalScore = 0;
   let scoreCount = 0;
+  let hasScore8Plus = false;
 
-  if (userProgress && userProgress[currentGrade]) {
-    const gProg = userProgress[currentGrade];
-    Object.values(gProg).forEach(lProg => {
-      if (lProg && lProg.completed) completedCount++;
-      if (lProg && typeof lProg.average_score === "number" && lProg.average_score > 0) {
-        totalScore += lProg.average_score;
-        scoreCount++;
-      }
-    });
-  }
+  Object.values(lessonsMap).forEach(lProg => {
+    if (lProg && lProg.completed) completedCount++;
+    if (lProg && typeof lProg.quiz_score === "number") {
+      totalScore += lProg.quiz_score;
+      scoreCount++;
+      if (lProg.quiz_score >= 8.0) hasScore8Plus = true;
+    }
+  });
 
   const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
   const avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
+  const streakDays = calculateStudentStreak(studentData.study_dates);
 
+  // 1. Cập nhật 4 Thẻ KPI Chỉ số
   const elProgressPercent = document.getElementById("stdKpiProgressPercent");
+  const elMiniBarFill = document.getElementById("stdKpiMiniBarFill");
   const elLessonsRatio = document.getElementById("stdKpiLessonsRatio");
   const elCompletedVal = document.getElementById("stdKpiCompletedVal");
+  const elRemainingDesc = document.getElementById("stdKpiRemainingDesc");
   const elScoreVal = document.getElementById("stdKpiScoreVal");
+  const elScoreDesc = document.getElementById("stdKpiScoreDesc");
   const elStreakVal = document.getElementById("stdKpiStreakVal");
 
   if (elProgressPercent) elProgressPercent.textContent = `${progressPercent}%`;
+  if (elMiniBarFill) elMiniBarFill.style.width = `${progressPercent}%`;
   if (elLessonsRatio) elLessonsRatio.textContent = `Đã học ${completedCount}/${totalLessons} bài`;
   if (elCompletedVal) elCompletedVal.textContent = `${completedCount}/${totalLessons}`;
-  if (elScoreVal) elScoreVal.textContent = avgScore > 0 ? String(avgScore).replace(".", ",") : "0";
-  if (elStreakVal) elStreakVal.textContent = "1 ngày";
+  if (elRemainingDesc) elRemainingDesc.textContent = `Còn lại ${Math.max(0, totalLessons - completedCount)} bài cần học`;
 
-  const nextLesson = gradeLessons.find(l => !userProgress?.[currentGrade]?.[l.id]?.completed) || gradeLessons[0];
+  if (elScoreVal) {
+    elScoreVal.textContent = scoreCount > 0 ? String(avgScore).replace(".", ",") : "--";
+  }
+  if (elScoreDesc) {
+    elScoreDesc.textContent = scoreCount > 0 ? `Trung bình từ ${scoreCount} bài kiểm tra` : "Dựa trên bài trắc nghiệm đã làm";
+  }
+  if (elStreakVal) elStreakVal.textContent = `${streakDays} ngày`;
+
+  // 2. Xác định Bài học tiếp theo cần học
+  const nextLesson = currentToc.find(l => !lessonsMap[String(l.lesson_id)]?.completed) || currentToc[0];
+  const nextLProg = lessonsMap[String(nextLesson.lesson_id)] || {};
+
+  let lessonProgressPercent = 0;
+  if (nextLProg.completed) {
+    lessonProgressPercent = 100;
+  } else {
+    if (nextLProg.theory_read) lessonProgressPercent += 40;
+    if (nextLProg.quiz_completed) lessonProgressPercent += 60;
+  }
+
   const elNextBadge = document.getElementById("stdContinueLessonBadge");
   const elNextText = document.getElementById("stdContinueNextText");
   const elBarFill = document.getElementById("stdContinueBarFill");
   const elBarVal = document.getElementById("stdContinueBarVal");
+  const elTaskSubtitle = document.getElementById("stdTaskSubtitle");
 
-  if (nextLesson) {
-    if (elNextBadge) elNextBadge.textContent = `Bài ${nextLesson.id} • ${nextLesson.topic_name || "Chủ đề A"}`;
-    if (elNextText) elNextText.textContent = `Bài tiếp theo: ${nextLesson.title || "Thiết bị có gắn bộ xử lí thông tin"}`;
+  if (elNextBadge) elNextBadge.textContent = `Bài ${nextLesson.lesson_id} • ${nextLesson.topic || "Tin học " + currentGrade}`;
+  if (elNextText) elNextText.textContent = `Bài ${nextLesson.lesson_id}: ${nextLesson.title}`;
+  if (elBarFill) elBarFill.style.width = `${lessonProgressPercent}%`;
+  if (elBarVal) elBarVal.textContent = `${lessonProgressPercent}%`;
+  if (elTaskSubtitle) elTaskSubtitle.textContent = `• Theo tiến trình Bài ${nextLesson.lesson_id}`;
+
+  // 3. Cập nhật Trạng thái Động cho Khối "Nhiệm vụ của em"
+  const elTaskTheoryStatus = document.getElementById("stdTaskTheoryStatus");
+  const elTaskQuizStatus = document.getElementById("stdTaskQuizStatus");
+  const elTaskPracticeStatus = document.getElementById("stdTaskPracticeStatus");
+
+  if (elTaskTheoryStatus) {
+    if (nextLProg.theory_read) {
+      elTaskTheoryStatus.textContent = "✓ Đã đọc lý thuyết";
+      elTaskTheoryStatus.className = "std-task-status status-done";
+    } else {
+      elTaskTheoryStatus.textContent = "⌛ Chưa học";
+      elTaskTheoryStatus.className = "std-task-status status-todo";
+    }
   }
-  if (elBarFill) elBarFill.style.width = `${progressPercent}%`;
-  if (elBarVal) elBarVal.textContent = `${progressPercent}%`;
+
+  if (elTaskQuizStatus) {
+    if (nextLProg.quiz_completed) {
+      elTaskQuizStatus.textContent = `✓ Đã làm (${nextLProg.quiz_score || 0}/10đ)`;
+      elTaskQuizStatus.className = "std-task-status status-done";
+    } else if (nextLProg.quiz_attempted) {
+      elTaskQuizStatus.textContent = "⟳ Đang làm";
+      elTaskQuizStatus.className = "std-task-status status-doing";
+    } else {
+      elTaskQuizStatus.textContent = "⌛ Chưa làm";
+      elTaskQuizStatus.className = "std-task-status status-todo";
+    }
+  }
+
+  if (elTaskPracticeStatus) {
+    if (nextLProg.practice_completed) {
+      elTaskPracticeStatus.textContent = "✓ Đã hoàn thành";
+      elTaskPracticeStatus.className = "std-task-status status-done";
+    } else {
+      elTaskPracticeStatus.textContent = "⌛ Chưa làm";
+      elTaskPracticeStatus.className = "std-task-status status-todo";
+    }
+  }
+
+  // 4. Cập nhật Thành tích học tập (Achievements)
+  const cardFirst = document.getElementById("achieveFirstLesson");
+  const statFirst = document.getElementById("achieveFirstLessonStatus");
+  if (cardFirst && statFirst) {
+    if (completedCount >= 1) {
+      cardFirst.className = "std-achieve-card unlocked";
+      statFirst.textContent = "✓ Đã mở khóa";
+    } else {
+      cardFirst.className = "std-achieve-card locked";
+      statFirst.textContent = "Chưa mở khóa (Hoàn thành 1 bài)";
+    }
+  }
+
+  const cardScore = document.getElementById("achieveHighScore");
+  const statScore = document.getElementById("achieveHighScoreStatus");
+  if (cardScore && statScore) {
+    if (hasScore8Plus) {
+      cardScore.className = "std-achieve-card unlocked";
+      statScore.textContent = "✓ Đã mở khóa";
+    } else {
+      cardScore.className = "std-achieve-card locked";
+      statScore.textContent = "Chưa mở khóa (Đạt điểm ≥ 8/10)";
+    }
+  }
+
+  const cardStreak = document.getElementById("achieveStreak");
+  const statStreak = document.getElementById("achieveStreakStatus");
+  if (cardStreak && statStreak) {
+    if (streakDays >= 3) {
+      cardStreak.className = "std-achieve-card unlocked";
+      statStreak.textContent = "✓ Đã mở khóa";
+    } else {
+      cardStreak.className = "std-achieve-card locked";
+      statStreak.textContent = "Chưa mở khóa (Học 3 ngày liên tiếp)";
+    }
+  }
+
+  // 5. Gắn sự kiện điều hướng khi click các nút
+  const btnContinue = document.getElementById("btnStdContinueStudy");
+  if (btnContinue) {
+    btnContinue.onclick = () => {
+      switchToLesson(nextLesson.lesson_id);
+      switchView("theory");
+    };
+  }
+
+  const taskTheory = document.getElementById("stdTaskTheory");
+  if (taskTheory) {
+    taskTheory.onclick = () => {
+      switchToLesson(nextLesson.lesson_id);
+      switchView("theory");
+    };
+  }
+
+  const taskQuiz = document.getElementById("stdTaskQuiz");
+  if (taskQuiz) {
+    taskQuiz.onclick = () => {
+      switchToLesson(nextLesson.lesson_id);
+      switchView("quiz");
+    };
+  }
+
+  const taskPractice = document.getElementById("stdTaskPractice");
+  if (taskPractice) {
+    taskPractice.onclick = () => {
+      switchToLesson(nextLesson.lesson_id);
+      switchView("theory");
+      setTimeout(() => {
+        const pEl = document.querySelector('[id*="thuc-hanh"], [id*="luyen-tap"], [id*="van-dung"]');
+        if (pEl) pEl.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    };
+  }
 }

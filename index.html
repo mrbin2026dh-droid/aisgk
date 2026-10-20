@@ -278,128 +278,144 @@
           </div>
         </div>
 
-        <!-- 4 Thẻ Chỉ số KPI -->
+        <!-- 4 Thẻ Chỉ số KPI Khoa học -->
         <div class="std-kpi-grid">
           <!-- KPI 1: Tiến độ học tập -->
           <div class="std-kpi-card std-kpi-progress">
-            <div class="std-donut-circle" id="stdKpiDonut">
-              <span id="stdKpiProgressPercent">25%</span>
+            <div class="std-kpi-icon-wrap bg-blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <div class="std-kpi-info">
-              <span class="std-kpi-label">Tiến độ học tập</span>
-              <span class="std-kpi-desc" id="stdKpiLessonsRatio">Đã học 2/8 bài</span>
+            <div class="std-kpi-content">
+              <div class="std-kpi-header-row">
+                <span class="std-kpi-label">Tiến độ học tập</span>
+                <span class="std-kpi-val highlight-cyan" id="stdKpiProgressPercent">0%</span>
+              </div>
+              <div class="std-kpi-bar-mini">
+                <div class="std-kpi-bar-fill" id="stdKpiMiniBarFill" style="width: 0%;"></div>
+              </div>
+              <span class="std-kpi-desc" id="stdKpiLessonsRatio">Đã học 0/17 bài</span>
             </div>
           </div>
 
           <!-- KPI 2: Bài đã hoàn thành -->
           <div class="std-kpi-card std-kpi-completed">
-            <div class="std-kpi-icon-circle bg-emerald">
+            <div class="std-kpi-icon-wrap bg-green">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div class="std-kpi-info">
-              <span class="std-kpi-label">Bài đã hoàn thành</span>
-              <span class="std-kpi-val" id="stdKpiCompletedVal">2/8</span>
+            <div class="std-kpi-content">
+              <div class="std-kpi-header-row">
+                <span class="std-kpi-label">Bài đã hoàn thành</span>
+                <span class="std-kpi-val highlight-green" id="stdKpiCompletedVal">0/17</span>
+              </div>
+              <span class="std-kpi-desc" id="stdKpiRemainingDesc">Còn lại 17 bài cần học</span>
             </div>
           </div>
 
           <!-- KPI 3: Điểm luyện tập -->
           <div class="std-kpi-card std-kpi-score">
-            <div class="std-kpi-icon-circle bg-purple">
+            <div class="std-kpi-icon-wrap bg-purple">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="#a855f7" stroke="#a855f7" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
-            <div class="std-kpi-info">
-              <span class="std-kpi-label">Điểm luyện tập</span>
-              <span class="std-kpi-val"><strong id="stdKpiScoreVal">8,4</strong><small>/10</small></span>
+            <div class="std-kpi-content">
+              <div class="std-kpi-header-row">
+                <span class="std-kpi-label">Điểm luyện tập TB</span>
+                <span class="std-kpi-val highlight-purple" id="stdKpiScoreWrap"><strong id="stdKpiScoreVal">--</strong><small>/10</small></span>
+              </div>
+              <span class="std-kpi-desc" id="stdKpiScoreDesc">Dựa trên bài trắc nghiệm đã làm</span>
             </div>
           </div>
 
           <!-- KPI 4: Chuỗi học tập -->
           <div class="std-kpi-card std-kpi-streak">
-            <div class="std-kpi-icon-circle bg-amber">
+            <div class="std-kpi-icon-wrap bg-orange">
               <span style="font-size: 1.35rem;">🔥</span>
             </div>
-            <div class="std-kpi-info">
-              <span class="std-kpi-label">Chuỗi học tập</span>
-              <span class="std-kpi-val" id="stdKpiStreakVal">3 ngày</span>
+            <div class="std-kpi-content">
+              <div class="std-kpi-header-row">
+                <span class="std-kpi-label">Chuỗi học tập</span>
+                <span class="std-kpi-val highlight-orange" id="stdKpiStreakVal">0 ngày</span>
+              </div>
+              <span class="std-kpi-desc">Duy trì học tập mỗi ngày</span>
             </div>
           </div>
         </div>
 
-        <!-- Khối Tiếp tục bài học -->
+        <!-- Khối Tiếp tục bài học (Bố cục khoa học 100% chiều rộng) -->
         <div class="std-section-card std-continue-card">
-          <div class="std-section-header">
-            <div class="std-sec-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
-              <span>Tiếp tục bài học</span>
-            </div>
-            <span class="std-sec-arrow" aria-hidden="true">›</span>
-          </div>
-          <div class="std-continue-body">
-            <div class="std-continue-graphic">
+          <div class="std-continue-banner">
+            <div class="std-continue-col-left">
               <div class="std-graphic-tech-box">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                <span class="std-dot-orbit d1"></span>
-                <span class="std-dot-orbit d2"></span>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               </div>
-            </div>
-            <div class="std-continue-details">
               <div class="std-continue-badge" id="stdContinueLessonBadge">Bài 1 • Thế giới kĩ thuật số</div>
-              <div class="std-continue-next-text" id="stdContinueNextText">Bài tiếp theo: Thiết bị có gắn bộ xử lí thông tin</div>
+            </div>
+            <div class="std-continue-col-center">
+              <div class="std-continue-meta-label">BÀI TIẾP THEO CẦN HỌC</div>
+              <h2 class="std-continue-title" id="stdContinueNextText">Bài 1: Thiết bị có gắn bộ xử lí thông tin</h2>
               <div class="std-continue-bar-row">
-                <span class="std-bar-label">Tiến độ bài học</span>
+                <span class="std-bar-label">Tiến độ bài học:</span>
                 <div class="std-bar-track">
-                  <div class="std-bar-fill" id="stdContinueBarFill" style="width: 60%;"></div>
+                  <div class="std-bar-fill" id="stdContinueBarFill" style="width: 0%;"></div>
                 </div>
-                <span class="std-bar-val" id="stdContinueBarVal">60%</span>
+                <span class="std-bar-val" id="stdContinueBarVal">0%</span>
               </div>
             </div>
-            <button id="btnStdContinueStudy" class="std-btn-continue" type="button">
-              <span>Tiếp tục học</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
+            <div class="std-continue-col-right">
+              <button id="btnStdContinueStudy" class="std-btn-continue" type="button" aria-label="Vào học ngay">
+                <span>Vào học ngay</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Khối Nhiệm vụ của em -->
+        <!-- Khối Nhiệm vụ của em (Động theo bài học hiện tại) -->
         <div class="std-section-block">
           <div class="std-block-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
             <span>Nhiệm vụ của em</span>
+            <span class="std-block-subtitle" id="stdTaskSubtitle">• Theo tiến trình Bài 1</span>
           </div>
           <div class="std-tasks-grid">
-            <!-- Nhiệm vụ 1: Luyện tập trắc nghiệm -->
+            <!-- Nhiệm vụ 1: Khám phá tri thức -->
+            <div class="std-task-card" id="stdTaskTheory" role="button" tabindex="0">
+              <div class="std-task-top-row">
+                <div class="std-task-icon-box bg-blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
+                <span class="std-task-status status-todo" id="stdTaskTheoryStatus">⌛ Chưa học</span>
+              </div>
+              <div class="std-task-info">
+                <strong class="std-task-name">Khám phá tri thức</strong>
+                <span class="std-task-desc">Nắm vững lý thuyết trọng tâm SGK</span>
+              </div>
+            </div>
+
+            <!-- Nhiệm vụ 2: Luyện tập trắc nghiệm -->
             <div class="std-task-card" id="stdTaskQuiz" role="button" tabindex="0">
-              <div class="std-task-icon-box bg-blue">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <div class="std-task-top-row">
+                <div class="std-task-icon-box bg-purple">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <span class="std-task-status status-todo" id="stdTaskQuizStatus">⌛ Chưa làm</span>
               </div>
               <div class="std-task-info">
                 <strong class="std-task-name">Luyện tập trắc nghiệm</strong>
                 <span class="std-task-desc">Kiểm tra mức độ hiểu bài</span>
-                <span class="std-task-status status-done" id="stdTaskQuizStatus">✓ Đã hoàn thành</span>
               </div>
             </div>
 
-            <!-- Nhiệm vụ 2: Bài thực hành -->
+            <!-- Nhiệm vụ 3: Bài tập thực hành -->
             <div class="std-task-card" id="stdTaskPractice" role="button" tabindex="0">
-              <div class="std-task-icon-box bg-cyan">
-                <span style="font-weight: 700; font-family: monospace;">&lt;/&gt;</span>
+              <div class="std-task-top-row">
+                <div class="std-task-icon-box bg-cyan">
+                  <span style="font-weight: 700; font-family: monospace; font-size: 1.1rem;">&lt;/&gt;</span>
+                </div>
+                <span class="std-task-status status-todo" id="stdTaskPracticeStatus">⌛ Chưa làm</span>
               </div>
               <div class="std-task-info">
-                <strong class="std-task-name">Bài thực hành</strong>
-                <span class="std-task-desc">Thực hành trên máy tính</span>
-                <span class="std-task-status status-doing" id="stdTaskPracticeStatus">⟳ Đang thực hiện</span>
-              </div>
-            </div>
-
-            <!-- Nhiệm vụ 3: Ôn tập kiến thức -->
-            <div class="std-task-card" id="stdTaskReview" role="button" tabindex="0">
-              <div class="std-task-icon-box bg-indigo">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              </div>
-              <div class="std-task-info">
-                <strong class="std-task-name">Ôn tập kiến thức</strong>
-                <span class="std-task-desc">Củng cố kiến thức trọng tâm</span>
-                <span class="std-task-status status-todo" id="stdTaskReviewStatus">⧖ Chưa làm</span>
+                <strong class="std-task-name">Bài tập thực hành</strong>
+                <span class="std-task-desc">Thực hành thao tác trên máy tính</span>
               </div>
             </div>
           </div>
@@ -412,29 +428,41 @@
             <span>Thành tích học tập</span>
           </div>
           <div class="std-achievements-grid">
-            <div class="std-achieve-card">
+            <div class="std-achieve-card locked" id="achieveFirstLesson">
               <div class="std-achieve-badge-circle bg-gold">
                 <span>🎖️</span>
               </div>
               <div class="std-achieve-info">
-                <strong class="std-achieve-title">Hoàn thành 2 bài</strong>
-                <span class="std-achieve-desc">Cố lên! Bạn đã hoàn thành 2/8 bài học.</span>
+                <strong class="std-achieve-title">Bước chân đầu tiên</strong>
+                <span class="std-achieve-desc">Hoàn thành bài học đầu tiên</span>
+                <span class="std-achieve-status" id="achieveFirstLessonStatus">Chưa mở khóa</span>
               </div>
-              <span class="std-achieve-arrow">›</span>
             </div>
 
-            <div class="std-achieve-card">
+            <div class="std-achieve-card locked" id="achieveHighScore">
+              <div class="std-achieve-badge-circle bg-purple">
+                <span>🌟</span>
+              </div>
+              <div class="std-achieve-info">
+                <strong class="std-achieve-title">Kiến thức vững vàng</strong>
+                <span class="std-achieve-desc">Đạt điểm từ 8/10 bài trắc nghiệm</span>
+                <span class="std-achieve-status" id="achieveHighScoreStatus">Chưa mở khóa</span>
+              </div>
+            </div>
+
+            <div class="std-achieve-card locked" id="achieveStreak">
               <div class="std-achieve-badge-circle bg-orange">
                 <span>🔥</span>
               </div>
               <div class="std-achieve-info">
-                <strong class="std-achieve-title">Luyện tập 3 ngày liên tiếp</strong>
-                <span class="std-achieve-desc">Duy trì thói quen học tập thật tốt!</span>
+                <strong class="std-achieve-title">Học sinh kiên trì</strong>
+                <span class="std-achieve-desc">Chuỗi học tập từ 3 ngày liên tiếp</span>
+                <span class="std-achieve-status" id="achieveStreakStatus">Chưa mở khóa</span>
               </div>
-              <span class="std-achieve-arrow">›</span>
             </div>
           </div>
         </div>
+
       </section>
 
       <!-- VIEW 1: ĐỌC LÝ THUYẾT SGK (CÁC MỤC CÓ MÀU NỀN NHẸ PHÂN BIỆT) -->
