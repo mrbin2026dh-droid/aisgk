@@ -1185,6 +1185,63 @@
             </div>
           </div>
 
+          <input type="hidden" id="examFormEditingId" value="" />
+
+          <!-- Form Soạn / Sửa Câu Hỏi Chi Tiết (Question Inline Editor) -->
+          <div id="examQuestionEditorBox" class="exam-q-editor-box hidden">
+            <div class="q-editor-header">
+              <span class="q-editor-title" id="qEditorTitle">📝 Soạn câu hỏi mới</span>
+              <input type="hidden" id="qEditorEditingIndex" value="-1" />
+            </div>
+            <div class="q-editor-body">
+              <div class="exam-form-group" style="margin-bottom: 0.75rem;">
+                <label for="qEditorContent" style="font-weight: 600; color: #f1f5f9; display: block; margin-bottom: 4px;">Nội dung câu hỏi (*):</label>
+                <textarea id="qEditorContent" class="exam-input" rows="2" style="width: 100%; resize: vertical;" placeholder="Nhập nội dung câu hỏi trắc nghiệm..."></textarea>
+              </div>
+              <div class="q-editor-options-grid">
+                <div class="exam-form-group">
+                  <label for="qEditorOptA" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Phương án A (*):</label>
+                  <input type="text" id="qEditorOptA" class="exam-input" placeholder="Lựa chọn A" />
+                </div>
+                <div class="exam-form-group">
+                  <label for="qEditorOptB" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Phương án B (*):</label>
+                  <input type="text" id="qEditorOptB" class="exam-input" placeholder="Lựa chọn B" />
+                </div>
+                <div class="exam-form-group">
+                  <label for="qEditorOptC" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Phương án C (*):</label>
+                  <input type="text" id="qEditorOptC" class="exam-input" placeholder="Lựa chọn C" />
+                </div>
+                <div class="exam-form-group">
+                  <label for="qEditorOptD" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Phương án D (*):</label>
+                  <input type="text" id="qEditorOptD" class="exam-input" placeholder="Lựa chọn D" />
+                </div>
+              </div>
+              <div class="q-editor-meta-row">
+                <div class="exam-form-group">
+                  <label for="qEditorCorrect" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Đáp án đúng (*):</label>
+                  <select id="qEditorCorrect" class="exam-select" style="font-weight: 700; color: #34d399;">
+                    <option value="A">Đáp án A</option>
+                    <option value="B">Đáp án B</option>
+                    <option value="C">Đáp án C</option>
+                    <option value="D">Đáp án D</option>
+                  </select>
+                </div>
+                <div class="exam-form-group">
+                  <label for="qEditorTopic" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Chủ đề / Mục SGK:</label>
+                  <input type="text" id="qEditorTopic" class="exam-input" placeholder="Ví dụ: Mục 1: Vai trò của thông tin" />
+                </div>
+              </div>
+              <div class="exam-form-group" style="margin-bottom: 0.75rem;">
+                <label for="qEditorExpl" style="font-size: 0.82rem; color: #94a3b8; display: block; margin-bottom: 3px;">Giải thích đáp án & Lời khuyên sư phạm (cho AI phản hồi):</label>
+                <input type="text" id="qEditorExpl" class="exam-input" placeholder="Giải thích vì sao đáp án này đúng để giúp học sinh tự học..." />
+              </div>
+              <div class="q-editor-actions">
+                <button type="button" id="btnCancelEditQ" class="btn-exam-secondary sm">Hủy</button>
+                <button type="button" id="btnSaveQToExam" class="btn-exam-primary sm">✔ Lưu câu hỏi vào đề</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Khu vực xem trước câu hỏi từ Excel hoặc thêm thủ công -->
           <div class="exam-questions-preview-box">
             <div class="preview-box-header">

@@ -1,0 +1,67 @@
+{
+  "exam_id": "exam_tin9_15p_b3",
+  "title": "Kiểm tra 15 phút – Bài 3: Đánh giá chất lượng thông tin (Tin học 9)",
+  "grade": 9,
+  "subject": "Tin học",
+  "target_classes": [
+    "Tất cả"
+  ],
+  "duration_minutes": 15,
+  "status": "published",
+  "created_at": "2026-10-20T08:30:00Z",
+  "total_questions": 4,
+  "questions": [
+    {
+      "id": "tin9_b3_q1",
+      "cau_hoi": "Khi tìm kiếm thông tin trên Internet, dấu hiệu nào sau đây cho thấy một website có độ tin cậy cao?",
+      "lua_chon": {
+        "A": "Trang web có nhiều quảng cáo nhấp nháy giật gân",
+        "B": "Tên miền thuộc tổ chức giáo dục (.edu.vn) hoặc chính phủ (.gov.vn) và ghi rõ tác giả",
+        "C": "Không ghi nguồn gốc và không có ngày tháng xuất bản",
+        "D": "Tiêu đề viết hoa toàn bộ kèm lời kêu gọi chia sẻ khẩn cấp"
+      },
+      "dap_an_dung": "B",
+      "giai_thich": "Các tên miền .gov.vn, .edu.vn thuộc các cơ quan nhà nước, trường học có quy trình kiểm duyệt nội dung chặt chẽ và tác giả rõ ràng.",
+      "muc_sgk": "Mục 2: Quy trình thực hành"
+    },
+    {
+      "id": "tin9_b3_q2",
+      "cau_hoi": "Để tìm kiếm thông tin hiệu quả và tiết kiệm thời gian trên công cụ tìm kiếm Google, em nên làm gì?",
+      "lua_chon": {
+        "A": "Sử dụng từ khóa ngắn gọn, chính xác và đặt cụm từ cần tìm trong dấu ngoặc kép \" \"",
+        "B": "Gõ toàn bộ đoạn văn dài vào ô tìm kiếm",
+        "C": "Chỉ nhấp vào kết quả đầu tiên xuất hiện mà không cần so sánh",
+        "D": "Sử dụng các từ cảm thán dài dòng"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Đặt cụm từ chính xác trong dấu ngoặc kép giúp công cụ tìm kiếm lọc đúng chuỗi từ cần tìm, giảm thiểu kết quả rác.",
+      "muc_sgk": "Mục 2: Quy trình thực hành"
+    },
+    {
+      "id": "tin9_b3_q3",
+      "cau_hoi": "Khi bắt gặp một bài viết gây xôn xao trên mạng xã hội về quy định thi cử mới, hành động chuẩn mực nhất là gì?",
+      "lua_chon": {
+        "A": "Bấm chia sẻ ngay lập tức để cảnh báo bạn bè",
+        "B": "Đối chiếu thông tin với thông báo chính thức trên website Bộ/Sở Giáo dục trước khi tin và chia sẻ",
+        "C": "Thêm bình luận chỉ trích gay gắt",
+        "D": "Bỏ qua không cần quan tâm đến tính đúng sai"
+      },
+      "dap_an_dung": "B",
+      "giai_thich": "Kiểm chứng chéo với các nguồn tin chính thống là kỹ năng số bắt buộc để phòng ngừa tin giả và thông tin sai lệch.",
+      "muc_sgk": "Mục 2: Quy trình thực hành"
+    },
+    {
+      "id": "tin9_b3_q4",
+      "cau_hoi": "Trong việc tìm hiểu hướng học tập sau THCS, việc chỉ biết điểm chuẩn mà không tìm hiểu về học phí và vị trí trường thể hiện thông tin bị thiếu tiêu chí nào?",
+      "lua_chon": {
+        "A": "Tính đầy đủ",
+        "B": "Tính mới",
+        "C": "Tính thẩm mỹ",
+        "D": "Tính bảo mật"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Thông tin thiếu các khía cạnh cần thiết để đưa ra quyết định toàn diện là thông tin vi phạm tiêu chí Tính đầy đủ.",
+      "muc_sgk": "Mục 1: Mục tiêu thực hành"
+    }
+  ]
+}
