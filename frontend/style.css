@@ -6687,7 +6687,7 @@ button, input, textarea, select {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 42px;
+  min-height: 44px;
   box-sizing: border-box;
   text-decoration: none;
 }
@@ -6954,7 +6954,7 @@ button, input, textarea, select {
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  min-height: 42px;
+  min-height: 44px;
   transition: all 0.2s ease;
 }
 .btn-taking-submit:hover {
@@ -8334,6 +8334,7 @@ tr.is-current-student td:nth-child(2) {
 }
 
 .btn-exam-review {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8357,6 +8358,7 @@ tr.is-current-student td:nth-child(2) {
 }
 
 .btn-exam-retake {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8625,6 +8627,7 @@ tr.is-current-student td:nth-child(2) {
 
 /* NÚT THI BỊ KHÓA CHO HỌC SINH */
 .btn-exam-disabled {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

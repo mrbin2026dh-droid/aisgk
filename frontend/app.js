@@ -8412,6 +8412,7 @@ async function startStudentExam(examId) {
     }
 
     activeStudentExam = examData;
+    window.activeStudentExam = examData;
     activeStudentExamFull = fullExamData;
 
     examTakingState = {
