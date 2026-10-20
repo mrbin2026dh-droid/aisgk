@@ -3900,11 +3900,11 @@ function openStudentManagementStage() {
   if (!stage || !canvas) return;
 
   // CHỐT CHẶN PHÂN QUYỀN SƯ PHẠM (RBAC):
-  // Khi học sinh đăng nhập vào, học sinh chỉ có quyền học và xem tiến độ cá nhân của mình.
-  // Không được phép truy cập Dashboard Quản lý học sinh của cả lớp!
-  if (studentAuthState.isLoggedIn && (!state.teacherUnlocked || !state.teacherToken)) {
-    alert("Khu vực Quản lý Học sinh & AI Sư phạm chỉ dành riêng cho Giáo viên bộ môn Tin học.\n\nHọc sinh chỉ có quyền học bài và xem tiến độ cá nhân của mình.");
-    switchView("dashboard");
+  // Bắt buộc phải là Giáo viên đã mở khóa PIN hợp lệ
+  const isTeacher = !!(state.teacherUnlocked && state.teacherToken);
+  if (!isTeacher) {
+    alert("Khu vực Quản lý Học sinh & AI Sư phạm chỉ dành riêng cho Giáo viên bộ môn Tin học.\n\nHọc sinh và khách chỉ có quyền học bài và xem tiến độ cá nhân của mình.");
+    switchView(studentAuthState.isLoggedIn ? "dashboard" : "theory");
     return;
   }
 
@@ -4569,8 +4569,8 @@ function updateHeaderStudentAuthUI() {
       if (switchTeacherMenu) switchTeacherMenu.classList.add("hidden");
       if (exitTeacherMenu) exitTeacherMenu.classList.remove("hidden");
     } else {
-      if (btnStudentMgmt) btnStudentMgmt.classList.remove("hidden");
-      if (btnTeacher) btnTeacher.classList.remove("hidden");
+      if (btnStudentMgmt) btnStudentMgmt.classList.add("hidden");
+      if (btnTeacher) btnTeacher.classList.add("hidden");
       if (teacherMenuSection) teacherMenuSection.classList.add("hidden");
       if (switchTeacherMenu) switchTeacherMenu.classList.remove("hidden");
       if (exitTeacherMenu) exitTeacherMenu.classList.add("hidden");
@@ -4587,6 +4587,7 @@ function handleTeacherLogout() {
   state.teacherToken = null;
   state.teacherUnlocked = false;
   state.teacherLessonData = null;
+  state.isTeacher = false;
   try {
     sessionStorage.removeItem("ai_sgk_teacher_token");
   } catch (e) {
@@ -4595,7 +4596,10 @@ function handleTeacherLogout() {
 
   const teacherModal = document.getElementById("teacherModal");
   if (teacherModal) teacherModal.classList.add("hidden");
+  const examStage = document.getElementById("examStage");
+  if (examStage) examStage.classList.add("hidden");
   closeStudentManagementStage();
+  switchView(studentAuthState.isLoggedIn ? "dashboard" : "theory");
   updateHeaderStudentAuthUI();
   alert("Đã kết thúc phiên làm việc của Giáo viên. Ứng dụng đã chuyển về chế độ Học sinh an toàn.");
 }
@@ -4657,12 +4661,7 @@ function openStudentLoginPortal() {
   document.body.style.overflow = "hidden";
 }
 
-function closeStudentLoginPortal() {
-  const portal = document.getElementById("studentLoginPortal");
-  if (!portal) return;
-  portal.classList.add("hidden");
-  document.body.style.overflow = "";
-}
+
 
 async function handleStudentGoogleSignIn() {
   const btn = document.getElementById("btnGoogleSignIn");
@@ -4844,6 +4843,11 @@ function handleStudentLogout() {
       window.firebase.auth().signOut().catch(() => {});
     }
     closeStudentManagementStage();
+    const examStage = document.getElementById("examStage");
+    if (examStage) examStage.classList.add("hidden");
+    const teacherModal = document.getElementById("teacherModal");
+    if (teacherModal) teacherModal.classList.add("hidden");
+    switchView("theory");
     updateHeaderStudentAuthUI();
     hideStudentBlockedOverlay();
     openStudentLoginPortal();
@@ -4937,7 +4941,7 @@ function initStudentAuthPortal() {
   const btnDirectSignOut = document.getElementById("btnHeaderDirectSignOut");
   const btnGoDash = document.getElementById("btnStdGoDashboard") || document.getElementById("btnStdOpenDashboard");
   const btnSboSignOut = document.getElementById("sboBtnSignOut");
-  const btnClosePortal = document.getElementById("btnCloseLoginPortal");
+
   const linkTeacherPin = document.getElementById("slLinkTeacherPinLogin");
   const btnStdTeacherMgmt = document.getElementById("btnStdTeacherMgmt");
   const btnStdTeacherStudio = document.getElementById("btnStdTeacherStudio");
@@ -4958,12 +4962,7 @@ function initStudentAuthPortal() {
     });
   }
 
-  // Nút ✕ Đóng Cổng Đăng nhập Học sinh
-  if (btnClosePortal) {
-    btnClosePortal.addEventListener("click", () => {
-      portalDirectClose();
-    });
-  }
+
 
   // PHÂN QUYỀN ĐĂNG NHẬP: TAB GOOGLE VS TAB LAN VS TAB GIÁO VIÊN (Hình 1, Hình 2)
   const tabStudent = document.getElementById("slTabStudent");
