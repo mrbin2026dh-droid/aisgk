@@ -3221,6 +3221,144 @@ async function sendChatMessage(messageText, customContext = null) {
    (Data Adapter Architecture - Sẵn sàng hoán đổi Firebase Cloud Firestore)
    ========================================================================== */
 
+function calculateRealStudentStats(s, targetGrade = 9) {
+  const totalLessons = 17;
+  let lessons = {};
+  if (s.progress && typeof s.progress === "object" && s.progress.lessons) {
+    lessons = s.progress.lessons;
+  } else if (s.lessons && typeof s.lessons === "object") {
+    lessons = s.lessons;
+  }
+
+  let completedCount = 0;
+  let startedCount = 0;
+  let totalScore = 0;
+  let scoreCount = 0;
+  let progressUnits = 0;
+
+  // Topic mapping chuẩn 5 chủ đề Tin học 9 SGK
+  const topicLessonMap = {
+    the_gioi_ki_thuat_so: [1],
+    thong_tin_giai_quyet_van_de: [2, 3],
+    danh_gia_chat_luong_thong_tin: [4],
+    su_dung_dich_vu_internet: [5, 6, 7, 8, 9, 10, 11, 12, 13],
+    phan_mem_ma_nguon_mo: [14, 15, 16, 17]
+  };
+
+  const topicData = {
+    the_gioi_ki_thuat_so: { scores: [], hasTheory: false },
+    thong_tin_giai_quyet_van_de: { scores: [], hasTheory: false },
+    danh_gia_chat_luong_thong_tin: { scores: [], hasTheory: false },
+    su_dung_dich_vu_internet: { scores: [], hasTheory: false },
+    phan_mem_ma_nguon_mo: { scores: [], hasTheory: false }
+  };
+
+  const lessonEntries = Object.entries(lessons).filter(([k, v]) => v && typeof v === "object");
+
+  lessonEntries.forEach(([lidStr, l]) => {
+    const lid = parseInt(lidStr, 10);
+    const hasTheory = !!l.theory_read;
+    const hasQuiz = !!(l.quiz_completed || typeof l.quiz_score === "number");
+    const isCompleted = !!l.completed;
+
+    if (isCompleted) {
+      completedCount++;
+      progressUnits += 1.0;
+    } else {
+      if (hasTheory) progressUnits += 0.5;
+      if (hasQuiz) progressUnits += 0.5;
+    }
+
+    if (hasTheory || hasQuiz || isCompleted) {
+      startedCount++;
+    }
+
+    if (typeof l.quiz_score === "number" && l.quiz_score >= 0 && (l.quiz_completed || isCompleted)) {
+      totalScore += l.quiz_score;
+      scoreCount++;
+    }
+
+    Object.entries(topicLessonMap).forEach(([tid, lids]) => {
+      if (lids.includes(lid)) {
+        if (typeof l.quiz_score === "number" && (l.quiz_completed || isCompleted)) {
+          topicData[tid].scores.push(l.quiz_score);
+        }
+        if (hasTheory || isCompleted) {
+          topicData[tid].hasTheory = true;
+        }
+      }
+    });
+  });
+
+  // Tính % tiến độ (đọc lý thuyết 50% bài, làm quiz 50% bài)
+  let progressPercent = totalLessons > 0 ? Math.min(100, Math.round((progressUnits / totalLessons) * 100)) : 0;
+  if (typeof s.progress_percent === "number" && s.progress_percent > progressPercent) {
+    progressPercent = s.progress_percent;
+  }
+
+  // Điểm TB
+  let avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
+  if (scoreCount === 0 && typeof s.average_score === "number" && s.average_score > 0) {
+    avgScore = s.average_score;
+    scoreCount = 1;
+  }
+
+  const topicNames = {
+    the_gioi_ki_thuat_so: "Thế giới kĩ thuật số",
+    thong_tin_giai_quyet_van_de: "Thông tin trong giải quyết vấn đề",
+    danh_gia_chat_luong_thong_tin: "Đạo đức & Dịch vụ Internet",
+    su_dung_dich_vu_internet: "Ứng dụng tin học",
+    phan_mem_ma_nguon_mo: "Giải quyết vấn đề bằng máy tính"
+  };
+
+  const topics = Object.entries(topicLessonMap).map(([tid, lids]) => {
+    const td = topicData[tid];
+    let score = 0;
+    let status = "not_started";
+
+    if (td.scores.length > 0) {
+      score = Number((td.scores.reduce((a, b) => a + b, 0) / td.scores.length).toFixed(1));
+      status = score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started");
+    } else if (td.hasTheory) {
+      score = 5.0; // Đang tự học lý thuyết
+      status = "warning"; // Biểu tượng ! (đang học)
+    } else if (Array.isArray(s.topics)) {
+      const existingT = s.topics.find(x => x.topic_id === tid);
+      if (existingT) {
+        score = existingT.score || 0;
+        status = existingT.status || "not_started";
+      }
+    }
+
+    return {
+      topic_id: tid,
+      topic_name: topicNames[tid] || tid,
+      score: score,
+      status: status
+    };
+  });
+
+  let status = "not_started";
+  if (s.is_blocked) {
+    status = "blocked";
+  } else if (progressPercent >= 100) {
+    status = "completed";
+  } else if (progressPercent > 0 || startedCount > 0) {
+    status = "learning";
+  } else if (s.status) {
+    status = s.status;
+  }
+
+  return {
+    progress_percent: progressPercent,
+    average_score: avgScore,
+    score_count: scoreCount,
+    completed_lessons: completedCount,
+    status: status,
+    topics: topics
+  };
+}
+
 class StudentDataAdapter {
   constructor() {
     this.cachedOverview = null;
@@ -3239,32 +3377,27 @@ class StudentDataAdapter {
           const val = snap.val();
           Object.entries(val).forEach(([key, s]) => {
             if (s && typeof s === "object") {
-              const code = s.student_code || (s.email ? s.email.split("@")[0].toUpperCase() : key.substring(0, 6).toUpperCase());
-              const name = s.full_name || s.studentName || s.name || "Học sinh";
-              const progress = typeof s.progress_percent === "number" ? s.progress_percent : (typeof s.progress === "number" ? s.progress : 0);
-              const score = typeof s.average_score === "number" ? s.average_score : (typeof s.score === "number" ? s.score : 0);
+              const code = s.student_code || (s.email ? s.email.split("@")[0].toUpperCase() : (key.startsWith("lan_") ? key.replace(/^lan_[^_]+_/, "").toUpperCase() : key.substring(0, 6).toUpperCase()));
+              const name = s.full_name || s.studentName || s.name || `Học sinh ${code}`;
               const isBlocked = !!s.is_blocked;
-              let status = isBlocked ? "blocked" : (s.status || (progress >= 100 ? "completed" : (progress > 0 ? "learning" : "learning")));
+
+              const stats = calculateRealStudentStats(s, grade);
 
               students.push({
                 id: key,
                 student_code: code,
                 full_name: name,
-                email: s.email || "",
+                email: s.email || `${code.toLowerCase()}@thcs.edu.vn`,
                 avatar: s.avatar || s.photoURL || "👦",
-                progress_percent: progress,
-                average_score: score,
-                status: status,
+                progress_percent: stats.progress_percent,
+                average_score: stats.average_score,
+                score_count: stats.score_count,
+                completed_lessons: stats.completed_lessons,
+                status: isBlocked ? "blocked" : stats.status,
                 is_blocked: isBlocked,
                 presence: s.presence || { online: false, last_seen: null },
                 password: s.password || "123456",
-                topics: s.topics || [
-                  { topic_id: "the_gioi_ki_thuat_so", topic_name: "Thế giới kĩ thuật số", score: score, status: score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started") },
-                  { topic_id: "thong_tin_giai_quyet_van_de", topic_name: "Thông tin trong giải quyết vấn đề", score: score, status: score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started") },
-                  { topic_id: "danh_gia_chat_luong_thong_tin", topic_name: "Đánh giá chất lượng thông tin", score: score, status: score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started") },
-                  { topic_id: "su_dung_dich_vu_internet", topic_name: "Sử dụng dịch vụ Internet", score: score, status: score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started") },
-                  { topic_id: "phan_mem_ma_nguon_mo", topic_name: "Phần mềm mã nguồn mở", score: score, status: score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started") }
-                ]
+                topics: stats.topics
               });
             }
           });
@@ -3686,6 +3819,8 @@ function openStudentManagementStage() {
 
   canvas.classList.add("hidden");
   stage.classList.remove("hidden");
+  const btnDashboard = document.getElementById("btnNavDashboard");
+  if (btnDashboard) btnDashboard.classList.remove("active");
   if (btnNav) btnNav.classList.add("active");
 
   loadStudentManagementData();
@@ -3703,6 +3838,8 @@ function closeStudentManagementStage() {
   stage.classList.add("hidden");
   canvas.classList.remove("hidden");
   if (btnNav) btnNav.classList.remove("active");
+  const btnDashboard = document.getElementById("btnNavDashboard");
+  if (btnDashboard) btnDashboard.classList.add("active");
 }
 
 async function loadStudentManagementData() {
@@ -3909,7 +4046,7 @@ function renderStudentTable(students) {
             <span class="table-progress-text">${hs.progress_percent}%</span>
           </div>
         </td>
-        <td class="td-score">${String(hs.average_score).replace(".", ",")}</td>
+        <td class="td-score">${hs.score_count > 0 ? String(hs.average_score).replace(".", ",") : "--"}</td>
         <td>
           <div class="topic-icon-matrix">
             ${topicIcons}
@@ -4060,7 +4197,7 @@ function openStudentDetailModal(student) {
         </div>
         <div style="background: #0f172a; padding: 0.85rem; border-radius: 8px; border: 1px solid #334155;">
           <div style="font-size: 0.75rem; color: #94a3b8;">Điểm trung bình</div>
-          <div style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.2rem;">${String(student.average_score).replace(".", ",")}/10</div>
+          <div style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.2rem;">${student.score_count > 0 ? String(student.average_score).replace(".", ",") + "/10" : "--"}</div>
         </div>
       </div>
       <h4 style="font-size: 0.88rem; color: #cbd5e1; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.05em;">Kết quả 5 chủ đề:</h4>
@@ -4270,13 +4407,9 @@ function updateHeaderStudentAuthUI() {
 
     const displayName = studentAuthState.studentName || "Học sinh";
 
-    // Ẩn cụm chọn khối lớp trên Header theo yêu cầu Hình 1 khi là học sinh
+    // Ẩn cụm chọn khối lớp trên Header theo yêu cầu giao diện khoa học
     if (headerGradeTabs) {
-      if (isTeacherUnlocked) {
-        headerGradeTabs.classList.remove("hidden");
-      } else {
-        headerGradeTabs.classList.add("hidden");
-      }
+      headerGradeTabs.classList.add("hidden");
     }
 
 
@@ -4318,7 +4451,7 @@ function updateHeaderStudentAuthUI() {
     if (btnAuth) btnAuth.classList.remove("hidden");
     if (userBadge) userBadge.classList.add("hidden");
     if (btnDirectSignOut) btnDirectSignOut.classList.add("hidden");
-    if (headerGradeTabs) headerGradeTabs.classList.remove("hidden");
+    if (headerGradeTabs) headerGradeTabs.classList.add("hidden");
 
 
     if (isTeacherUnlocked) {
@@ -4758,6 +4891,7 @@ function initStudentAuthPortal() {
 
   // Đăng nhập Học sinh bằng Mã Phòng Máy LAN (Hình 2 - Không cần Internet/Google)
   async function handleLanStudentLogin() {
+    initFirebaseApp();
     const inputClass = document.getElementById("slInputLanClass");
     const inputCode = document.getElementById("slInputLanStudentCode");
     const inputPass = document.getElementById("slInputLanPassword");
@@ -5500,6 +5634,7 @@ function recordStudentQuizCompletion(grade, lessonId, score10, correctCount, tot
 
 function syncStudentProgressToFirebase(data) {
   if (!studentAuthState.isLoggedIn || !studentAuthState.classCode) return;
+  initFirebaseApp();
   if (typeof firebase === "undefined" || !firebase.database) return;
 
   const classCode = studentAuthState.classCode;
@@ -5507,30 +5642,14 @@ function syncStudentProgressToFirebase(data) {
   if (!studentId) return;
 
   try {
-    const currentGrade = data.grade || 9;
-    const currentToc = getCurriculumToc(currentGrade);
-    const totalLessons = currentToc.length || 17;
-
-    const lessonsMap = data.lessons || {};
-    let completedCount = 0;
-    let totalScore = 0;
-    let scoreCount = 0;
-
-    Object.values(lessonsMap).forEach(l => {
-      if (l && l.completed) completedCount++;
-      if (l && typeof l.quiz_score === "number") {
-        totalScore += l.quiz_score;
-        scoreCount++;
-      }
-    });
-
-    const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-    const avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
+    const stats = calculateRealStudentStats({ progress: data, lessons: data.lessons }, data.grade || 9);
 
     firebase.database().ref(`students/${classCode}/${studentId}`).update({
-      progress_percent: progressPercent,
-      average_score: avgScore,
-      completed_lessons: completedCount,
+      progress_percent: stats.progress_percent,
+      average_score: stats.average_score,
+      completed_lessons: stats.completed_lessons,
+      topics: stats.topics,
+      status: stats.status,
       progress: data,
       last_active: Date.now()
     }).catch(err => {
