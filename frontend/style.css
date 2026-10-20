@@ -3321,49 +3321,49 @@ button, input, textarea, select {
   box-shadow: 0 0 10px rgba(2, 132, 199, 0.35);
 }
 
-/* Tiêu đề bài học và đề mục chuẩn hài hòa, tỷ lệ chuẩn sư phạm (Hình 3) */
+/* Tiêu đề bài học và đề mục chuẩn sư phạm: Tiêu đề mục lớn hơn nội dung (Hình 1) */
 .theory-main-title {
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
-  font-size: 1.25rem !important;
-  font-weight: 700 !important;
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
   color: #f8fafc !important;
-  margin: 0.25rem 0 0.85rem 0 !important;
+  margin: 0.25rem 0 1rem 0 !important;
   line-height: 1.35 !important;
   letter-spacing: -0.01em !important;
 }
 
 .theory-markdown-canvas .md-heading-2 {
   font-family: var(--font-display, inherit) !important;
-  font-size: 1.05rem !important;
+  font-size: 1.35rem !important;
   font-weight: 700 !important;
   color: #38bdf8 !important;
-  margin: 1.25rem 0 0.45rem 0 !important;
+  margin: 1.75rem 0 0.85rem 0 !important;
   line-height: 1.4 !important;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15) !important;
-  padding-bottom: 0.35rem !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2) !important;
+  padding-bottom: 0.45rem !important;
 }
 
 .theory-markdown-canvas .md-heading-3 {
   font-family: var(--font-display, inherit) !important;
-  font-size: 0.98rem !important;
-  font-weight: 600 !important;
-  color: #e2e8f0 !important;
-  margin: 1rem 0 0.35rem 0 !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #f8fafc !important;
+  margin: 1.5rem 0 0.75rem 0 !important;
   line-height: 1.4 !important;
 }
 
 @media (max-width: 768px) {
   .theory-main-title {
-    font-size: 1.12rem !important;
-    margin: 0.2rem 0 0.65rem 0 !important;
+    font-size: 1.32rem !important;
+    margin: 0.2rem 0 0.75rem 0 !important;
   }
   .theory-markdown-canvas .md-heading-2 {
-    font-size: 1rem !important;
-    margin: 1rem 0 0.4rem 0 !important;
+    font-size: 1.18rem !important;
+    margin: 1.25rem 0 0.6rem 0 !important;
   }
   .theory-markdown-canvas .md-heading-3 {
-    font-size: 0.92rem !important;
-    margin: 0.85rem 0 0.3rem 0 !important;
+    font-size: 1.12rem !important;
+    margin: 1.1rem 0 0.5rem 0 !important;
   }
 }
 
@@ -6143,4 +6143,14 @@ button, input, textarea, select {
   .std-kpi-grid {
     grid-template-columns: 1fr 1fr !important;
   }
+}
+
+/* Modal Thông tin tài khoản Học sinh */
+.student-edit-modal-card {
+  max-width: 440px !important;
+  width: 90% !important;
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
 }

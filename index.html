@@ -152,9 +152,9 @@
                 <span>📝</span> <span>Biên soạn SGK (Teacher Studio)</span>
               </button>
             </li>
-            <li id="stdMenuSwitchTeacher">
-              <button type="button" class="std-dropdown-item" id="btnStdOpenTeacherAuth">
-                <span>🔑</span> <span>Xác thực quyền Giáo viên (Nhập PIN)</span>
+            <li id="stdMenuEditProfile">
+              <button type="button" class="std-dropdown-item" id="btnStdOpenEditProfile">
+                <span>👤</span> <span>Thông tin tài khoản</span>
               </button>
             </li>
             <li id="stdMenuExitTeacher" class="hidden">
@@ -1270,24 +1270,12 @@
             </div>
           </div>
 
-          <!-- Nhập Mã Lớp -->
-          <div class="sl-form-group">
-            <label for="slInputClassCode" class="sl-form-label">Lớp:</label>
-            <div class="sl-input-wrap">
-              <input type="text" id="slInputClassCode" class="sl-input" placeholder="Ví dụ: 9A, 9B, 6A" value="9A" maxlength="15" autocomplete="off">
-            </div>
-          </div>
-
           <!-- Điều khoản -->
           <label class="sl-checkbox-row">
             <input type="checkbox" id="slChkAgreeTerms" class="sl-checkbox-native" checked>
             <span class="sl-checkbox-custom" aria-hidden="true"></span>
             <span class="sl-checkbox-text">Đồng ý với <a href="javascript:void(0)" class="sl-link" id="slLinkTerms">điều khoản học tập</a></span>
           </label>
-
-          <div class="sl-auth-footer-help">
-            <span>Gặp sự cố? <a href="javascript:void(0)" class="sl-link" id="slLinkTeacherHelp">Hỏi giáo viên</a></span>
-          </div>
         </div>
 
         <!-- PANEL 2: GIÁO VIÊN & QUẢN TRỊ -->
@@ -1346,5 +1334,50 @@
 
   <!-- Logic Ứng dụng & Hiệu ứng Đánh máy Typewriter -->
   <script src="app.js?v=6.0"></script>
+  <!-- MODAL THÔNG TIN TÀI KHOẢN: ĐỔI HỌ TÊN & MẬT KHẨU (HÌNH 2) -->
+  <div class="modal-overlay hidden" id="modalStudentEditProfile" role="dialog" aria-modal="true" aria-labelledby="modalEditProfileTitle">
+    <div class="modal-card student-edit-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon-badge">👤</span>
+          <div>
+            <h3 class="modal-title" id="modalEditProfileTitle">Thông tin tài khoản</h3>
+            <p class="modal-subtitle">Đổi họ tên và mật khẩu học sinh</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseEditProfileModal" aria-label="Đóng">✕</button>
+      </div>
+
+      <form class="modal-body" id="formStudentEditProfile" onsubmit="return false;" style="padding: 1.25rem 1.5rem;">
+        <div class="sl-form-group">
+          <label class="sl-form-label" for="inputEditStudentName">Họ và tên học sinh:</label>
+          <div class="sl-input-wrap">
+            <input type="text" id="inputEditStudentName" class="sl-input" placeholder="Nhập họ và tên..." maxlength="50" autocomplete="name" required />
+          </div>
+        </div>
+
+        <div class="sl-form-group" style="margin-top: 1rem;">
+          <label class="sl-form-label" for="inputEditNewPassword">Đổi mật khẩu mới <span style="font-weight: 400; color: #94a3b8; font-size: 0.8rem;">(để trống nếu không đổi)</span>:</label>
+          <div class="sl-input-wrap">
+            <input type="password" id="inputEditNewPassword" class="sl-input" placeholder="Nhập mật khẩu mới..." autocomplete="new-password" />
+          </div>
+        </div>
+
+        <div class="sl-form-group">
+          <label class="sl-form-label" for="inputEditConfirmPassword">Xác nhận mật khẩu mới:</label>
+          <div class="sl-input-wrap">
+            <input type="password" id="inputEditConfirmPassword" class="sl-input" placeholder="Nhập lại mật khẩu mới..." autocomplete="new-password" />
+          </div>
+        </div>
+
+        <div id="msgEditProfile" class="sl-auth-msg hidden" role="alert" style="margin-top: 0.85rem;"></div>
+
+        <div class="modal-actions-row" style="display: flex; gap: 10px; margin-top: 1.25rem;">
+          <button type="button" class="btn-secondary" id="btnCancelEditProfile" style="flex: 1; padding: 10px; font-weight: 600;">Hủy</button>
+          <button type="button" class="btn-primary" id="btnSaveEditProfile" style="flex: 1; padding: 10px; font-weight: 600;">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

@@ -4794,6 +4794,105 @@ function initStudentAuthPortal() {
     });
   }
 
+  // =========================================================================
+  // XỬ LÝ MODAL THÔNG TIN TÀI KHOẢN HỌC SINH (HÌNH 2)
+  // =========================================================================
+  const btnOpenEditProfile = document.getElementById("btnStdOpenEditProfile");
+  const modalEditProfile = document.getElementById("modalStudentEditProfile");
+  const btnCloseEditProfile = document.getElementById("btnCloseEditProfileModal");
+  const btnCancelEditProfile = document.getElementById("btnCancelEditProfile");
+  const btnSaveEditProfile = document.getElementById("btnSaveEditProfile");
+  const inputEditName = document.getElementById("inputEditStudentName");
+  const inputEditNewPass = document.getElementById("inputEditNewPassword");
+  const inputEditConfirmPass = document.getElementById("inputEditConfirmPassword");
+  const msgEditProfile = document.getElementById("msgEditProfile");
+
+  function openEditProfileModal() {
+    if (profileWrap && userDropdown) {
+      profileWrap.classList.remove("open");
+      userDropdown.classList.add("hidden");
+    }
+    if (modalEditProfile) {
+      modalEditProfile.classList.remove("hidden");
+      if (inputEditName) {
+        inputEditName.value = studentAuthState.studentName || "";
+        setTimeout(() => inputEditName.focus(), 150);
+      }
+      if (inputEditNewPass) inputEditNewPass.value = "";
+      if (inputEditConfirmPass) inputEditConfirmPass.value = "";
+      if (msgEditProfile) {
+        msgEditProfile.classList.add("hidden");
+        msgEditProfile.textContent = "";
+      }
+    }
+  }
+
+  function closeEditProfileModal() {
+    if (modalEditProfile) modalEditProfile.classList.add("hidden");
+  }
+
+  if (btnOpenEditProfile) {
+    btnOpenEditProfile.addEventListener("click", openEditProfileModal);
+  }
+  if (btnCloseEditProfile) {
+    btnCloseEditProfile.addEventListener("click", closeEditProfileModal);
+  }
+  if (btnCancelEditProfile) {
+    btnCancelEditProfile.addEventListener("click", closeEditProfileModal);
+  }
+
+  if (btnSaveEditProfile) {
+    btnSaveEditProfile.addEventListener("click", () => {
+      const newName = inputEditName ? inputEditName.value.trim() : "";
+      if (!newName) {
+        if (msgEditProfile) {
+          msgEditProfile.textContent = "Vui lòng nhập họ và tên của em!";
+          msgEditProfile.className = "sl-auth-msg error";
+          msgEditProfile.classList.remove("hidden");
+        }
+        return;
+      }
+
+      const newPass = inputEditNewPass ? inputEditNewPass.value : "";
+      const confirmPass = inputEditConfirmPass ? inputEditConfirmPass.value : "";
+
+      if (newPass || confirmPass) {
+        if (newPass.length < 4) {
+          if (msgEditProfile) {
+            msgEditProfile.textContent = "Mật khẩu mới phải có ít nhất 4 ký tự!";
+            msgEditProfile.className = "sl-auth-msg error";
+            msgEditProfile.classList.remove("hidden");
+          }
+          return;
+        }
+        if (newPass !== confirmPass) {
+          if (msgEditProfile) {
+            msgEditProfile.textContent = "Mật khẩu xác nhận không khớp!";
+            msgEditProfile.className = "sl-auth-msg error";
+            msgEditProfile.classList.remove("hidden");
+          }
+          return;
+        }
+        studentAuthState.studentPassword = newPass;
+      }
+
+      studentAuthState.studentName = newName;
+      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
+      updateHeaderStudentAuthUI();
+
+      if (msgEditProfile) {
+        msgEditProfile.textContent = "✓ Đã cập nhật thông tin thành công!";
+        msgEditProfile.className = "sl-auth-msg success";
+        msgEditProfile.classList.remove("hidden");
+      }
+
+      setTimeout(() => {
+        closeEditProfileModal();
+      }, 700);
+    });
+  }
+
+
   if (btnSignOut) {
     btnSignOut.addEventListener("click", () => {
       if (profileWrap && userDropdown) {
