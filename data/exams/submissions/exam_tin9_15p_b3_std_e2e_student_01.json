@@ -7,11 +7,36 @@
   "answers": {
     "tin9_b3_q1": "A"
   },
+  "score": 0.0,
+  "correct_count": 0,
+  "total_questions": 4,
+  "percentage": 0,
   "evaluation": {
     "score": 0.0,
     "total_questions": 4,
     "correct_count": 0,
     "percentage": 0,
+    "socratic_advice": "Kết quả chưa như mong muốn (0.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
+    "recommended_lessons": [
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Quy trình thực hành",
+        "mistakes_count": 3,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Quy trình thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Quy trình thực hành để ôn lại ngay"
+      },
+      {
+        "lesson_id": 1,
+        "topic": "Mục 1: Mục tiêu thực hành",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Mục tiêu thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 1: Mục tiêu thực hành để ôn lại ngay"
+      }
+    ],
+    "weak_topics": [
+      "Mục 2: Quy trình thực hành",
+      "Mục 1: Mục tiêu thực hành"
+    ],
     "ai_evaluation": {
       "overall_comment": "Kết quả chưa như mong muốn (0.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
       "weak_topics": {
@@ -101,6 +126,7 @@
         "goi_y_khi_sai": "Xem lại Mục 1: Mục tiêu thực hành"
       }
     ],
-    "submitted_at": "2026-10-20T12:21:50.711887"
-  }
+    "submitted_at": "2026-10-20T15:54:18.051893"
+  },
+  "submitted_at": "2026-10-20T15:54:18.051893"
 }

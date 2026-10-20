@@ -8,11 +8,28 @@
     "q1": "A",
     "q2": "A"
   },
+  "score": 5.0,
+  "correct_count": 1,
+  "total_questions": 2,
+  "percentage": 50,
   "evaluation": {
     "score": 5.0,
     "total_questions": 2,
     "correct_count": 1,
     "percentage": 50,
+    "socratic_advice": "Đạt yêu cầu (5.0/10). Em đã có nền tảng cơ bản nhưng các khái niệm phân biệt còn dễ bị nhầm lẫn. Hãy dành 10 phút đọc lại các mục được AI đề xuất nhé.",
+    "recommended_lessons": [
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Vật mang tin",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Vật mang tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Vật mang tin để ôn lại ngay"
+      }
+    ],
+    "weak_topics": [
+      "Mục 2: Vật mang tin"
+    ],
     "ai_evaluation": {
       "overall_comment": "Đạt yêu cầu (5.0/10). Em đã có nền tảng cơ bản nhưng các khái niệm phân biệt còn dễ bị nhầm lẫn. Hãy dành 10 phút đọc lại các mục được AI đề xuất nhé.",
       "weak_topics": {
@@ -62,6 +79,7 @@
         "goi_y_khi_sai": "Xem lại Mục 2: Vật mang tin"
       }
     ],
-    "submitted_at": "2026-10-20T12:21:12.717056"
-  }
+    "submitted_at": "2026-10-20T16:09:54.289504"
+  },
+  "submitted_at": "2026-10-20T16:09:54.289504"
 }

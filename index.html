@@ -763,10 +763,10 @@
         <div class="sm-card sm-topics-card">
           <h2 class="sm-card-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-            <span>Kết quả luyện tập theo chủ đề</span>
+            <span>Kết quả theo bài kiểm tra của giáo viên</span>
           </h2>
           <div class="sm-barchart-container" id="smTopicBarChart">
-            <!-- Render Bar Chart SVG động cho 5 chủ đề -->
+            <!-- Render Bar Chart động theo các bài kiểm tra do giáo viên tạo -->
           </div>
         </div>
 
@@ -1089,6 +1089,7 @@
       <!-- 4. SÂN KHẤU KẾT QUẢ & AI SƯ PHẠM NHẬN XÉT ĐIỀU CHỈNH LỖ HỔNG -->
       <div id="examResultView" class="exam-result-view hidden">
         <div class="exam-result-card">
+          <div id="examSuccessAlert" class="exam-success-alert"></div>
           <div class="exam-result-hero">
             <div class="exam-result-score-circle" id="resultScoreCircle">
               <span class="score-number" id="resultScoreNum">8.5</span>
@@ -1100,6 +1101,7 @@
                 <span class="stat-pill success" id="resultCorrectCount">✔ 8/10 câu đúng</span>
                 <span class="stat-pill info" id="resultPercentRatio">⚡ Đạt 85%</span>
                 <span class="stat-pill warning" id="resultTimeSpent">⏱ 11 phút 20 giây</span>
+                <span class="stat-pill ranking" id="resultRankingBadge">🏆 Đang tính thứ hạng...</span>
               </div>
             </div>
           </div>
@@ -1278,15 +1280,35 @@
           <button type="button" id="btnCloseTeacherResultsModal" class="exam-modal-close" aria-label="Đóng">&times;</button>
         </div>
         <div class="exam-modal-body">
+          <div class="teacher-results-stats-row" id="teacherResultsStatsRow">
+            <div class="teacher-stat-card">
+              <span class="teacher-stat-val" id="statTotalSubmissions">0</span>
+              <span class="teacher-stat-lbl">Số bài đã nộp</span>
+            </div>
+            <div class="teacher-stat-card">
+              <span class="teacher-stat-val" id="statAvgScore">--</span>
+              <span class="teacher-stat-lbl">Điểm trung bình</span>
+            </div>
+            <div class="teacher-stat-card">
+              <span class="teacher-stat-val" id="statPassRate">--%</span>
+              <span class="teacher-stat-lbl">Tỷ lệ đạt (≥ 5.0)</span>
+            </div>
+            <div class="teacher-stat-card">
+              <span class="teacher-stat-val" id="statMaxScore">--</span>
+              <span class="teacher-stat-lbl">Điểm cao nhất</span>
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="exam-results-table">
               <thead>
                 <tr>
-                  <th>STT</th>
+                  <th style="width: 55px; text-align: center;">Hạng</th>
                   <th>Học sinh</th>
                   <th>Lớp</th>
                   <th>Điểm số</th>
                   <th>Số câu đúng</th>
+                  <th>Thời gian làm</th>
                   <th>Thời gian nộp</th>
                 </tr>
               </thead>

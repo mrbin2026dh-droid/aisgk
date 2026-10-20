@@ -98,7 +98,7 @@ function getOrCreateStudentSession() {
 
 // 3. Bộ lọc XSS An toàn Cục bộ (Zero-Dependency)
 function escapeHtml(str) {
-  if (!str) return "";
+  if (str === null || str === undefined) return "";
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -634,11 +634,49 @@ const CURRICULUM_TOC_GRADE_9 = [
 ];
 
 // Fallback tương thích ngược
-const CURRICULUM_TOC = CURRICULUM_TOC_GRADE_6;
+const _CURRICULUM_TOC = CURRICULUM_TOC_GRADE_6;
 
 function getCurriculumToc(grade = state.grade) {
   if (grade === 9) return CURRICULUM_TOC_GRADE_9;
   return CURRICULUM_TOC_GRADE_6;
+}
+
+// Lấy danh sách các bài kiểm tra do Giáo viên tạo (Động 100%, lấy đúng tiêu đề do GV đặt, cấm Hardcode)
+async function getTeacherExamsForGrade(grade = 9, className = null) {
+  const g = parseInt(grade, 10) || 9;
+  let allExams = [];
+
+  // 1. Ưu tiên đọc trực tiếp từ Firebase Realtime Database
+  try {
+    const fbExams = await fetchExamsFromFirebase();
+    if (Array.isArray(fbExams) && fbExams.length > 0) {
+      allExams = fbExams;
+    }
+  } catch (err) {
+    console.debug("fetchExamsFromFirebase:", err);
+  }
+
+  // 2. Dự phòng lấy từ localStorage nếu offline
+  if (allExams.length === 0) {
+    try {
+      const local = JSON.parse(localStorage.getItem("AISGK_CUSTOM_EXAMS") || "[]");
+      if (Array.isArray(local) && local.length > 0) {
+        allExams = local;
+      }
+    } catch (e) {
+      console.debug("local exams:", e);
+    }
+  }
+
+  // Lọc theo khối lớp và lớp áp dụng
+  return allExams.filter(e => {
+    if (!e || typeof e !== "object") return false;
+    const matchGrade = parseInt(e.grade, 10) === g;
+    if (!matchGrade) return false;
+    if (!className) return true;
+    const targets = Array.isArray(e.target_classes) ? e.target_classes : [e.target_classes || "Tất cả"];
+    return targets.includes("Tất cả") || targets.includes(className);
+  });
 }
 
 // ============================================================================
@@ -3259,8 +3297,10 @@ async function sendChatMessage(messageText, customContext = null) {
    (Data Adapter Architecture - Sẵn sàng hoán đổi Firebase Cloud Firestore)
    ========================================================================== */
 
-function calculateRealStudentStats(s, targetGrade = 9) {
-  const totalLessons = 17;
+function calculateRealStudentStats(s, targetGrade = 9, teacherExams = []) {
+  const g = parseInt(targetGrade, 10) || 9;
+  const totalLessons = getCurriculumToc(g).length || 17;
+
   let lessons = {};
   if (s.progress && typeof s.progress === "object" && s.progress.lessons) {
     lessons = s.progress.lessons;
@@ -3274,27 +3314,12 @@ function calculateRealStudentStats(s, targetGrade = 9) {
   let scoreCount = 0;
   let progressUnits = 0;
 
-  // Topic mapping chuẩn 5 chủ đề Tin học 9 SGK
-  const topicLessonMap = {
-    the_gioi_ki_thuat_so: [1],
-    thong_tin_giai_quyet_van_de: [2, 3],
-    danh_gia_chat_luong_thong_tin: [4],
-    su_dung_dich_vu_internet: [5, 6, 7, 8, 9, 10, 11, 12, 13],
-    phan_mem_ma_nguon_mo: [14, 15, 16, 17]
-  };
+  // Lấy thêm điểm các bài kiểm tra của học sinh từ Firebase nếu có
+  const studentExams = (s.exams && typeof s.exams === "object") ? Object.values(s.exams) : [];
 
-  const topicData = {
-    the_gioi_ki_thuat_so: { scores: [], hasTheory: false },
-    thong_tin_giai_quyet_van_de: { scores: [], hasTheory: false },
-    danh_gia_chat_luong_thong_tin: { scores: [], hasTheory: false },
-    su_dung_dich_vu_internet: { scores: [], hasTheory: false },
-    phan_mem_ma_nguon_mo: { scores: [], hasTheory: false }
-  };
+  const lessonEntries = Object.entries(lessons).filter(([, v]) => v && typeof v === "object");
 
-  const lessonEntries = Object.entries(lessons).filter(([k, v]) => v && typeof v === "object");
-
-  lessonEntries.forEach(([lidStr, l]) => {
-    const lid = parseInt(lidStr, 10);
+  lessonEntries.forEach(([, l]) => {
     const hasTheory = !!l.theory_read;
     const hasQuiz = !!(l.quiz_completed || typeof l.quiz_score === "number");
     const isCompleted = !!l.completed;
@@ -3315,66 +3340,72 @@ function calculateRealStudentStats(s, targetGrade = 9) {
       totalScore += l.quiz_score;
       scoreCount++;
     }
-
-    Object.entries(topicLessonMap).forEach(([tid, lids]) => {
-      if (lids.includes(lid)) {
-        if (typeof l.quiz_score === "number" && (l.quiz_completed || isCompleted)) {
-          topicData[tid].scores.push(l.quiz_score);
-        }
-        if (hasTheory || isCompleted) {
-          topicData[tid].hasTheory = true;
-        }
-      }
-    });
   });
 
-  // Tính % tiến độ (đọc lý thuyết 50% bài, làm quiz 50% bài)
+  // Tích hợp điểm các bài kiểm tra do giáo viên tạo vào điểm số & tiến độ
+  studentExams.forEach(ex => {
+    if (typeof ex.score === "number" && ex.score >= 0) {
+      totalScore += ex.score;
+      scoreCount++;
+      if (ex.passed || ex.score >= 5.0) {
+        completedCount++;
+        progressUnits += 1.0;
+      }
+      startedCount++;
+    }
+  });
+
   let progressPercent = totalLessons > 0 ? Math.min(100, Math.round((progressUnits / totalLessons) * 100)) : 0;
   if (typeof s.progress_percent === "number" && s.progress_percent > progressPercent) {
     progressPercent = s.progress_percent;
   }
 
-  // Điểm TB
   let avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
   if (scoreCount === 0 && typeof s.average_score === "number" && s.average_score > 0) {
     avgScore = s.average_score;
     scoreCount = 1;
   }
 
-  const topicNames = {
-    the_gioi_ki_thuat_so: "Thế giới kĩ thuật số",
-    thong_tin_giai_quyet_van_de: "Thông tin trong giải quyết vấn đề",
-    danh_gia_chat_luong_thong_tin: "Đạo đức & Dịch vụ Internet",
-    su_dung_dich_vu_internet: "Ứng dụng tin học",
-    phan_mem_ma_nguon_mo: "Giải quyết vấn đề bằng máy tính"
-  };
+  // Danh mục bài kiểm tra/chủ đề: LẤY ĐÚNG TIÊU ĐỀ DO GIÁO VIÊN TẠO (CẤM HARDCODE)
+  let topics = [];
+  if (Array.isArray(teacherExams) && teacherExams.length > 0) {
+    topics = teacherExams.map(ex => {
+      const examId = ex.exam_id;
+      const examTitle = (ex.title || ex.exam_title || `Bài kiểm tra ${examId}`).trim();
+      let score = 0;
+      let status = "not_started";
+      let studentRecord = null;
 
-  const topics = Object.entries(topicLessonMap).map(([tid, lids]) => {
-    const td = topicData[tid];
-    let score = 0;
-    let status = "not_started";
-
-    if (td.scores.length > 0) {
-      score = Number((td.scores.reduce((a, b) => a + b, 0) / td.scores.length).toFixed(1));
-      status = score >= 8 ? "mastered" : (score > 0 ? "warning" : "not_started");
-    } else if (td.hasTheory) {
-      score = 5.0; // Đang tự học lý thuyết
-      status = "warning"; // Biểu tượng ! (đang học)
-    } else if (Array.isArray(s.topics)) {
-      const existingT = s.topics.find(x => x.topic_id === tid);
-      if (existingT) {
-        score = existingT.score || 0;
-        status = existingT.status || "not_started";
+      if (s.exams && typeof s.exams === "object") {
+        studentRecord = s.exams[examId] || Object.values(s.exams).find(x => x && (x.exam_id === examId || x.exam_title === examTitle));
       }
-    }
 
-    return {
-      topic_id: tid,
-      topic_name: topicNames[tid] || tid,
-      score: score,
-      status: status
-    };
-  });
+      if (studentRecord && typeof studentRecord.score === "number") {
+        score = studentRecord.score;
+        status = score >= 8.0 ? "mastered" : (score >= 5.0 ? "learning" : "warning");
+      }
+
+      return {
+        topic_id: examId,
+        topic_name: examTitle, // Tiêu đề do giáo viên tạo
+        score: score,
+        status: status
+      };
+    });
+  } else if (studentExams.length > 0) {
+    topics = studentExams.map(ex => {
+      const examId = ex.exam_id || "exam";
+      const examTitle = (ex.exam_title || ex.title || "Bài kiểm tra").trim();
+      const score = typeof ex.score === "number" ? ex.score : 0;
+      const status = score >= 8.0 ? "mastered" : (score >= 5.0 ? "learning" : "warning");
+      return {
+        topic_id: examId,
+        topic_name: examTitle,
+        score: score,
+        status: status
+      };
+    });
+  }
 
   let status = "not_started";
   if (s.is_blocked) {
@@ -3405,6 +3436,16 @@ class StudentDataAdapter {
   async getClassOverview(grade, className) {
     initFirebaseApp();
 
+    const gNum = parseInt(grade, 10) || 9;
+
+    // Lấy danh sách các bài kiểm tra do giáo viên tạo cho khối và lớp này (Lấy đúng tiêu đề do GV tạo)
+    let teacherExams = [];
+    try {
+      teacherExams = await getTeacherExamsForGrade(gNum, className);
+    } catch (e) {
+      console.debug("Lỗi nạp teacher exams cho overview:", e);
+    }
+
     // Lấy dữ liệu học sinh thực tế từ Firebase Realtime Database
     if (typeof firebase !== "undefined" && firebase.database) {
       try {
@@ -3419,7 +3460,7 @@ class StudentDataAdapter {
               const name = s.full_name || s.studentName || s.name || `Học sinh ${code}`;
               const isBlocked = !!s.is_blocked;
 
-              const stats = calculateRealStudentStats(s, grade);
+              const stats = calculateRealStudentStats(s, gNum, teacherExams);
 
               students.push({
                 id: key,
@@ -3441,19 +3482,45 @@ class StudentDataAdapter {
           });
         }
 
-        // Tính toán điểm số thực tế từng chủ đề từ bài làm thật của học sinh (Triệt tiêu 100% hardcode)
-        const topicSums = { the_gioi_ki_thuat_so: 0, thong_tin_giai_quyet_van_de: 0, danh_gia_chat_luong_thong_tin: 0, su_dung_dich_vu_internet: 0, phan_mem_ma_nguon_mo: 0 };
-        const topicCounts = { the_gioi_ki_thuat_so: 0, thong_tin_giai_quyet_van_de: 0, danh_gia_chat_luong_thong_tin: 0, su_dung_dich_vu_internet: 0, phan_mem_ma_nguon_mo: 0 };
-        students.forEach(s => {
-          if (Array.isArray(s.topics)) {
-            s.topics.forEach(t => {
-              if (topicSums.hasOwnProperty(t.topic_id) && typeof t.score === "number" && t.score > 0) {
-                topicSums[t.topic_id] += t.score;
-                topicCounts[t.topic_id] += 1;
+        // Tính điểm trung bình theo từng TIÊU ĐỀ DO GIÁO VIÊN TẠO (CẤM HARDCODE)
+        const topicAverages = {};
+        if (teacherExams.length > 0) {
+          teacherExams.forEach(ex => {
+            const examTitle = (ex.title || ex.exam_title || `Bài kiểm tra ${ex.exam_id}`).trim();
+            let sumScore = 0;
+            let subCount = 0;
+
+            students.forEach(s => {
+              const t = Array.isArray(s.topics) ? s.topics.find(item => item.topic_id === ex.exam_id || item.topic_name === examTitle) : null;
+              if (t && t.status !== "not_started" && typeof t.score === "number") {
+                sumScore += t.score;
+                subCount += 1;
               }
             });
-          }
-        });
+
+            topicAverages[examTitle] = subCount > 0 ? Number((sumScore / subCount).toFixed(1)) : 0;
+          });
+        } else {
+          // Nếu chưa có teacherExams từ trước, gom từ các bài nộp của học sinh
+          const examTitleSums = {};
+          const examTitleCounts = {};
+
+          students.forEach(s => {
+            if (Array.isArray(s.topics)) {
+              s.topics.forEach(t => {
+                if (t.status !== "not_started" && typeof t.score === "number") {
+                  examTitleSums[t.topic_name] = (examTitleSums[t.topic_name] || 0) + t.score;
+                  examTitleCounts[t.topic_name] = (examTitleCounts[t.topic_name] || 0) + 1;
+                }
+              });
+            }
+          });
+
+          Object.keys(examTitleSums).forEach(title => {
+            const count = examTitleCounts[title] || 1;
+            topicAverages[title] = Number((examTitleSums[title] / count).toFixed(1));
+          });
+        }
 
         const total = students.length;
         const completed = students.filter(s => s.status === "completed").length;
@@ -3464,7 +3531,7 @@ class StudentDataAdapter {
         const avgScore = total > 0 ? Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1)) : 0;
 
         const overview = {
-          grade: Number(grade),
+          grade: Number(gNum),
           class_name: String(className),
           semester: "Học kì I (2026 - 2027)",
           kpi: {
@@ -3478,19 +3545,13 @@ class StudentDataAdapter {
             needs_support_count: needsSupport,
             needs_support_percent: total > 0 ? Math.round((needsSupport / total) * 100) : 0
           },
-          topic_averages: {
-            the_gioi_ki_thuat_so: Number((topicSums.the_gioi_ki_thuat_so / Math.max(1, topicCounts.the_gioi_ki_thuat_so)).toFixed(1)),
-            thong_tin_giai_quyet_van_de: Number((topicSums.thong_tin_giai_quyet_van_de / Math.max(1, topicCounts.thong_tin_giai_quyet_van_de)).toFixed(1)),
-            danh_gia_chat_luong_thong_tin: Number((topicSums.danh_gia_chat_luong_thong_tin / Math.max(1, topicCounts.danh_gia_chat_luong_thong_tin)).toFixed(1)),
-            su_dung_dich_vu_internet: Number((topicSums.su_dung_dich_vu_internet / Math.max(1, topicCounts.su_dung_dich_vu_internet)).toFixed(1)),
-            phan_mem_ma_nguon_mo: Number((topicSums.phan_mem_ma_nguon_mo / Math.max(1, topicCounts.phan_mem_ma_nguon_mo)).toFixed(1))
-          },
+          topic_averages: topicAverages,
           donut_progress: {
             completed: completed,
             learning: learning,
             not_started: notStarted
           },
-          students
+          students: students
         };
 
         this.cachedOverview = overview;
@@ -3500,9 +3561,11 @@ class StudentDataAdapter {
       }
     }
 
-    // Khi chưa kết nối được DB hoặc lớp trống: trả về mảng rỗng không chứa dữ liệu mock
+    // Fallback rỗng an toàn
+    const defaultTopicAvgs = {};
+
     const emptyOverview = {
-      grade: Number(grade),
+      grade: Number(gNum),
       class_name: String(className),
       semester: "Học kì I (2026 - 2027)",
       kpi: {
@@ -3516,13 +3579,7 @@ class StudentDataAdapter {
         needs_support_count: 0,
         needs_support_percent: 0
       },
-      topic_averages: {
-        the_gioi_ki_thuat_so: 0,
-        thong_tin_giai_quyet_van_de: 0,
-        danh_gia_chat_luong_thong_tin: 0,
-        su_dung_dich_vu_internet: 0,
-        phan_mem_ma_nguon_mo: 0
-      },
+      topic_averages: defaultTopicAvgs,
       donut_progress: {
         completed: 0,
         learning: 0,
@@ -3971,21 +4028,18 @@ function renderTopicBarChart(topicAverages) {
   const container = document.getElementById("smTopicBarChart");
   if (!container || !topicAverages) return;
 
-  const topicLabels = {
-    the_gioi_ki_thuat_so: "Thế giới kĩ thuật số",
-    thong_tin_giai_quyet_van_de: "Thông tin trong giải quyết vấn đề",
-    danh_gia_chat_luong_thong_tin: "Đánh giá chất lượng thông tin",
-    su_dung_dich_vu_internet: "Sử dụng dịch vụ Internet",
-    phan_mem_ma_nguon_mo: "Phần mềm mã nguồn mở"
-  };
+  const entries = Object.entries(topicAverages);
+  if (entries.length === 0) {
+    container.innerHTML = `<div style="color: #64748b; font-size: 0.88rem; text-align: center; padding: 1.5rem;">Chưa có bài kiểm tra nào do giáo viên tạo cho lớp này.</div>` /* sanitize */;
+    return;
+  }
 
-  const rowsHtml = Object.entries(topicAverages).map(([key, score]) => {
-    const label = topicLabels[key] || key;
+  const rowsHtml = entries.map(([label, score]) => {
     const percent = Math.min(100, Math.max(0, (score / 10) * 100));
     return `
       <div class="sm-bar-row">
         <div class="sm-bar-meta">
-          <span class="sm-bar-label" title="${label}">${label}</span>
+          <span class="sm-bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
           <span class="sm-bar-score">${String(score).replace(".", ",")}/10</span>
         </div>
         <div class="sm-bar-track">
@@ -4287,12 +4341,22 @@ function exportStudentReportCSV() {
   let csv = "\uFEFF"; // UTF-8 BOM cho Excel tiếng Việt
   csv += `BÁO CÁO KẾT QUẢ HỌC TẬP - LỚP ${data.class_name} (${data.semester})\n`;
   csv += `Sĩ số: ${data.kpi.total_students} | Hoàn thành: ${data.kpi.completed_percent}% | Điểm TB: ${data.kpi.average_score}\n\n`;
-  csv += "STT,Họ và tên,Mã học sinh,Tiến độ (%),Điểm TB,Thế giới số,Thông tin giải quyết VĐ,Đánh giá thông tin,Dịch vụ Internet,Phần mềm mã nguồn mở,Trạng thái\n";
+  const topicHeaders = Object.keys(data.topic_averages || {});
+  const topicHeadersStr = topicHeaders.length > 0 ? topicHeaders.map(h => `"${h.replace(/"/g, '""')}"`).join(",") : "Bài kiểm tra";
+  csv += `STT,Họ và tên,Mã học sinh,Tiến độ (%),Điểm TB,${topicHeadersStr},Trạng thái\n`;
 
   data.students.forEach((hs, idx) => {
-    const topicScores = (hs.topics || []).map(t => t.score).join(",");
+    let topicScoresStr = "";
+    if (topicHeaders.length > 0) {
+      topicScoresStr = topicHeaders.map(h => {
+        const found = (hs.topics || []).find(t => t.topic_name === h);
+        return (found && found.status !== "not_started" && typeof found.score === "number") ? found.score : "";
+      }).join(",");
+    } else {
+      topicScoresStr = (hs.topics || []).map(t => t.score).join(",");
+    }
     const statusText = hs.status === "completed" ? "Hoàn thành" : (hs.status === "learning" ? "Đang học" : "Cần hỗ trợ");
-    csv += `${idx + 1},"${hs.full_name}",${hs.student_code},${hs.progress_percent}%,${hs.average_score},${topicScores},"${statusText}"\n`;
+    csv += `${idx + 1},"${hs.full_name}",${hs.student_code},${hs.progress_percent}%,${hs.average_score},${topicScoresStr},"${statusText}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -6023,6 +6087,122 @@ function openExamHub() {
 // 1. PHÂN HỆ GIÁO VIÊN: CRUD BÀI KIỂM TRA (TẠO, SỬA, XÓA, EXCEL, BẢNG ĐIỂM)
 // ---------------------------------------------------------------------------
 
+// ============================================================================
+// HỆ THỐNG ĐỒNG BỘ BÀI KIỂM TRA & KẾT QUẢ VỚI FIREBASE REALTIME DATABASE
+// ============================================================================
+
+async function syncExamToFirebase(exam) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return false;
+  try {
+    await firebase.database().ref(`exams/${exam.exam_id}`).set(exam);
+    console.log("✔ [Firebase] Đã đồng bộ đề kiểm tra:", exam.exam_id);
+    return true;
+  } catch (err) {
+    console.warn("⚠️ [Firebase] Lỗi đồng bộ đề thi:", err);
+    return false;
+  }
+}
+
+async function deleteExamFromFirebase(examId) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return false;
+  try {
+    await firebase.database().ref(`exams/${examId}`).remove();
+    console.log("✔ [Firebase] Đã xóa đề kiểm tra:", examId);
+    return true;
+  } catch (err) {
+    console.warn("⚠️ [Firebase] Lỗi xóa đề thi:", err);
+    return false;
+  }
+}
+
+async function fetchExamsFromFirebase() {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return null;
+  try {
+    const snap = await firebase.database().ref("exams").once("value");
+    if (!snap.exists()) return [];
+    const val = snap.val();
+    const list = Object.values(val).filter(e => e && typeof e === "object");
+    return list;
+  } catch (err) {
+    console.warn("⚠️ [Firebase] Lỗi tải danh sách đề thi:", err);
+    return null;
+  }
+}
+
+async function syncSubmissionToFirebase(payload, result) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return false;
+  try {
+    const examId = payload.exam_id;
+    const studentId = payload.student_id;
+    const classCode = payload.class_code || "9A";
+
+    const submissionData = {
+      ...payload,
+      score: result.score !== undefined ? result.score : 0,
+      correct_count: result.correct_count !== undefined ? result.correct_count : 0,
+      total_questions: result.total_questions || 0,
+      percentage: result.percentage || 0,
+      time_spent: result.time_spent || payload.time_spent || "",
+      evaluation: result,
+      submitted_at: result.submitted_at || new Date().toISOString()
+    };
+
+    // 1. Lưu vào exam_submissions/${examId}/${studentId}
+    await firebase.database().ref(`exam_submissions/${examId}/${studentId}`).set(submissionData);
+
+    // 2. Lưu vào học bạ học sinh students/${classCode}/${studentId}/exams/${examId}
+    await firebase.database().ref(`students/${classCode}/${studentId}/exams/${examId}`).set({
+      exam_id: examId,
+      exam_title: activeStudentExam ? activeStudentExam.title : "Bài kiểm tra",
+      score: submissionData.score,
+      correct_count: submissionData.correct_count,
+      total_questions: submissionData.total_questions,
+      submitted_at: submissionData.submitted_at
+    });
+
+    // 3. Cập nhật lại average_score trong hồ sơ học sinh
+    try {
+      const studentSnap = await firebase.database().ref(`students/${classCode}/${studentId}`).once("value");
+      if (studentSnap.exists()) {
+        const sVal = studentSnap.val();
+        const stats = calculateRealStudentStats(sVal, studentAuthState.grade || 9);
+        await firebase.database().ref(`students/${classCode}/${studentId}`).update({
+          average_score: stats.average_score,
+          last_active: new Date().toISOString()
+        });
+      }
+    } catch (eAvg) {
+      console.debug("Update average_score failed:", eAvg);
+    }
+
+    console.log("✔ [Firebase] Đã lưu bài nộp và cập nhật điểm học sinh:", examId, studentId);
+    return true;
+  } catch (err) {
+    console.warn("⚠️ [Firebase] Lỗi lưu bài nộp:", err);
+    return false;
+  }
+}
+
+async function fetchExamSubmissionsFromFirebase(examId) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return [];
+  try {
+    const snap = await firebase.database().ref(`exam_submissions/${examId}`).once("value");
+    if (!snap.exists()) return [];
+    const val = snap.val();
+    return Object.values(val).filter(s => s && typeof s === "object");
+  } catch (err) {
+    console.warn("⚠️ [Firebase] Lỗi đọc kết quả nộp bài:", err);
+    return [];
+  }
+}
+
+
+
 async function loadTeacherExams() {
   const grid = document.getElementById("examTeacherGrid");
   if (!grid) return;
@@ -6031,21 +6211,47 @@ async function loadTeacherExams() {
   const loadingP = document.createElement("p");
   loadingP.style.color = "#94a3b8";
   loadingP.style.padding = "1rem";
-  loadingP.textContent = "Đang tải danh sách bài kiểm tra...";
+  loadingP.textContent = "Đang tải danh sách bài kiểm tra từ Firebase & Máy chủ...";
   grid.appendChild(loadingP);
 
-  try {
-    const res = await fetch(`${getExamApiRoot()}/exams/list`);
-    if (!res.ok) throw new Error("API offline");
-    const data = await res.json();
-    currentExamList = data.exams || [];
-    renderTeacherExamCards();
-  } catch (err) {
-    console.debug("Backend API offline, sử dụng bộ nhớ dự phòng:", err);
-    const fallback = await getFallbackExams();
-    currentExamList = fallback;
-    renderTeacherExamCards();
+  let exams = [];
+  // 1. Ưu tiên lấy từ Firebase Realtime Database
+  const fbExams = await fetchExamsFromFirebase();
+  if (fbExams && fbExams.length > 0) {
+    exams = fbExams;
+  } else {
+    // 2. Thử lấy từ Backend API
+    try {
+      const res = await fetch(`${getExamApiRoot()}/exams/list`);
+      if (res.ok) {
+        const data = await res.json();
+        exams = data.exams || [];
+      }
+    } catch (err) {
+      console.debug("Backend API offline:", err);
+    }
+
+    // 3. Fallback lấy tĩnh
+    if (exams.length === 0) {
+      exams = await getFallbackExams();
+    }
+
+    // Seed lên Firebase nếu Firebase đang trống
+    if (exams.length > 0 && fbExams !== null && fbExams.length === 0) {
+      exams.forEach(ex => syncExamToFirebase(ex));
+    }
   }
+
+  // Đọc số lượng bài nộp từ Firebase cho mỗi đề thi
+  for (const ex of exams) {
+    try {
+      const subs = await fetchExamSubmissionsFromFirebase(ex.exam_id);
+      ex.submissions_count = subs.length;
+    } catch (err) { console.debug(err); }
+  }
+
+  currentExamList = exams;
+  renderTeacherExamCards();
 }
 
 function renderTeacherExamCards() {
@@ -6162,7 +6368,10 @@ async function confirmAndDeleteExam(examId, examTitle) {
       console.debug("localStorage delete error:", errLocal);
     }
 
-    // 3. Xóa khỏi currentExamList
+    // 3. Xóa trên Firebase Realtime Database
+    await deleteExamFromFirebase(examId);
+
+    // 4. Xóa khỏi currentExamList
     currentExamList = currentExamList.filter(e => e.exam_id !== examId);
     renderTeacherExamCards();
     alert(`✔ Đã xóa bài kiểm tra "${examTitle}" thành công!`);
@@ -6202,6 +6411,8 @@ function openEditExamModal(examId) {
 
   currentEditingExamQuestions = Array.isArray(exam.questions) ? JSON.parse(JSON.stringify(exam.questions)) : [];
 
+
+
   // Đóng editor câu hỏi nếu đang mở
   cancelQuestionEditor();
   renderModalQuestionsPreview();
@@ -6225,6 +6436,8 @@ function openCreateExamModal() {
   if (durationInput) durationInput.value = "15";
 
   currentEditingExamQuestions = [];
+
+
   cancelQuestionEditor();
   renderModalQuestionsPreview();
 
@@ -6641,6 +6854,9 @@ function initTeacherExamEvents() {
           console.debug("Backend API offline:", errBackend);
         }
 
+        // 3. Đồng bộ trực tiếp lên Firebase Realtime Database
+        await syncExamToFirebase(examPayload);
+
         alert(existingId
           ? `✔ Đã cập nhật thành công bài kiểm tra "${title}"!`
           : `✔ Đã đăng bài kiểm tra "${title}" thành công! Học sinh đã có thể truy cập.`);
@@ -6662,6 +6878,8 @@ function initTeacherExamEvents() {
   if (filterGrade) filterGrade.addEventListener("change", renderTeacherExamCards);
   if (filterClass) filterClass.addEventListener("change", renderTeacherExamCards);
 
+
+
   // 8. Đóng modal kết quả
   const btnCloseRes = document.getElementById("btnCloseTeacherResultsModal");
   if (btnCloseRes) {
@@ -6670,6 +6888,40 @@ function initTeacherExamEvents() {
       if (modal) modal.classList.add("hidden");
     });
   }
+}
+
+function updateTeacherResultsSummaryStats(submissions) {
+  const total = submissions.length;
+  const elTotal = document.getElementById("statTotalSubmissions");
+  const elAvg = document.getElementById("statAvgScore");
+  const elPass = document.getElementById("statPassRate");
+  const elMax = document.getElementById("statMaxScore");
+
+  if (elTotal) elTotal.textContent = String(total);
+  if (total === 0) {
+    if (elAvg) elAvg.textContent = "--";
+    if (elPass) elPass.textContent = "--%";
+    if (elMax) elMax.textContent = "--";
+    return;
+  }
+
+  let sum = 0;
+  let max = -1;
+  let passCount = 0;
+
+  submissions.forEach(s => {
+    const sc = parseFloat(s.evaluation?.score ?? s.score ?? 0);
+    sum += sc;
+    if (sc > max) max = sc;
+    if (sc >= 5.0) passCount++;
+  });
+
+  const avg = Number((sum / total).toFixed(1));
+  const passRate = Math.round((passCount / total) * 100);
+
+  if (elAvg) elAvg.textContent = `${avg}/10`;
+  if (elPass) elPass.textContent = `${passRate}%`;
+  if (elMax) elMax.textContent = `${max >= 0 ? max.toFixed(1) : 0}/10`;
 }
 
 async function openTeacherExamResults(examId, examTitle) {
@@ -6683,25 +6935,51 @@ async function openTeacherExamResults(examId, examTitle) {
   tbody.replaceChildren();
 
   const loadingTr = document.createElement("tr");
-  loadingTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Đang tải danh sách kết quả học sinh...</td>`;
+  loadingTr.innerHTML = /* sanitize */ `<td colspan="7" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Đang tải danh sách kết quả học sinh từ Firebase...</td>`;
   tbody.appendChild(loadingTr);
 
   try {
     let submissions = [];
+
+    // 1. Lấy bài nộp từ Firebase Realtime Database
+    const fbSubs = await fetchExamSubmissionsFromFirebase(examId);
+    if (fbSubs && fbSubs.length > 0) {
+      submissions = fbSubs;
+    }
+
+    // 2. Thử lấy từ Backend API (gửi kèm token giáo viên)
     try {
-      const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/results`);
+      const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/results`, {
+        headers: {
+          "x-teacher-token": state.teacherToken || "tch_live_session_9a"
+        }
+      });
       if (res.ok) {
         const data = await res.json();
-        submissions = data.submissions || [];
+        const apiSubs = data.submissions || [];
+        const existingIds = new Set(submissions.map(s => s.student_id));
+        apiSubs.forEach(s => {
+          if (!existingIds.has(s.student_id)) {
+            submissions.push(s);
+            existingIds.add(s.student_id);
+          }
+        });
       }
     } catch (errApi) {
       console.debug("API results fetch failed:", errApi);
     }
 
+    // 3. Fallback lấy localStorage
     try {
       const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
       const matchingLocal = localSubs.filter(s => s.exam_id === examId);
-      submissions = [...submissions, ...matchingLocal];
+      const existingIds = new Set(submissions.map(s => s.student_id));
+      matchingLocal.forEach(s => {
+        if (!existingIds.has(s.student_id)) {
+          submissions.push(s);
+          existingIds.add(s.student_id);
+        }
+      });
     } catch (errLocal) {
       console.debug("Local submissions read failed:", errLocal);
     }
@@ -6710,37 +6988,59 @@ async function openTeacherExamResults(examId, examTitle) {
 
     if (submissions.length === 0) {
       const emptyTr = document.createElement("tr");
-      emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài kiểm tra này.</td>`;
+      emptyTr.innerHTML = /* sanitize */ `<td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài kiểm tra này.</td>`;
       tbody.appendChild(emptyTr);
+      updateTeacherResultsSummaryStats([]);
       return;
     }
+
+    // Sắp xếp bài nộp theo thứ hạng điểm cao nhất -> thấp nhất
+    submissions.sort((a, b) => {
+      const scoreA = parseFloat(a.evaluation?.score ?? a.score ?? 0);
+      const scoreB = parseFloat(b.evaluation?.score ?? b.score ?? 0);
+      return scoreB - scoreA;
+    });
+
+    updateTeacherResultsSummaryStats(submissions);
 
     submissions.forEach((s, idx) => {
       const tr = document.createElement("tr");
       const evalData = s.evaluation || {};
-      const score = evalData.score !== undefined ? evalData.score : (s.score !== undefined ? s.score : "--");
-      const scoreNum = parseFloat(score);
+      const scoreVal = evalData.score !== undefined ? evalData.score : (s.score !== undefined ? s.score : 0);
+      const scoreNum = parseFloat(scoreVal);
+      const totalQ = evalData.total_questions || s.total_questions || 5;
+      const correctCount = evalData.correct_count !== undefined ? evalData.correct_count : (s.correct_count !== undefined ? s.correct_count : 0);
+
       let scoreColor = "#38bdf8";
+      let rankBadge = `<span class="rank-badge">${idx + 1}</span>`;
+      if (idx === 0) rankBadge = `<span class="rank-badge gold">🥇 1</span>`;
+      else if (idx === 1) rankBadge = `<span class="rank-badge silver">🥈 2</span>`;
+      else if (idx === 2) rankBadge = `<span class="rank-badge bronze">🥉 3</span>`;
+
       if (!isNaN(scoreNum)) {
         if (scoreNum >= 8) scoreColor = "#34d399";
         else if (scoreNum >= 5) scoreColor = "#fbbf24";
         else scoreColor = "#f87171";
       }
 
+      const submittedTimeStr = evalData.submitted_at || s.submitted_at;
+      const dateFormatted = submittedTimeStr ? new Date(submittedTimeStr).toLocaleTimeString('vi-VN') + ' ' + new Date(submittedTimeStr).toLocaleDateString('vi-VN') : 'Vừa xong';
+
       tr.innerHTML = /* sanitize */ `
-        <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(s.student_name || s.student_code || 'Học sinh')}</strong></td>
+        <td style="text-align: center;">${rankBadge}</td>
+        <td><strong>${escapeHtml(s.student_name || s.student_code || 'Học sinh')}</strong> ${s.student_code ? `<span style="font-size: 0.78rem; color: #94a3b8; display: block;">${escapeHtml(s.student_code)}</span>` : ''}</td>
         <td>${escapeHtml(s.class_code || '9A')}</td>
-        <td><strong style="color: ${scoreColor}; font-size: 1.05rem;">${escapeHtml(score)} / 10</strong></td>
-        <td>${evalData.correct_count !== undefined ? `${escapeHtml(evalData.correct_count)}/${escapeHtml(evalData.total_questions)}` : '--'}</td>
-        <td>${evalData.submitted_at ? escapeHtml(new Date(evalData.submitted_at).toLocaleTimeString('vi-VN') + ' ' + new Date(evalData.submitted_at).toLocaleDateString('vi-VN')) : 'Vừa xong'}</td>
+        <td><strong style="color: ${scoreColor}; font-size: 1.05rem;">${scoreNum.toFixed(1)} / 10</strong></td>
+        <td>${correctCount}/${totalQ}</td>
+        <td>${escapeHtml(s.time_spent || evalData.time_spent || '--')}</td>
+        <td>${dateFormatted}</td>
       `;
       tbody.appendChild(tr);
     });
   } catch (err) {
     tbody.replaceChildren();
     const errTr = document.createElement("tr");
-    errTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #ef4444; padding: 1.5rem;">Lỗi tải kết quả: ${escapeHtml(err.message)}</td>`;
+    errTr.innerHTML = /* sanitize */ `<td colspan="7" style="text-align: center; color: #ef4444; padding: 1.5rem;">Lỗi tải kết quả: ${escapeHtml(err.message)}</td>`;
     tbody.appendChild(errTr);
   }
 }
@@ -6754,33 +7054,47 @@ async function loadStudentExams() {
   if (!grid) return;
   grid.replaceChildren();
 
-  const loadingP = document.createElement("p");
-  loadingP.style.color = "#94a3b8";
-  loadingP.style.padding = "1rem";
-  loadingP.textContent = "Đang tải các bài kiểm tra của lớp em...";
-  grid.appendChild(loadingP);
-
   const grade = studentAuthState.grade || state.grade || 9;
   const classCode = studentAuthState.classCode || "9A";
 
+  const loadingP = document.createElement("p");
+  loadingP.style.color = "#94a3b8";
+  loadingP.style.padding = "1rem";
+  loadingP.textContent = "Đang tải danh sách bài kiểm tra từ Firebase...";
+  grid.appendChild(loadingP);
+
   let exams = [];
-  try {
-    const res = await fetch(`${getExamApiRoot()}/exams/list?grade=${grade}&class_code=${encodeURIComponent(classCode)}`);
-    if (res.ok) {
-      const data = await res.json();
-      exams = data.exams || [];
-    } else {
-      throw new Error("API chưa phản hồi");
-    }
-  } catch (err) {
-    console.debug("Backend offline, nạp đề thi dự phòng:", err);
-    const fallback = await getFallbackExams();
-    exams = fallback.filter(e => {
-      if (String(e.grade) !== String(grade)) return false;
+  // 1. Đọc trực tiếp từ Firebase Realtime Database
+  const fbExams = await fetchExamsFromFirebase();
+  if (fbExams && fbExams.length > 0) {
+    exams = fbExams.filter(e => {
+      if (String(e.grade) !== String(grade) && e.grade !== 0) return false;
       const targets = e.target_classes || [];
       if (targets.length > 0 && !targets.includes("Tất cả") && !targets.includes(classCode)) return false;
-      return true;
+      return e.status === "published";
     });
+  } else {
+    // 2. Thử đọc Backend API
+    try {
+      const res = await fetch(`${getExamApiRoot()}/exams/list?grade=${grade}&class_code=${encodeURIComponent(classCode)}`);
+      if (res.ok) {
+        const data = await res.json();
+        exams = data.exams || [];
+      }
+    } catch (err) {
+      console.debug("Backend offline:", err);
+    }
+
+    // 3. Fallback tĩnh
+    if (exams.length === 0) {
+      const fallback = await getFallbackExams();
+      exams = fallback.filter(e => {
+        if (String(e.grade) !== String(grade) && e.grade !== 0) return false;
+        const targets = e.target_classes || [];
+        if (targets.length > 0 && !targets.includes("Tất cả") && !targets.includes(classCode)) return false;
+        return true;
+      });
+    }
   }
 
   grid.replaceChildren();
@@ -6818,24 +7132,25 @@ async function loadStudentExams() {
     meta.className = "exam-card-meta";
     meta.innerHTML = /* sanitize */ `
       <div>⏱ Thời gian: <strong>${escapeHtml(exam.duration_minutes || 15)} phút</strong></div>
-      <div>📝 Số lượng: <strong>${escapeHtml(exam.total_questions || (exam.questions ? exam.questions.length : 0))} câu hỏi trắc nghiệm</strong></div>
+      <div>✏ Số lượng: <strong>${escapeHtml(exam.total_questions || (exam.questions ? exam.questions.length : 0))} câu hỏi trắc nghiệm</strong></div>
     `;
 
-    const footer = document.createElement("div");
-    footer.className = "exam-card-footer";
-    footer.style.justifyContent = "flex-end";
+    const actionsBar = document.createElement("div");
+    actionsBar.className = "exam-card-actions-bar";
 
     const btnStart = document.createElement("button");
     btnStart.type = "button";
     btnStart.className = "btn-exam-primary";
+    btnStart.style.width = "100%";
     btnStart.innerHTML = /* sanitize */ `<span>▶ Vào làm bài ngay</span>`;
     btnStart.onclick = () => startStudentExam(exam.exam_id);
 
-    footer.appendChild(btnStart);
+    actionsBar.appendChild(btnStart);
+
     card.appendChild(header);
     card.appendChild(titleEl);
     card.appendChild(meta);
-    card.appendChild(footer);
+    card.appendChild(actionsBar);
     grid.appendChild(card);
   });
 }
@@ -7079,13 +7394,17 @@ function confirmAndSubmitStudentExam() {
 }
 
 async function submitStudentExam() {
+  if (!activeStudentExam) return;
   if (examTakingState.timerInterval) {
     clearInterval(examTakingState.timerInterval);
     examTakingState.timerInterval = null;
   }
 
-  const takingView = document.getElementById("examTakingView");
-  const resultView = document.getElementById("examResultView");
+  const btnSubmit = document.getElementById("btnTakingSubmitExam");
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = "<span>⏳ Đang nộp bài & Gia sư Socrates đang chấm...</span>" /* sanitize */;
+  }
 
   const elapsedSeconds = examTakingState.startTime ? Math.round((Date.now() - examTakingState.startTime) / 1000) : 0;
   const elapsedMin = Math.floor(elapsedSeconds / 60);
@@ -7094,11 +7413,12 @@ async function submitStudentExam() {
 
   const payload = {
     exam_id: activeStudentExam.exam_id,
-    student_id: studentAuthState.uid || "std_demo",
+    student_id: studentAuthState.uid || studentAuthState.studentCode || `student_${Date.now()}`,
     student_name: studentAuthState.studentName || "Học sinh",
     student_code: studentAuthState.studentCode || "HS001",
     class_code: studentAuthState.classCode || "9A",
-    answers: examTakingState.answers
+    answers: examTakingState.answers,
+    time_spent: timeSpentStr
   };
 
   try {
@@ -7141,7 +7461,7 @@ async function submitStudentExam() {
         if (isCorrect) {
           correctCount++;
         } else {
-          const topic = q.muc_sgk || "Kiến thức chung";
+          const topic = q.muc_sgk || "Kiến thức chung SGK";
           weakTopicsMap[topic] = (weakTopicsMap[topic] || 0) + 1;
         }
         details.push({
@@ -7150,7 +7470,7 @@ async function submitStudentExam() {
           is_correct: isCorrect,
           student_choice: studentChoice,
           correct_option: q.dap_an_dung,
-          giai_thich: q.giai_thich || "",
+          giai_thich: q.giai_thich || "Đáp án chuẩn xác theo SGK.",
           muc_sgk: q.muc_sgk || "Kiến thức chung"
         });
       });
@@ -7158,37 +7478,81 @@ async function submitStudentExam() {
       const score = Math.round((correctCount / totalQ) * 100) / 10;
       const weakTopics = Object.keys(weakTopicsMap);
 
-      // Đánh giá Socratic AI chuyên sâu theo từng trường hợp cụ thể
       let socraticAdvice = "";
       if (score >= 9) {
-        socraticAdvice = `🌟 Xuất sắc! Em đã hoàn thành xuất sắc bài kiểm tra với điểm số tuyệt đối ${score}/10 (${correctCount}/${totalQ} câu). Em nắm rất chắc các khái niệm trọng tâm trong SGK Tin học. Hãy tiếp tục duy trì phong độ và thử sức thêm các bài toán mở rộng!`;
+        socraticAdvice = `🌟 Xuất sắc! Em đã hoàn thành bài kiểm tra với điểm số tuyệt vời ${score}/10 (${correctCount}/${totalQ} câu). Em nắm rất chắc các khái niệm trọng tâm trong SGK Tin học. Hãy tiếp tục phát huy!`;
       } else if (score >= 7) {
-        socraticAdvice = `👍 Khá tốt! Em đã trả lời đúng ${correctCount}/${totalQ} câu (${score}/10 điểm). Em đã nắm được nền tảng kiến thức bài học. Tuy nhiên, em cần rà soát lại các câu sai ở phần "${weakTopics.join(', ')}" để hiểu sâu hơn về bản chất và tránh nhầm lẫn khi làm bài thi chính thức.`;
+        socraticAdvice = `👍 Khá tốt! Em đã trả lời đúng ${correctCount}/${totalQ} câu (${score}/10 điểm). Em đã nắm được nền tảng kiến thức bài học. Hãy xem lại giải thích ở các mục bên dưới để củng cố các câu còn nhầm lẫn nhé.`;
       } else if (score >= 5) {
-        socraticAdvice = `⚠️ Em đã đạt mức yêu cầu cơ bản (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Hệ thống nhận diện em còn bị nhầm lẫn ở các chủ đề: "${weakTopics.join(', ')}". Em hãy dành ít nhất 15 phút mở lại các mục SGK được Gia sư Socrates đề xuất bên dưới để củng cố nền tảng nhé!`;
+        socraticAdvice = `⚠️ Em đã đạt mức yêu cầu cơ bản (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Hệ thống nhận diện em còn bị nhầm lẫn ở các chủ đề: ${weakTopics.join(', ')}. Em hãy dành ít nhất 15 phút mở lại các mục SGK được Gia sư Socrates đề xuất bên dưới để ôn lại lý thuyết nhé!`;
       } else {
-        socraticAdvice = `🚨 Em cần nghiêm túc ôn tập lại kiến thức bài học (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Em đang hổng kiến thức ở các chủ đề: "${weakTopics.join(', ')}". Đừng nản lòng! Hãy bấm vào các nút "Học ngay" ở bên dưới, đọc kỹ lại nội dung bài học và giải thích chi tiết của từng câu hỏi để bổ sung kiến thức.`;
+        socraticAdvice = `🚨 Kết quả kiểm tra của em chưa đạt yêu cầu (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Thầy Socrates nhận thấy em đang gặp khó khăn ở các chủ đề: ${weakTopics.join(', ') || 'các kiến thức bài học'}. Đừng nản lòng! Hãy bấm vào nút "Mở SGK học ngay" bên dưới để đọc lại lý thuyết và phân tích từng câu sai nhé!`;
       }
 
       result = {
         score: score,
         correct_count: correctCount,
         total_questions: totalQ,
+        percentage: Math.round((correctCount / totalQ) * 100),
         weak_topics: weakTopics,
         socratic_advice: socraticAdvice,
         details: details,
         time_spent: timeSpentStr,
-        recommended_lessons: weakTopics.map((topic, i) => ({
-          grade: activeStudentExam.grade || 9,
-          lesson_id: i + 1,
-          title: `Bài học Tin học ${activeStudentExam.grade || 9}`,
-          muc_sgk: topic
-        })),
+        recommended_lessons: weakTopics.map((topic, i) => {
+          const matchLesson = topic.match(/Bài\s*(\d+)/i) || (activeStudentExam.title && activeStudentExam.title.match(/Bài\s*(\d+)/i));
+          const lessonId = matchLesson ? parseInt(matchLesson[1], 10) : (i + 1);
+          return {
+            grade: activeStudentExam.grade || 9,
+            lesson_id: lessonId,
+            title: `Tin học ${activeStudentExam.grade || 9} - Bài ${lessonId}`,
+            muc_sgk: topic,
+            advice: `Em cần ôn lại lý thuyết tại "${topic}" để nắm chắc kiến thức.`
+          };
+        }),
         submitted_at: new Date().toISOString()
       };
     }
 
-    // 3. Lưu kết quả bài nộp vào localStorage
+    // 3. Chuẩn hóa hai chiều giữa backend evaluation và frontend
+    if (result.ai_evaluation) {
+      if (!result.socratic_advice && result.ai_evaluation.overall_comment) {
+        result.socratic_advice = result.ai_evaluation.overall_comment;
+      }
+      if ((!result.recommended_lessons || result.recommended_lessons.length === 0) && result.ai_evaluation.recommendations) {
+        result.recommended_lessons = result.ai_evaluation.recommendations.map(r => ({
+          grade: activeStudentExam.grade || 9,
+          lesson_id: r.lesson_id || 1,
+          title: `Tin học ${activeStudentExam.grade || 9} - Bài ${r.lesson_id || 1}`,
+          muc_sgk: r.topic,
+          advice: r.advice
+        }));
+      }
+      if (!result.weak_topics && result.ai_evaluation.weak_topics) {
+        result.weak_topics = Object.keys(result.ai_evaluation.weak_topics);
+      }
+    }
+
+    result.time_spent = result.time_spent || timeSpentStr;
+
+    // 4. ĐỒNG BỘ LÊN FIREBASE REALTIME DATABASE
+    await syncSubmissionToFirebase(payload, result);
+
+    // 5. Tính toán thứ hạng xếp điểm trong lớp từ Firebase
+    try {
+      const allSubs = await fetchExamSubmissionsFromFirebase(activeStudentExam.exam_id);
+      if (allSubs.length > 0) {
+        allSubs.sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+        const myIndex = allSubs.findIndex(s => s.student_id === payload.student_id);
+        result.rank = myIndex >= 0 ? (myIndex + 1) : 1;
+        result.total_participants = allSubs.length;
+        const avg = allSubs.reduce((acc, s) => acc + (parseFloat(s.score) || 0), 0) / allSubs.length;
+        result.class_average = Number(avg.toFixed(1));
+      }
+    } catch (eRank) {
+      console.debug("Compute rank failed:", eRank);
+    }
+
+    // 6. Lưu offline vào localStorage
     try {
       const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
       localSubs.unshift({
@@ -7201,29 +7565,41 @@ async function submitStudentExam() {
       console.debug("Lưu localStorage submission thất bại:", eSub);
     }
 
+    const takingView = document.getElementById("examTakingView");
+    const resultView = document.getElementById("examResultView");
     if (takingView) takingView.classList.add("hidden");
     if (resultView) resultView.classList.remove("hidden");
     renderExamResult(result);
   } catch (err) {
     alert("Lỗi khi nộp bài: " + err.message);
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = "<span>✔ Nộp bài kiểm tra</span>" /* sanitize */;
+    }
   }
 }
 
 function renderExamResult(evaluation) {
-  const scoreNum = evaluation.score !== undefined ? evaluation.score : 0;
+  const scoreVal = evaluation.score !== undefined ? evaluation.score : 0;
+  const scoreNum = parseFloat(scoreVal) || 0;
   const scoreEl = document.getElementById("resultScoreNum");
   const countEl = document.getElementById("resultCorrectCount");
   const percentEl = document.getElementById("resultPercentRatio");
   const timeEl = document.getElementById("resultTimeSpent");
   const examTitleEl = document.getElementById("resultExamTitle");
 
-  if (scoreEl) scoreEl.textContent = String(scoreNum);
-  if (countEl) countEl.textContent = `✔ ${evaluation.correct_count}/${evaluation.total_questions} câu đúng`;
+  if (scoreEl) scoreEl.textContent = String(scoreNum.toFixed(1));
+  if (countEl) countEl.textContent = `✔ ${evaluation.correct_count ?? 0}/${evaluation.total_questions ?? 0} câu đúng`;
 
-  const pct = evaluation.total_questions > 0 ? Math.round((evaluation.correct_count / evaluation.total_questions) * 100) : 0;
+  const pct = evaluation.total_questions > 0 ? Math.round(((evaluation.correct_count ?? 0) / evaluation.total_questions) * 100) : 0;
   if (percentEl) percentEl.textContent = `⚡ Đạt ${pct}%`;
-  if (timeEl && evaluation.time_spent) timeEl.textContent = `⏱ ${evaluation.time_spent}`;
-  if (examTitleEl && activeStudentExam) examTitleEl.textContent = `Kết quả: ${activeStudentExam.title}`;
+  if (timeEl && (evaluation.time_spent || evaluation.timeSpent)) {
+    timeEl.textContent = `⏱ ${evaluation.time_spent || evaluation.timeSpent}`;
+  }
+  if (examTitleEl && activeStudentExam) {
+    examTitleEl.textContent = `Kết quả: ${activeStudentExam.title}`;
+  }
 
   // Đổi màu vòng tròn điểm số
   const circleEl = document.getElementById("resultScoreCircle");
@@ -7240,6 +7616,34 @@ function renderExamResult(evaluation) {
     }
   }
 
+  // Thông báo chúc mừng & Xếp hạng điểm số
+  let tierText = "Xuất sắc 🌟";
+  if (scoreNum < 5) tierText = "Cần ôn tập gấp 🚨";
+  else if (scoreNum < 6.5) tierText = "Trung bình ⚠️";
+  else if (scoreNum < 8) tierText = "Khá 👍";
+  else if (scoreNum < 9) tierText = "Giỏi 🎯";
+
+  const alertContainer = document.getElementById("examSuccessAlert");
+  if (alertContainer) {
+    const rankText = evaluation.rank ? ` • Xếp hạng: <strong>#${evaluation.rank}/${evaluation.total_participants || 1}</strong> trong lớp` : "";
+    alertContainer.innerHTML = /* sanitize */ `
+      <div class="exam-alert-badge">
+        🎉 <strong>Đã nộp bài thành công!</strong> Xếp loại: <strong>${tierText}</strong>${rankText}.
+      </div>
+    `;
+    alertContainer.classList.remove("hidden");
+  }
+
+  const rankBadgeEl = document.getElementById("resultRankingBadge");
+  if (rankBadgeEl) {
+    if (evaluation.rank) {
+      rankBadgeEl.textContent = `🏆 Hạng #${evaluation.rank}/${evaluation.total_participants || 1}`;
+      rankBadgeEl.style.display = "inline-block";
+    } else {
+      rankBadgeEl.textContent = `🏆 Xếp loại: ${tierText}`;
+    }
+  }
+
   // Nhận xét Socratic AI sâu sắc
   const feedbackEl = document.getElementById("resultAIFeedbackText");
   if (feedbackEl) {
@@ -7251,15 +7655,37 @@ function renderExamResult(evaluation) {
   const recBox = document.getElementById("resultRecommendationsBox");
   if (recList && recBox) {
     const recs = evaluation.recommended_lessons || [];
-    if (recs.length === 0) {
-      recList.replaceChildren();
+    recList.replaceChildren();
+
+    if (scoreNum >= 9.0 && recs.length === 0) {
       const p = document.createElement("p");
-      p.style.color = "#94a3b8";
-      p.style.fontStyle = "italic";
-      p.textContent = "Em đã làm rất tốt, không có chủ đề nào cần phải ôn lại gấp!";
+      p.style.color = "#34d399";
+      p.style.fontWeight = "600";
+      p.textContent = "🌟 Em đã nắm rất vững toàn bộ nội dung của bài kiểm tra này!";
       recList.appendChild(p);
+    } else if (recs.length === 0 && scoreNum < 9.0) {
+      const item = document.createElement("div");
+      item.className = "recommendation-item";
+      item.style.display = "flex";
+      item.style.justifyContent = "space-between";
+      item.style.alignItems = "center";
+      item.style.padding = "10px 14px";
+      item.style.background = "rgba(15, 23, 42, 0.6)";
+      item.style.border = "1px solid #334155";
+      item.style.borderRadius = "8px";
+      item.innerHTML = /* sanitize */ `
+        <div>
+          <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">Lý thuyết trọng tâm bài học</div>
+          <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 2px;">Em hãy mở SGK để đọc lại các khái niệm cơ bản.</div>
+        </div>
+        <button type="button" class="btn-exam-primary sm" style="flex-shrink: 0;">📖 Mở SGK học ngay</button>
+      `;
+      const btn = item.querySelector("button");
+      if (btn) {
+        btn.onclick = () => openSGKTopicFromRecommendation(activeStudentExam.grade || 9, 1, "Kiến thức bài học");
+      }
+      recList.appendChild(item);
     } else {
-      recList.replaceChildren();
       recs.forEach(rec => {
         const item = document.createElement("div");
         item.className = "recommendation-item";
@@ -7274,10 +7700,11 @@ function renderExamResult(evaluation) {
 
         item.innerHTML = /* sanitize */ `
           <div>
-            <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">${escapeHtml(rec.title)}</div>
+            <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">${escapeHtml(rec.title || `Bài học Tin học ${rec.grade || 9}`)}</div>
             <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 2px;">Chủ đề cần đọc lại: <strong style="color: #38bdf8;">${escapeHtml(rec.muc_sgk || '')}</strong></div>
+            ${rec.advice ? `<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; font-style: italic;">${escapeHtml(rec.advice)}</div>` : ''}
           </div>
-          <button type="button" class="btn-exam-primary sm" style="flex-shrink: 0;">📖 Mở SGK học ngay</button>
+          <button type="button" class="btn-exam-primary sm" style="flex-shrink: 0; margin-left: 10px;">📖 Mở SGK học ngay</button>
         `;
 
         const btn = item.querySelector("button");
@@ -7319,11 +7746,11 @@ function renderExamResult(evaluation) {
         <div style="color: #f8fafc; font-size: 0.95rem; margin-bottom: 0.65rem; line-height: 1.45;">
           ${escapeHtml(d.cau_hoi)}
         </div>
-        <div style="font-size: 0.88rem; color: #94a3b8; margin-bottom: 0.4rem;">
-          Lựa chọn của em: <strong style="color: ${isCorrect ? '#34d399' : '#f87171'};">${escapeHtml(d.student_choice || 'Chưa trả lời')}</strong>
-          ${!isCorrect ? ` • Đáp án đúng: <strong style="color: #34d399;">${escapeHtml(d.correct_option || '')}</strong>` : ''}
+        <div style="font-size: 0.85rem; line-height: 1.5; background: #0f172a; padding: 0.65rem 0.85rem; border-radius: 6px; border: 1px solid #1e293b;">
+          <div>Em đã chọn: <strong style="color: ${isCorrect ? '#34d399' : '#f87171'};">${escapeHtml(d.student_choice || d.user_choice || 'Chưa chọn')}</strong></div>
+          ${!isCorrect ? `<div>Đáp án đúng: <strong style="color: #34d399;">${escapeHtml(d.correct_option || d.correct_choice || '')}</strong></div>` : ''}
+          ${d.giai_thich || d.giai_thich_su_pham ? `<div style="color: #94a3b8; margin-top: 4px; font-style: italic;">💡 Giải thích: ${escapeHtml(d.giai_thich || d.giai_thich_su_pham)}</div>` : ''}
         </div>
-        ${d.giai_thich ? `<div style="background: rgba(15, 23, 42, 0.7); padding: 8px 12px; border-radius: 6px; font-size: 0.83rem; color: #cbd5e1; border-left: 3px solid #38bdf8; margin-top: 6px;"><strong>💡 Giải thích sư phạm:</strong> ${escapeHtml(d.giai_thich)}</div>` : ''}
       `;
 
       reviewList.appendChild(card);
