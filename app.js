@@ -1180,6 +1180,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function initApp() {
   try {
+    const parsedCurrentGrade = parseInt(state.grade, 10);
+    if (isNaN(parsedCurrentGrade) || parsedCurrentGrade < 6 || parsedCurrentGrade > 9) {
+      state.grade = 9;
+    } else {
+      state.grade = parsedCurrentGrade;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const gradeParam = parseInt(urlParams.get("grade"), 10);
     if (gradeParam === 6 || gradeParam === 9) {
@@ -1228,7 +1235,8 @@ async function initApp() {
 async function loadCurriculumLessons() {
   if (!API_BASE) return;
   try {
-    const res = await fetch(`${API_BASE}/v2/curriculum/lessons/${state.grade}`);
+    const cleanGrade = (state.grade === "all" || isNaN(parseInt(state.grade, 10)) || parseInt(state.grade, 10) < 6 || parseInt(state.grade, 10) > 9) ? 9 : parseInt(state.grade, 10);
+    const res = await fetch(`${API_BASE}/v2/curriculum/lessons/${cleanGrade}`);
     if (!res.ok) return;
     const data = await res.json();
     state.availableLessons = data.lessons || [];
@@ -1487,9 +1495,14 @@ function renderCurriculumCards(data) {
 
 // 6. Tải Dữ liệu Bài học từ Backend
 async function fetchLesson(grade, lessonId) {
+  const cleanGrade = (grade === "all" || isNaN(parseInt(grade, 10)) || parseInt(grade, 10) < 6 || parseInt(grade, 10) > 9) ? 9 : parseInt(grade, 10);
+  const cleanLessonId = (isNaN(parseInt(lessonId, 10)) || parseInt(lessonId, 10) < 1) ? 1 : parseInt(lessonId, 10);
+  grade = cleanGrade;
+  lessonId = cleanLessonId;
+
   if (!API_BASE) {
     try {
-      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${grade}/bai${lessonId}.json`);
+      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${cleanGrade}/bai${cleanLessonId}.json`);
       if (staticRes && staticRes.ok) {
         const data = await staticRes.json();
         state.lessonData = data;
@@ -1623,7 +1636,7 @@ async function fetchLesson(grade, lessonId) {
     renderCurriculumTree();
   } catch {
     try {
-      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${grade}/bai${lessonId}.json`);
+      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${cleanGrade}/bai${cleanLessonId}.json`);
       if (staticRes && staticRes.ok) {
         const data = await staticRes.json();
         state.lessonData = data;
@@ -1956,9 +1969,15 @@ function applyGradeLocking() {
 }
 
 async function switchGrade(newGrade) {
+  let validGrade = parseInt(newGrade, 10);
+  if (isNaN(validGrade) || validGrade < 6 || validGrade > 9) {
+    validGrade = 9;
+  }
+  newGrade = validGrade;
+
   const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
   if (studentAuthState.isLoggedIn && !isTeacherUnlocked) {
-    const studentGrade = studentAuthState.grade || 9;
+    const studentGrade = parseInt(studentAuthState.grade, 10) || 9;
     if (newGrade !== studentGrade) {
       alert(`🔒 Khối Lớp ${newGrade} đã bị khóa đối với tài khoản học sinh của em!\n\nEm đã đăng nhập chương trình Khối ${studentGrade} ${studentAuthState.classCode ? ` (Lớp ${studentAuthState.classCode})` : ""}, nên chỉ được phép truy cập và học nội dung của Khối ${studentGrade}.\n\nNếu muốn đổi sang học khối khác, hãy bấm nút "Thoát" ở góc trên bên phải để đăng nhập lại nhé!`);
       return;
@@ -3427,9 +3446,11 @@ async function sendChatMessage(messageText, customContext = null) {
   }
 
   try {
+    const chatGrade = (state.grade === "all" || isNaN(parseInt(state.grade, 10)) || parseInt(state.grade, 10) < 6 || parseInt(state.grade, 10) > 9) ? 9 : parseInt(state.grade, 10);
+    const chatLessonId = (isNaN(parseInt(state.lessonId, 10)) || parseInt(state.lessonId, 10) < 1) ? 1 : parseInt(state.lessonId, 10);
     const payload = {
-      grade: state.grade,
-      lesson_id: state.lessonId,
+      grade: chatGrade,
+      lesson_id: chatLessonId,
       message: cleanMessage,
       context: contextPayload,
       history: state.chatHistory.slice(-4)
@@ -4639,9 +4660,11 @@ function loadStoredStudentAuth() {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.isLoggedIn) {
         Object.assign(studentAuthState, parsed);
-        if (!studentAuthState.grade) {
+        if (!studentAuthState.grade || studentAuthState.grade === "all" || isNaN(parseInt(studentAuthState.grade, 10))) {
           const match = (studentAuthState.classCode || "").match(/^(\d+)/);
           studentAuthState.grade = match ? parseInt(match[1], 10) : 9;
+        } else {
+          studentAuthState.grade = parseInt(studentAuthState.grade, 10);
         }
       }
     }
@@ -4663,9 +4686,10 @@ function loadStoredStudentAuth() {
 
   // Tự động đồng bộ khối lớp nếu học sinh đã đăng nhập
   const isTeacherUnlocked = !!(state.teacherUnlocked && state.teacherToken);
-  if (studentAuthState.isLoggedIn && !isTeacherUnlocked && studentAuthState.grade) {
-    if (state.grade !== studentAuthState.grade) {
-      switchGrade(studentAuthState.grade);
+  if (studentAuthState.isLoggedIn && !isTeacherUnlocked && studentAuthState.grade && studentAuthState.grade !== "all") {
+    const targetGrade = parseInt(studentAuthState.grade, 10) || 9;
+    if (state.grade !== targetGrade) {
+      switchGrade(targetGrade);
     }
   }
 
@@ -5254,9 +5278,11 @@ function initStudentAuthPortal() {
         studentAuthState.studentName = user.displayName || "Học sinh";
         studentAuthState.studentEmail = user.email || "";
         studentAuthState.studentAvatar = user.photoURL || "";
-        if (!studentAuthState.grade) {
+        if (!studentAuthState.grade || studentAuthState.grade === "all" || isNaN(parseInt(studentAuthState.grade, 10))) {
           const match = (studentAuthState.classCode || "").match(/^(\d+)/);
           studentAuthState.grade = match ? parseInt(match[1], 10) : 9;
+        } else {
+          studentAuthState.grade = parseInt(studentAuthState.grade, 10);
         }
         localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
         updateHeaderStudentAuthUI();
@@ -5664,7 +5690,7 @@ function initStudentAuthPortal() {
       studentAuthState.studentName = "Giáo viên Tin học";
       studentAuthState.studentEmail = "giaovien@thcs.edu.vn";
       studentAuthState.classCode = "Tất cả các khối";
-      studentAuthState.grade = "all";
+      studentAuthState.grade = 9; // Giữ nguyên Khối 9 cho ngữ cảnh SGK, không để "all"
 
       try {
         sessionStorage.setItem("ai_sgk_teacher_token", sessionToken);
@@ -6049,7 +6075,7 @@ function initStudentAuthPortal() {
       // 2. Cập nhật Local Storage
       studentAuthState.studentName = newName;
       studentAuthState.classCode = newClass;
-      studentAuthState.grade = newGrade;
+      studentAuthState.grade = parseInt(newGrade, 10) || 9;
       if (newPass) studentAuthState.studentPassword = newPass;
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
 
@@ -9229,6 +9255,9 @@ function renderExamResult(evaluation) {
 }
 
 function openSGKTopicFromRecommendation(grade, lessonId, mucSgk) {
+  const cleanGrade = (grade === "all" || isNaN(parseInt(grade, 10))) ? 9 : parseInt(grade, 10);
+  const cleanLessonId = (isNaN(parseInt(lessonId, 10)) || parseInt(lessonId, 10) < 1) ? 1 : parseInt(lessonId, 10);
+
   const examStage = document.getElementById("examStage");
   if (examStage) examStage.classList.add("hidden");
 
@@ -9236,12 +9265,12 @@ function openSGKTopicFromRecommendation(grade, lessonId, mucSgk) {
   if (canvas) canvas.classList.remove("hidden");
 
   if (typeof state !== "undefined") {
-    state.grade = grade;
-    state.lessonId = lessonId;
+    state.grade = cleanGrade;
+    state.lessonId = cleanLessonId;
   }
 
-  if (typeof loadLesson === "function") {
-    loadLesson(grade, lessonId);
+  if (typeof fetchLesson === "function") {
+    fetchLesson(cleanGrade, cleanLessonId);
   }
 
   setTimeout(() => {
