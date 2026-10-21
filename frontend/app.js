@@ -183,34 +183,63 @@ function initTeacherChangePinModal() {
 // 1. Cấu hình Endpoint Động thông minh (Hỗ trợ Localhost, Render, GitHub Pages)
 const DEFAULT_RENDER_BACKEND = "https://aisgk.onrender.com/api";
 
-const getApiBase = () => {
+const getBackendPool = () => {
   try {
     const saved = localStorage.getItem("AISGK_BACKEND_URL");
-    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, "");
+    if (saved && saved.trim()) {
+      const parts = saved.split(",").map(u => u.trim().replace(/\/+$/, "")).filter(Boolean);
+      if (parts.length > 0) return parts;
+    }
   } catch (err) {
     console.debug("Unable to read custom backend URL from localStorage:", err);
   }
 
   if (typeof window !== "undefined" && window.location && window.location.hostname && window.location.hostname.endsWith("github.io")) {
-    return DEFAULT_RENDER_BACKEND;
+    return [DEFAULT_RENDER_BACKEND];
   }
 
   if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
     if (window.location.port === "8000") {
-      return "http://127.0.0.1:8000/api";
+      return ["http://127.0.0.1:8000/api"];
     }
-    return "";
+    return [""];
   }
 
   if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
-    return "";
+    return [""];
   }
 
-  return `${window.location.origin}/api`;
+  return [`${window.location.origin}/api`];
+};
+
+const getApiBase = () => {
+  const pool = getBackendPool();
+  return pool[0] || "";
 };
 
 const API_BASE = getApiBase();
+window.getBackendPool = () => getBackendPool();
 window.getBackendUrl = () => API_BASE;
+
+// 1.1. Cơ chế Đánh thức Render Chủ động (Client Pre-warming / Just-In-Time Wakeup)
+function prewarmBackend() {
+  const pool = getBackendPool();
+  pool.forEach(base => {
+    if (!base) return;
+    try {
+      fetch(`${base}/health`, { method: "GET", mode: "cors" })
+        .then(r => {
+          if (r.ok) {
+            console.debug(`[Keep-Alive] Render Backend (${base}) đã sẵn sàng.`);
+          }
+        })
+        .catch(() => {});
+    } catch {
+      // Non-blocking fire-and-forget
+    }
+  });
+}
+window.prewarmBackend = prewarmBackend;
 window.setBackendUrl = (url) => {
   if (url) {
     localStorage.setItem("AISGK_BACKEND_URL", url);
@@ -1179,6 +1208,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initApp() {
+  prewarmBackend();
   try {
     const parsedCurrentGrade = parseInt(state.grade, 10);
     if (isNaN(parsedCurrentGrade) || parsedCurrentGrade < 6 || parsedCurrentGrade > 9) {
@@ -3462,13 +3492,36 @@ async function sendChatMessage(messageText, customContext = null) {
       "X-Curriculum-Version": "v2"
     };
 
-    const res = await fetch(`${API_BASE}/chat`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload)
-    });
+    let res = null;
+    let fetchError = null;
+    const pool = getBackendPool();
+    for (let i = 0; i < pool.length; i++) {
+      const currentBase = pool[i];
+      if (!currentBase) continue;
+      try {
+        const attemptRes = await fetch(`${currentBase}/chat`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload)
+        });
+        if (attemptRes.ok) {
+          res = attemptRes;
+          break;
+        } else if (attemptRes.status >= 500) {
+          console.warn(`[Failover] Backend ${currentBase} trả về lỗi HTTP ${attemptRes.status}, chuyển sang server tiếp theo...`);
+          fetchError = new Error(`HTTP ${attemptRes.status}`);
+        } else {
+          // Lỗi 4xx (ví dụ validation) không phải lỗi máy chủ
+          res = attemptRes;
+          break;
+        }
+      } catch (networkErr) {
+        console.warn(`[Failover] Không thể kết nối tới ${currentBase}, chuyển sang server tiếp theo...`, networkErr);
+        fetchError = networkErr;
+      }
+    }
 
-    if (!res.ok) throw new Error("Lỗi gọi AI Socrates");
+    if (!res || !res.ok) throw (fetchError || new Error("Lỗi gọi AI Socrates"));
     const data = await res.json();
     const reply = data.reply;
 
