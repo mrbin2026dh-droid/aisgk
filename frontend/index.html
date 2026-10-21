@@ -992,6 +992,10 @@
             <button type="button" id="btnExamCreateManual" class="btn-exam-accent" title="Tạo bài kiểm tra thủ công">
               <span>+ Soạn đề mới</span>
             </button>
+            <button type="button" id="btnTeacherOpenUploadDoc" class="btn-exam-primary" style="background: linear-gradient(135deg, #0284c7, #0369a1);" title="Tải lên tài liệu học tập PDF cho học sinh">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span>+ Tải tài liệu PDF</span>
+            </button>
             <input type="file" id="examExcelFileInput" accept=".xlsx, .xls" style="display: none;" />
           </div>
         </div>
@@ -1024,6 +1028,19 @@
         <!-- Danh sách bài kiểm tra của giáo viên -->
         <div class="exam-grid-container" id="examTeacherGrid">
           <!-- Render danh sách thẻ bài kiểm tra qua JavaScript -->
+        </div>
+
+        <!-- Phân hệ Quản lý Tài liệu PDF của Giáo viên -->
+        <div class="teacher-docs-section" id="teacherDocsSection" style="margin-top: 2rem;">
+          <div class="teacher-docs-header">
+            <div class="docs-section-title">
+              <span>📚 Danh sách tài liệu PDF đã chia sẻ cho học sinh</span>
+              <span class="teacher-doc-count" id="teacherDocCountPill">0 tài liệu</span>
+            </div>
+          </div>
+          <div class="teacher-docs-grid" id="teacherDocsGrid">
+            <!-- Render danh sách tài liệu giáo viên đã đăng -->
+          </div>
         </div>
       </div>
 
@@ -1101,6 +1118,10 @@
           <button type="button" class="exam-tab-btn" id="tabBtnHistory" role="tab" aria-selected="false" aria-controls="tabStudentExamHistory">
             <span>📊 Lịch sử & Đánh giá năng lực</span>
           </button>
+          <button type="button" class="exam-tab-btn" id="tabBtnDocuments" role="tab" aria-selected="false" aria-controls="tabStudentDocuments">
+            <span>📚 Tài liệu</span>
+            <span class="tab-count-badge" id="badgeStudentDocumentsCount">0</span>
+          </button>
         </div>
 
         <!-- TAB 1: LƯỚI ĐỀ THI ĐƯỢC GIAO -->
@@ -1170,6 +1191,24 @@
                 <!-- Render các chủ đề yếu cần khắc phục -->
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: TÀI LIỆU HỌC TẬP (PDF DOCUMENTS) -->
+        <div class="student-tab-panel hidden" id="tabStudentDocuments" role="tabpanel">
+          <div class="documents-header-bar">
+            <div class="documents-title-wrap">
+              <span class="doc-icon-badge">📚</span>
+              <div>
+                <h3 class="doc-stage-heading">Tài liệu học tập & Đề cương PDF</h3>
+                <p class="doc-stage-subheading">Xem trực tiếp và tải về tài liệu, đề cương do Thầy/Cô biên soạn</p>
+              </div>
+            </div>
+            <div class="doc-count-tag" id="badgeDocSummary">0 tài liệu</div>
+          </div>
+
+          <div class="documents-grid" id="studentDocumentsGrid">
+            <!-- Render danh sách tài liệu qua JavaScript -->
           </div>
         </div>
 
@@ -2056,6 +2095,107 @@
         <button type="button" class="btn-primary pin-modal-btn-save" id="btnSubmitChangeTeacherPin">
           <span>Lưu mã PIN mới</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TẢI LÊN TÀI LIỆU PDF DÀNH CHO GIÁO VIÊN -->
+  <div class="modal-overlay hidden" id="modalTeacherUploadDoc" role="dialog" aria-modal="true" aria-labelledby="modalUploadDocTitle">
+    <div class="modal-card doc-upload-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">📄</span>
+          <div>
+            <h3 class="modal-title" id="modalUploadDocTitle">Tải lên tài liệu học tập (PDF)</h3>
+            <p class="modal-subtitle">Học sinh các lớp sẽ xem trực tiếp tài liệu trên điện thoại và máy tính</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseUploadDocModal" aria-label="Đóng modal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <div class="sl-form-group">
+          <label for="inputDocTitle" class="sl-form-label">Tên tài liệu / Chuyên đề: <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="inputDocTitle" class="sl-input" placeholder="Ví dụ: Đề cương ôn tập kiểm tra giữa HK1 Tin học 9..." required />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+          <div class="sl-form-group">
+            <label for="selectDocGrade" class="sl-form-label">Khối lớp:</label>
+            <select id="selectDocGrade" class="exam-select" style="width: 100%;">
+              <option value="9" selected>Khối 9</option>
+              <option value="8">Khối 8</option>
+              <option value="7">Khối 7</option>
+              <option value="6">Khối 6</option>
+              <option value="all">Tất cả các khối</option>
+            </select>
+          </div>
+          <div class="sl-form-group">
+            <label for="selectDocClass" class="sl-form-label">Lớp áp dụng:</label>
+            <select id="selectDocClass" class="exam-select" style="width: 100%;">
+              <option value="all" selected>Tất cả các lớp</option>
+              <option value="9A">Lớp 9A</option>
+              <option value="9B">Lớp 9B</option>
+              <option value="9C">Lớp 9C</option>
+              <option value="6A">Lớp 6A</option>
+              <option value="6B">Lớp 6B</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sl-form-group" style="margin-top: 1rem;">
+          <label for="inputDocDesc" class="sl-form-label">Mô tả tóm tắt / Lời dặn dò của Thầy/Cô:</label>
+          <textarea id="inputDocDesc" class="sl-input" rows="2" placeholder="Ví dụ: Các em ôn kỹ phần 2 và làm bài tập trang 3-5 nhé..." style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="sl-form-group" style="margin-top: 1rem;">
+          <label class="sl-form-label">Chọn tệp tin PDF: <span style="color: #ef4444;">*</span></label>
+          <div class="doc-file-dropzone" id="docFileDropzone">
+            <input type="file" id="inputDocFile" accept=".pdf,application/pdf" style="display: none;" />
+            <button type="button" class="btn-select-file" id="btnSelectDocFile">
+              📁 Chọn file PDF từ máy tính
+            </button>
+            <span class="doc-file-name" id="docFileNameSelected">Chưa chọn tệp (Hỗ trợ file .pdf)</span>
+          </div>
+        </div>
+
+        <div id="msgDocUpload" class="pin-modal-msg hidden" style="margin-top: 1rem;"></div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-light);">
+        <button type="button" class="btn-exam-secondary" id="btnCancelUploadDoc">Hủy bỏ</button>
+        <button type="button" class="btn-exam-primary" id="btnSubmitUploadDoc" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+          <span>📤 Tải lên & Chia sẻ cho học sinh</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XEM TÀI LIỆU PDF CHUẨN ĐA NỀN TẢNG (DESKTOP & MOBILE RESPONSIVE) -->
+  <div class="modal-overlay hidden" id="modalPdfViewer" role="dialog" aria-modal="true" aria-labelledby="modalPdfViewerTitle">
+    <div class="pdf-viewer-modal-card">
+      <div class="pdf-viewer-header">
+        <div class="pdf-header-title-group">
+          <span class="pdf-badge-icon">📄</span>
+          <div>
+            <h3 class="pdf-modal-title" id="modalPdfViewerTitle">Tài liệu học tập</h3>
+            <span class="pdf-modal-subtitle" id="modalPdfViewerSubtitle">Khối 9 • Giáo viên bộ môn Tin học</span>
+          </div>
+        </div>
+        <div class="pdf-header-actions">
+          <a href="#" id="btnPdfOpenNewTab" target="_blank" rel="noopener noreferrer" class="btn-pdf-action" title="Mở toàn màn hình / Tab mới">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span class="pdf-action-text">Toàn màn hình</span>
+          </a>
+          <a href="#" id="btnPdfDownload" download="tai_lieu.pdf" class="btn-pdf-action primary" title="Tải file PDF về máy">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span class="pdf-action-text">Tải về</span>
+          </a>
+          <button type="button" class="pdf-close-btn" id="btnClosePdfViewer" aria-label="Đóng modal xem PDF">✕</button>
+        </div>
+      </div>
+      <div class="pdf-viewer-body" id="pdfViewerBody">
+        <iframe id="pdfViewerIframe" class="pdf-iframe-frame" title="Xem tài liệu PDF" src="about:blank"></iframe>
       </div>
     </div>
   </div>

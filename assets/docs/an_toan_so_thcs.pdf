@@ -1,0 +1,50 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 592 >>
+stream
+BT
+/F1 20 Tf
+50 720 Td
+(CAM NANG AN TOAN KHONG GIAN MANG THCS) Tj
+/F1 12 Tf
+0 -30 Td
+(Ky nang bao ve tai khoan va phong chong lua dao so) Tj
+/F1 10 Tf
+0 -25 Td
+(--------------------------------------------------------------------------------) Tj
+0 -20 Td
+(* Nguyen tac 1: Dat mat khau manh (toi thieu 8 ky tu gom chu, so, ky hieu)) Tj
+0 -18 Td
+(* Nguyen tac 2: Khong chia se ma OTP hoac mat khau cho bat ky ai) Tj
+0 -18 Td
+(* Nguyen tac 3: Canh giac voi link la va tin nhan gia mao tren mang xa hoi) Tj
+0 -18 Td
+(* Nguyen tac 4: Thong bao ngay cho Thay Co va Phu huynh khi gap nguy co) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000244 00000 n 
+0000000318 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+992
+%%EOF

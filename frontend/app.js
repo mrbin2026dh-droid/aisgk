@@ -6751,6 +6751,7 @@ async function loadTeacherExams() {
 
   currentExamList = exams;
   renderTeacherExamCards();
+  loadTeacherDocuments();
 }
 
 function renderTeacherExamCards() {
@@ -7732,7 +7733,8 @@ function switchStudentExamTab(tabName) {
   const tabs = [
     { name: "exams", btnId: "tabBtnExamsList", panelId: "tabStudentExamsList" },
     { name: "leaderboard", btnId: "tabBtnLeaderboard", panelId: "tabStudentLeaderboard" },
-    { name: "history", btnId: "tabBtnHistory", panelId: "tabStudentExamHistory" }
+    { name: "history", btnId: "tabBtnHistory", panelId: "tabStudentExamHistory" },
+    { name: "documents", btnId: "tabBtnDocuments", panelId: "tabStudentDocuments" }
   ];
 
   tabs.forEach(t => {
@@ -7752,6 +7754,10 @@ function switchStudentExamTab(tabName) {
       if (panel) panel.classList.add("hidden");
     }
   });
+
+  if (tabName === "documents") {
+    loadStudentDocuments();
+  }
 }
 
 function initStudentExamTabEvents() {
@@ -7771,6 +7777,14 @@ function initStudentExamTabEvents() {
   if (btnHistory && !btnHistory._hasTabListener) {
     btnHistory._hasTabListener = true;
     btnHistory.addEventListener("click", () => switchStudentExamTab("history"));
+  }
+  const btnDocs = document.getElementById("tabBtnDocuments");
+  if (btnDocs && !btnDocs._hasTabListener) {
+    btnDocs._hasTabListener = true;
+    btnDocs.addEventListener("click", () => {
+      switchStudentExamTab("documents");
+      loadStudentDocuments();
+    });
   }
   if (selectExam && !selectExam._hasChangeListener) {
     selectExam._hasChangeListener = true;
@@ -8506,6 +8520,9 @@ async function loadStudentExams() {
   // 6. Gắn sự kiện chuyển tab và bộ lọc
   initStudentExamTabEvents();
   listenRealtimeExamStatusForStudents();
+
+  // 7. Tải danh sách tài liệu học tập PDF (H3)
+  loadStudentDocuments();
 }
 
 
@@ -8515,12 +8532,16 @@ async function startStudentExam(examId) {
     let examData = null;
     let fullExamData = null;
 
-    // 1. Ưu tiên tải trực tiếp từ Firebase Realtime Database
+    // 1. Ưu tiên tải trực tiếp từ Firebase Realtime Database (kèm timeout an toàn chống treo)
     try {
       initFirebaseApp();
       if (typeof firebase !== "undefined" && firebase.database) {
-        const snap = await firebase.database().ref(`exams/${examId}`).once("value");
-        if (snap.exists()) {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+        const snap = await Promise.race([
+          firebase.database().ref(`exams/${examId}`).once("value"),
+          timeoutPromise
+        ]);
+        if (snap && snap.exists && snap.exists()) {
           const fbVal = snap.val();
           if (fbVal && fbVal.questions && fbVal.questions.length > 0) {
             fullExamData = JSON.parse(JSON.stringify(fbVal));
@@ -8759,12 +8780,21 @@ function renderTakingQuestion(index) {
     });
   }
 
-  // Điều khiển nút Câu trước / Câu tiếp theo
+  // Điều khiển nút Câu trước / Câu tiếp theo (H2: Giữ nút Câu tiếp có thể bấm để bật cảnh báo khi chưa chọn đáp án)
   const btnPrev = document.getElementById("btnTakingPrevQ");
   const btnNext = document.getElementById("btnTakingNextQ");
   const isCurrentAnswered = Boolean(examTakingState.answers[q.id]);
   if (btnPrev) btnPrev.disabled = (index === 0);
-  if (btnNext) btnNext.disabled = (index === total - 1) || !isCurrentAnswered;
+  if (btnNext) {
+    btnNext.disabled = (index === total - 1);
+    if (!isCurrentAnswered && index < total - 1) {
+      btnNext.classList.add("needs-answer");
+      btnNext.title = "Em vui lòng chọn đáp án trước khi bấm Câu tiếp";
+    } else {
+      btnNext.classList.remove("needs-answer");
+      btnNext.title = "Chuyển sang câu tiếp theo";
+    }
+  }
 
   renderTakingPalette();
 }
@@ -8777,6 +8807,8 @@ function selectTakingOption(questionId, letter) {
   if (btnNext && activeStudentExam && activeStudentExam.questions) {
     const total = activeStudentExam.questions.length;
     btnNext.disabled = (examTakingState.currentQuestionIndex === total - 1);
+    btnNext.classList.remove("needs-answer");
+    btnNext.title = "Chuyển sang câu tiếp theo";
   }
 
   const optionsContainer = document.getElementById("takingOptionsContainer");
@@ -8808,14 +8840,19 @@ function confirmAndSubmitStudentExam() {
   if (!activeStudentExam || !activeStudentExam.questions) return;
   const total = activeStudentExam.questions.length;
   const answered = Object.keys(examTakingState.answers).length;
+  const isTimeUp = Boolean(examTakingState.timeLeftSeconds <= 0);
 
-  if (answered < total) {
-    const confirmSubmit = confirm(`Em mới trả lời ${answered}/${total} câu hỏi. Em có chắc chắn muốn nộp bài sớm không?`);
-    if (!confirmSubmit) return;
-  } else {
-    const confirmSubmit = confirm("Em đã hoàn thành tất cả các câu hỏi! Bấm OK để nộp bài và nhận đánh giá AI tức thì.");
-    if (!confirmSubmit) return;
+  // H1: BẮT BUỘC học sinh phải làm HẾT tất cả các câu hoặc HẾT GIỜ mới được nộp bài!
+  if (!isTimeUp && answered < total) {
+    const unAnsweredCount = total - answered;
+    showExamToast(`⚠️ Em chưa làm hết các câu hỏi (mới làm ${answered}/${total} câu). Bắt buộc phải hoàn thành 100% các câu hoặc đợi hết giờ mới được nộp bài!`, "warning");
+    alert(`⚠️ CHƯA THỂ NỘP BÀI!\n\nEm mới hoàn thành ${answered}/${total} câu hỏi (còn ${unAnsweredCount} câu chưa chọn đáp án).\n\nTheo quy chế thi trắc nghiệm, em BẮT BUỘC phải làm hết tất cả các câu hỏi hoặc đợi đến khi hết giờ làm bài mới được nộp bài.`);
+    return;
   }
+
+  // Khi đã làm hết các câu hỏi hoặc đã hết giờ
+  const confirmSubmit = confirm(`🎉 Em đã hoàn thành đủ ${answered}/${total} câu hỏi!\n\nEm có chắc chắn muốn nộp bài để Gia sư AI Socrates chấm điểm ngay bây giờ không?`);
+  if (!confirmSubmit) return;
 
   submitStudentExam();
 }
@@ -9213,6 +9250,7 @@ if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     initTeacherExamEvents();
     initTeacherChangePinModal();
+    initTeacherUploadDocModal();
 
     const btnTakingPrev = document.getElementById("btnTakingPrevQ");
     const btnTakingNext = document.getElementById("btnTakingNextQ");
@@ -9229,13 +9267,22 @@ if (typeof document !== "undefined") {
     if (btnTakingNext) {
       btnTakingNext.addEventListener("click", () => {
         if (!activeStudentExam || !activeStudentExam.questions) return;
-        const currentQ = activeStudentExam.questions[examTakingState.currentQuestionIndex];
-        if (currentQ && !examTakingState.answers[currentQ.id]) {
-          showExamToast("Em vui lòng chọn đáp án cho câu hỏi hiện tại trước khi chuyển sang câu tiếp theo!", "warning");
+        const currentIdx = examTakingState.currentQuestionIndex;
+        const currentQ = activeStudentExam.questions[currentIdx];
+        const isCurrentAnswered = Boolean(currentQ && examTakingState.answers[currentQ.id]);
+
+        if (!isCurrentAnswered) {
+          showExamToast("⚠️ Em vui lòng chọn đáp án cho câu hỏi hiện tại trước khi chuyển sang câu tiếp theo!", "warning");
+          const container = document.getElementById("takingOptionsContainer");
+          if (container) {
+            container.classList.add("shake-highlight");
+            setTimeout(() => container.classList.remove("shake-highlight"), 600);
+          }
           return;
         }
-        if (examTakingState.currentQuestionIndex < activeStudentExam.questions.length - 1) {
-          renderTakingQuestion(examTakingState.currentQuestionIndex + 1);
+
+        if (currentIdx < activeStudentExam.questions.length - 1) {
+          renderTakingQuestion(currentIdx + 1);
         }
       });
     }
@@ -9249,4 +9296,522 @@ if (typeof document !== "undefined") {
       btnResultBack.addEventListener("click", openExamHub);
     }
   });
+}
+
+
+// ============================================================================
+// HỆ THỐNG QUẢN LÝ TÀI LIỆU HỌC TẬP & BỘ XEM PDF CHUẨN ĐA NỀN TẢNG (H3)
+// ============================================================================
+
+const DEFAULT_DOCUMENTS = [
+  {
+    doc_id: "doc_tin9_decuong_hk1",
+    title: "Đề cương Ôn tập & Hướng dẫn Thực hành Giữa HK1 - Tin học 9",
+    grade: 9,
+    target_classes: ["all"],
+    description: "Tóm tắt kiến thức trọng tâm Chủ đề 1, 2, 3: Hệ thống máy tính, Mạng xã hội & Đạo đức số.",
+    file_name: "de_cuong_tin9.pdf",
+    file_size: "350 KB",
+    uploaded_at: "2026-10-21T08:00:00Z",
+    uploaded_by: "Giáo viên Tin học",
+    url: "assets/docs/de_cuong_tin9.pdf"
+  },
+  {
+    doc_id: "doc_tin6_lythuyet_hk1",
+    title: "Sổ tay Lý thuyết & Sơ đồ Tư duy Tin học 6 - Kết nối tri thức",
+    grade: 6,
+    target_classes: ["all"],
+    description: "Hệ thống sơ đồ tư duy Chủ đề Máy tính và em, Biểu diễn thông tin trong máy tính.",
+    file_name: "ly_thuyet_tin6.pdf",
+    file_size: "420 KB",
+    uploaded_at: "2026-10-21T08:00:00Z",
+    uploaded_by: "Giáo viên Tin học",
+    url: "assets/docs/ly_thuyet_tin6.pdf"
+  },
+  {
+    doc_id: "doc_all_antoanso",
+    title: "Cẩm nang An toàn trên Không gian mạng & Phòng tránh Lừa đảo số THCS",
+    grade: "all",
+    target_classes: ["all"],
+    description: "Quy tắc 5K bảo mật tài khoản, nhận diện mã độc và phòng tránh lừa đảo trực tuyến.",
+    file_name: "an_toan_so_thcs.pdf",
+    file_size: "280 KB",
+    uploaded_at: "2026-10-21T08:00:00Z",
+    uploaded_by: "Giáo viên Tin học",
+    url: "assets/docs/an_toan_so_thcs.pdf"
+  }
+];
+
+let currentDocumentsList = [];
+
+async function fetchDocumentsFromFirebase() {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return [];
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500));
+    const snap = await Promise.race([
+      firebase.database().ref("documents").once("value"),
+      timeoutPromise
+    ]);
+    if (snap && snap.exists && snap.exists()) {
+      const data = snap.val();
+      return Object.values(data);
+    }
+  } catch (err) {
+    console.debug("Firebase fetch documents fallback:", err);
+  }
+  return [];
+}
+
+async function syncDocumentToFirebase(doc) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return false;
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
+    await Promise.race([
+      firebase.database().ref(`documents/${doc.doc_id}`).set(doc),
+      timeoutPromise
+    ]);
+    return true;
+  } catch (err) {
+    console.warn("Could not save document to Firebase:", err);
+    return false;
+  }
+}
+
+async function deleteDocumentFromFirebase(docId) {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return false;
+  try {
+    await firebase.database().ref(`documents/${docId}`).remove();
+    return true;
+  } catch (err) {
+    console.warn("Could not delete document from Firebase:", err);
+    return false;
+  }
+}
+
+async function getAllDocuments() {
+  let docs = [];
+  try {
+    const local = localStorage.getItem("ai_sgk_documents");
+    if (local) docs = JSON.parse(local);
+  } catch (err) {
+    console.debug("Local storage read docs:", err);
+  }
+
+  if (!docs || docs.length === 0) {
+    docs = DEFAULT_DOCUMENTS;
+    try {
+      localStorage.setItem("ai_sgk_documents", JSON.stringify(docs));
+    } catch (err) {
+      console.debug("Local storage write docs:", err);
+    }
+  }
+
+  currentDocumentsList = docs;
+
+  // Background sync với Firebase Realtime Database (không chặn giao diện)
+  fetchDocumentsFromFirebase().then(fbDocs => {
+    if (fbDocs && fbDocs.length > 0) {
+      currentDocumentsList = fbDocs;
+      try {
+        localStorage.setItem("ai_sgk_documents", JSON.stringify(fbDocs));
+      } catch (err) {
+        console.debug("Local storage save fbDocs:", err);
+      }
+    }
+  }).catch(err => console.debug("FB docs bg sync:", err));
+
+  return docs;
+}
+
+async function loadStudentDocuments() {
+  const grid = document.getElementById("studentDocumentsGrid");
+  const countBadge = document.getElementById("badgeStudentDocumentsCount");
+  const countPill = document.getElementById("badgeDocSummary");
+  if (!grid) return;
+
+  grid.replaceChildren();
+  const allDocs = await getAllDocuments();
+
+  const grade = studentAuthState.grade || state.grade || 9;
+  const classCode = studentAuthState.classCode || "";
+
+  const filtered = allDocs.filter(doc => {
+    if (doc.grade !== "all" && String(doc.grade) !== String(grade)) return false;
+    if (doc.target_classes && doc.target_classes.length > 0) {
+      if (!doc.target_classes.includes("all") && !doc.target_classes.includes("Tất cả") && classCode && !doc.target_classes.includes(classCode)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (countBadge) countBadge.textContent = String(filtered.length);
+  if (countPill) countPill.textContent = `${filtered.length} tài liệu`;
+
+  if (filtered.length === 0) {
+    const emptyBox = document.createElement("div");
+    emptyBox.style.gridColumn = "1 / -1";
+    emptyBox.style.padding = "2.5rem";
+    emptyBox.style.textAlign = "center";
+    emptyBox.style.background = "#0f172a";
+    emptyBox.style.borderRadius = "12px";
+    emptyBox.style.border = "1px dashed rgba(255,255,255,0.15)";
+
+    const p1 = document.createElement("p");
+    p1.style.fontSize = "1.1rem";
+    p1.style.color = "#94a3b8";
+    p1.style.margin = "0";
+    p1.textContent = "📚 Chưa có tài liệu nào được giao cho lớp của em.";
+
+    const p2 = document.createElement("p");
+    p2.style.fontSize = "0.85rem";
+    p2.style.color = "#64748b";
+    p2.style.marginTop = "6px";
+    p2.textContent = "Thầy/Cô sẽ sớm đăng tải tài liệu ôn tập và đề cương lên đây nhé!";
+
+    emptyBox.appendChild(p1);
+    emptyBox.appendChild(p2);
+    grid.appendChild(emptyBox);
+    return;
+  }
+
+  filtered.forEach(doc => {
+    const card = document.createElement("div");
+    card.className = "doc-card-item";
+
+    const docUrl = doc.data_url || doc.url || (`assets/docs/${doc.file_name}`);
+    const gradeLabel = doc.grade === "all" ? "Tất cả các khối" : `Khối ${doc.grade}`;
+    const classLabel = (doc.target_classes && doc.target_classes.length > 0 && !doc.target_classes.includes("all")) ? doc.target_classes.join(", ") : "Tất cả các lớp";
+
+    card.innerHTML = /* sanitize */ `
+      <div class="doc-card-top">
+        <div class="doc-pdf-badge">
+          <span>PDF</span>
+        </div>
+        <div class="doc-card-main">
+          <h4 class="doc-card-title">${escapeHtml(doc.title)}</h4>
+          <div class="doc-card-meta">
+            <span class="doc-pill grade">${gradeLabel}</span>
+            <span class="doc-pill">${classLabel}</span>
+            <span class="doc-pill size">${escapeHtml(doc.file_size || "350 KB")}</span>
+          </div>
+          <p class="doc-card-desc">${escapeHtml(doc.description || "Tài liệu học tập ôn tập chính khóa theo chương trình Tin học THCS.")}</p>
+        </div>
+      </div>
+      <div class="doc-card-actions">
+        <button type="button" class="btn-doc-view" data-doc-id="${doc.doc_id}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Xem tài liệu</span>
+        </button>
+        <a href="${docUrl}" download="${doc.file_name || 'tai_lieu.pdf'}" class="btn-doc-download" title="Tải file PDF về máy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
+      </div>
+    `;
+
+    const viewBtn = card.querySelector(".btn-doc-view");
+    if (viewBtn) {
+      viewBtn.addEventListener("click", () => openPdfViewer(doc));
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function openPdfViewer(doc) {
+  const modal = document.getElementById("modalPdfViewer");
+  const titleEl = document.getElementById("modalPdfViewerTitle");
+  const subtitleEl = document.getElementById("modalPdfViewerSubtitle");
+  const iframe = document.getElementById("pdfViewerIframe");
+  const btnDownload = document.getElementById("btnPdfDownload");
+  const btnOpenTab = document.getElementById("btnPdfOpenNewTab");
+
+  if (!modal || !doc) return;
+
+  const docUrl = doc.data_url || doc.url || (`assets/docs/${doc.file_name}`);
+  const gradeLabel = doc.grade === "all" ? "Tất cả các khối" : `Khối ${doc.grade}`;
+
+  if (titleEl) titleEl.textContent = doc.title;
+  if (subtitleEl) subtitleEl.textContent = `${gradeLabel} • ${doc.uploaded_by || "Giáo viên Tin học"}`;
+
+  if (iframe) {
+    iframe.src = docUrl;
+  }
+  if (btnDownload) {
+    btnDownload.href = docUrl;
+    btnDownload.download = doc.file_name || "tai_lieu.pdf";
+  }
+  if (btnOpenTab) {
+    btnOpenTab.href = docUrl;
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function closePdfViewer() {
+  const modal = document.getElementById("modalPdfViewer");
+  const iframe = document.getElementById("pdfViewerIframe");
+  if (iframe) iframe.src = "about:blank";
+  if (modal) modal.classList.add("hidden");
+}
+
+async function loadTeacherDocuments() {
+  const grid = document.getElementById("teacherDocsGrid");
+  const pill = document.getElementById("teacherDocCountPill");
+  if (!grid) return;
+
+  grid.replaceChildren();
+  const allDocs = await getAllDocuments();
+
+  if (pill) pill.textContent = `${allDocs.length} tài liệu`;
+
+  if (allDocs.length === 0) {
+    const emptyP = document.createElement("p");
+    emptyP.style.color = "#94a3b8";
+    emptyP.style.fontSize = "0.9rem";
+    emptyP.style.padding = "1rem";
+    emptyP.textContent = 'Chưa có tài liệu PDF nào được tải lên. Bấm "+ Tải tài liệu PDF" ở trên để tải tài liệu cho học sinh nhé!';
+    grid.appendChild(emptyP);
+    return;
+  }
+
+  allDocs.forEach(doc => {
+    const card = document.createElement("div");
+    card.className = "teacher-doc-card";
+
+    const gradeLabel = doc.grade === "all" ? "Tất cả các khối" : `Khối ${doc.grade}`;
+    const classLabel = (doc.target_classes && doc.target_classes.length > 0 && !doc.target_classes.includes("all")) ? doc.target_classes.join(", ") : "Tất cả các lớp";
+
+    card.innerHTML = /* sanitize */ `
+      <div>
+        <h4 class="teacher-doc-card-title">${escapeHtml(doc.title)}</h4>
+        <div class="teacher-doc-card-meta">
+          <span>${gradeLabel}</span> • <span>${classLabel}</span> • <span>${escapeHtml(doc.file_size || "350 KB")}</span>
+        </div>
+      </div>
+      <div class="teacher-doc-card-actions">
+        <button type="button" class="btn-teacher-doc-view" data-doc-id="${doc.doc_id}">👁 Xem thử</button>
+        <button type="button" class="btn-teacher-doc-delete" data-doc-id="${doc.doc_id}">🗑 Xóa</button>
+      </div>
+    `;
+
+    const viewBtn = card.querySelector(".btn-teacher-doc-view");
+    if (viewBtn) {
+      viewBtn.addEventListener("click", () => openPdfViewer(doc));
+    }
+
+    const delBtn = card.querySelector(".btn-teacher-doc-delete");
+    if (delBtn) {
+      delBtn.addEventListener("click", async () => {
+        if (!confirm(`Thầy/Cô có chắc chắn muốn xóa tài liệu "${doc.title}" không?`)) return;
+        await deleteDocumentFromFirebase(doc.doc_id);
+        const updated = currentDocumentsList.filter(d => d.doc_id !== doc.doc_id);
+        currentDocumentsList = updated;
+        try {
+          localStorage.setItem("ai_sgk_documents", JSON.stringify(updated));
+        } catch (err) {
+          console.debug("Local storage update docs:", err);
+        }
+        showExamToast("✔ Đã xóa tài liệu thành công!", "success");
+        loadTeacherDocuments();
+        loadStudentDocuments();
+      });
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function initTeacherUploadDocModal() {
+  const modal = document.getElementById("modalTeacherUploadDoc");
+  const btnOpen = document.getElementById("btnTeacherOpenUploadDoc");
+  const btnClose = document.getElementById("btnCloseUploadDocModal");
+  const btnCancel = document.getElementById("btnCancelUploadDoc");
+  const btnSelectFile = document.getElementById("btnSelectDocFile");
+  const fileInput = document.getElementById("inputDocFile");
+  const fileNameSpan = document.getElementById("docFileNameSelected");
+  const btnSubmit = document.getElementById("btnSubmitUploadDoc");
+  const msgEl = document.getElementById("msgDocUpload");
+
+  const inputTitle = document.getElementById("inputDocTitle");
+  const selectGrade = document.getElementById("selectDocGrade");
+  const selectClass = document.getElementById("selectDocClass");
+  const inputDesc = document.getElementById("inputDocDesc");
+
+  let selectedPdfDataUrl = "";
+  let selectedPdfFileName = "";
+  let selectedPdfFileSize = "";
+
+  function openModal() {
+    if (modal) {
+      modal.classList.remove("hidden");
+      if (inputTitle) inputTitle.value = "";
+      if (inputDesc) inputDesc.value = "";
+      if (fileNameSpan) {
+        fileNameSpan.textContent = "Chưa chọn tệp (Hỗ trợ file .pdf)";
+        fileNameSpan.style.color = "#94a3b8";
+      }
+      if (msgEl) {
+        msgEl.className = "pin-modal-msg hidden";
+        msgEl.textContent = "";
+      }
+      selectedPdfDataUrl = "";
+      selectedPdfFileName = "";
+      selectedPdfFileSize = "";
+    }
+  }
+
+  function closeModal() {
+    if (modal) modal.classList.add("hidden");
+  }
+
+  if (btnOpen) btnOpen.addEventListener("click", openModal);
+  if (btnClose) btnClose.addEventListener("click", closeModal);
+  if (btnCancel) btnCancel.addEventListener("click", closeModal);
+
+  if (btnSelectFile && fileInput) {
+    btnSelectFile.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "⚠️ Vui lòng chỉ chọn tệp tin định dạng PDF (.pdf)!";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      selectedPdfFileName = file.name;
+      const sizeKb = Math.round(file.size / 1024);
+      selectedPdfFileSize = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
+
+      if (fileNameSpan) {
+        fileNameSpan.textContent = `✔ ${file.name} (${selectedPdfFileSize})`;
+        fileNameSpan.style.color = "#38bdf8";
+      }
+
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        selectedPdfDataUrl = loadEvt.target.result;
+        if (msgEl) msgEl.classList.add("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (btnSubmit) {
+    btnSubmit.addEventListener("click", async () => {
+      const title = inputTitle ? inputTitle.value.trim() : "";
+      const grade = selectGrade ? selectGrade.value : "all";
+      const classCode = selectClass ? selectClass.value : "all";
+      const desc = inputDesc ? inputDesc.value.trim() : "";
+
+      if (!title) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Vui lòng nhập tên tài liệu / chuyên đề.";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (!selectedPdfDataUrl) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Vui lòng chọn một tệp tin PDF từ máy tính để tải lên.";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "Đang tải lên...";
+
+      const newDoc = {
+        doc_id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        title: title,
+        grade: grade === "all" ? "all" : parseInt(grade, 10),
+        target_classes: classCode === "all" ? ["all"] : [classCode],
+        description: desc,
+        file_name: selectedPdfFileName,
+        file_size: selectedPdfFileSize,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: "Giáo viên Tin học",
+        data_url: selectedPdfDataUrl
+      };
+
+      try {
+        await syncDocumentToFirebase(newDoc);
+        const docs = await getAllDocuments();
+        docs.unshift(newDoc);
+        currentDocumentsList = docs;
+        try {
+          localStorage.setItem("ai_sgk_documents", JSON.stringify(docs));
+        } catch (err) {
+          console.debug("Local storage save docs:", err);
+        }
+
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg success";
+          msgEl.textContent = "✔ Tải lên tài liệu PDF thành công! Học sinh đã có thể xem ngay.";
+          msgEl.classList.remove("hidden");
+        }
+
+        showExamToast(`✔ Đã đăng tài liệu "${title}" cho học sinh thành công!`, "success");
+
+        setTimeout(() => {
+          closeModal();
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = "📤 Tải lên & Chia sẻ cho học sinh";
+          loadTeacherDocuments();
+          loadStudentDocuments();
+        }, 800);
+      } catch (err) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Lỗi khi lưu tài liệu: " + err.message;
+          msgEl.classList.remove("hidden");
+        }
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "📤 Tải lên & Chia sẻ cho học sinh";
+      }
+    });
+  }
+
+  // Gắn sự kiện đóng modal PDF Viewer & Backdrop click
+  const btnClosePdf = document.getElementById("btnClosePdfViewer");
+  if (btnClosePdf) btnClosePdf.addEventListener("click", closePdfViewer);
+
+  const modalPdf = document.getElementById("modalPdfViewer");
+  if (modalPdf) {
+    modalPdf.addEventListener("click", (e) => {
+      if (e.target === modalPdf) closePdfViewer();
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (modalPdf && !modalPdf.classList.contains("hidden")) {
+        closePdfViewer();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      } else if (modal && !modal.classList.contains("hidden")) {
+        closeModal();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, true);
 }
