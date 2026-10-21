@@ -22,7 +22,7 @@ async function getEffectiveTeacherPin() {
   // 1. Thử lấy từ Firebase Realtime Database với timeout 1.2s chống treo
   try {
     if (typeof firebase !== "undefined" && firebase.database) {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 3500));
       const snap = await Promise.race([
         firebase.database().ref("system/teacher_pin").once("value"),
         timeoutPromise
@@ -55,7 +55,7 @@ async function updateTeacherPin(currentPin, newPin) {
   const cleanPin = newPin.trim();
   try {
     if (typeof firebase !== "undefined" && firebase.database) {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 3500));
       await Promise.race([
         firebase.database().ref("system/teacher_pin").set(cleanPin),
         timeoutPromise
@@ -8621,7 +8621,7 @@ async function startStudentExam(examId) {
     try {
       initFirebaseApp();
       if (typeof firebase !== "undefined" && firebase.database) {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 3500));
         const snap = await Promise.race([
           firebase.database().ref(`exams/${examId}`).once("value"),
           timeoutPromise
