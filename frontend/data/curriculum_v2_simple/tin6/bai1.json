@@ -1,0 +1,78 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 6,
+  "lesson_id": 1,
+  "title": "Thông tin và dữ liệu",
+  "status": "published",
+  "content_markdown": "### 1. Thông tin và dữ liệu\n\n- Thông tin là những gì đem lại hiểu biết cho con người về thế giới xung quanh và về chính bản thân mình.\n\n*Ví dụ: Hành động khi nhìn thấy đèn tín hiệu.*\n\n- Thông tin được ghi lên vật mang tin trở thành dữ liệu. Dữ liệu được thể hiện dưới dạng những con số, văn bản, hình ảnh và âm thanh.\n\n![Ví dụ: Màu sắc của đèn tín hiệu.](assets/traffic_light_2x.png)\n\n- Vật mang tin là phương tiện được dùng để lưu trữ và truyền tải thông tin.\n\n*Ví dụ: Đèn tín hiệu, giấy viết, thẻ nhớ.*\n\n**Lưu ý:**\n- Dữ liệu có thể biểu diễn dưới nhiều dạng khác nhau.\n- Thông tin = Dữ liệu + Xử lí.\n\n---\n\n### 2. Tầm quan trọng của thông tin\n\n- Thông tin đem lại hiểu biết cho con người, giúp con người đưa ra những quyết định đúng đắn trong cuộc sống.",
+  "quiz": [
+    {
+      "id": "tin6_b1_q1",
+      "section_ref": "Mục 1: Thông tin và dữ liệu",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu",
+      "trang_sgk": 5,
+      "cau_hoi": "Khi nhìn thấy đèn tín hiệu giao thông chuyển sang màu đỏ, người đi đường dừng lại. Trong tình huống này, 'ánh sáng màu đỏ' mà mắt em nhìn thấy là gì?",
+      "lua_chon": {
+        "A": "Vật mang tin",
+        "B": "Dữ liệu",
+        "C": "Thông tin",
+        "D": "Quyết định"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Ánh sáng màu đỏ là tín hiệu hình ảnh thô mắt em thu nhận trực tiếp từ thế giới bên ngoài, chưa qua suy nghĩ nên nó là Dữ liệu.",
+      "goi_y_khi_sai": "Em hãy nhớ lại Lưu ý ở Mục 1: Những tín hiệu hình ảnh hay âm thanh thu nhận trực tiếp qua giác quan trước khi suy nghĩ thì được gọi là gì? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Dữ liệu", "đáp án B"]
+    },
+    {
+      "id": "tin6_b1_q2",
+      "section_ref": "Mục 1: Thông tin và dữ liệu",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu",
+      "trang_sgk": 6,
+      "cau_hoi": "Cũng trong tình huống trên, sự hiểu biết 'phải dừng xe lại trước vạch để đảm bảo an toàn' được gọi là gì?",
+      "lua_chon": {
+        "A": "Dữ liệu",
+        "B": "Thông tin",
+        "C": "Vật mang tin",
+        "D": "Phương tiện giao thông"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất tốt! Sự hiểu biết mà bộ não rút ra sau khi nhìn thấy đèn đỏ chính là Thông tin, giúp em ra quyết định dừng xe an toàn.",
+      "goi_y_khi_sai": "Hãy chú ý cụm từ 'sự hiểu biết của con người'. Khái niệm nào trong SGK định nghĩa là sự hiểu biết thu nhận được sau khi não xử lý? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Thông tin", "đáp án B"]
+    },
+    {
+      "id": "tin6_b1_q3",
+      "section_ref": "Mục 1: Thông tin và dữ liệu",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu",
+      "trang_sgk": 6,
+      "cau_hoi": "Vật nào sau đây KHÔNG PHẢI là vật mang tin?",
+      "lua_chon": {
+        "A": "Thẻ nhớ điện thoại lưu các bức ảnh chụp",
+        "B": "Cuốn sách giáo khoa Tin học 6 in bằng giấy",
+        "C": "Ý nghĩ 'ngày mai mình sẽ đi thư viện' trong đầu em",
+        "D": "Tấm biển báo giao thông cắm bên lề đường"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Chính xác! Vật mang tin phải là vật thể vật lý chứa dữ liệu bên ngoài. Ý nghĩ trong đầu là thông tin/suy nghĩ của con người, không phải vật thể vật lý.",
+      "goi_y_khi_sai": "Vật mang tin là một phương tiện hoặc vật thể cụ thể (cầm được, nhìn thấy được) dùng để chứa dữ liệu. Cái nào trong 4 phương án chỉ là suy nghĩ trong đầu? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Ý nghĩ", "đáp án C"]
+    },
+    {
+      "id": "tin6_b1_q4",
+      "section_ref": "Mục 2: Tầm quan trọng của thông tin",
+      "muc_sgk": "Mục 2: Tầm quan trọng của thông tin",
+      "trang_sgk": 7,
+      "cau_hoi": "Trước chuyến đi dã ngoại, lớp trưởng xem dự báo thời tiết và thông báo: 'Ngày mai trời nắng đẹp, nhiệt độ 28°C'. Thông tin này có tầm quan trọng như thế nào đối với các bạn trong lớp?",
+      "lua_chon": {
+        "A": "Giúp các bạn chủ động chuẩn bị trang phục phù hợp và an tâm cho chuyến đi",
+        "B": "Làm cho thời tiết ngày mai không thể bị mưa",
+        "C": "Giúp biến thông tin thành vật mang tin",
+        "D": "Thay đổi lịch thi học kỳ của nhà trường"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Thông tin giúp con người đưa ra những lựa chọn đúng đắn và chuẩn bị hành động hiệu quả, an toàn trong đời sống.",
+      "goi_y_khi_sai": "Thông tin đem lại sự hiểu biết và giúp ích gì cho hành động của chúng ta? Xem lại Mục 2 về Tầm quan trọng của thông tin nhé!",
+      "forbidden_keywords": ["trang phục phù hợp", "đáp án A"]
+    }
+  ]
+}

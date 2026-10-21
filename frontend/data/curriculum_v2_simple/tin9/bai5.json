@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 5,
+  "title": "Tìm hiểu phần mềm mô phỏng",
+  "topic": "Chủ đề 4. Ứng dụng tin học",
+  "status": "published",
+  "content_markdown": "# Bài 5: Tìm hiểu phần mềm mô phỏng\n\n### 1. Khái niệm phần mềm mô phỏng\n- **Định nghĩa**: Phần mềm mô phỏng là chương trình máy tính tái hiện lại trực quan sự vận động, quy luật hoạt động của một đối tượng, hiện tượng hoặc hệ thống thực tế (trong khoa học, kỹ thuật, đời sống hoặc tự nhiên).\n- **Đặc điểm tương tác hai chiều**:\n  - Không chỉ để xem như một đoạn video thụ động, phần mềm mô phỏng cho phép người dùng **thay đổi các thông số đầu vào** (như vận tốc, khối lượng, nhiệt độ, góc nghiêng).\n  - Mô hình sẽ tính toán và hiển thị kết quả biến đổi tương ứng ngay trên màn hình theo thời gian thực.\n\n---\n\n### 2. Lợi ích vượt trội của phần mềm mô phỏng\n1. **Trực quan hóa điều vô hình**: Giúp quan sát các hiện tượng mắt thường không thấy được (sự chuyển động của hạt phân tử, quỹ đạo hành tinh vũ trụ).\n2. **Đảm bảo an toàn tuyệt đối**: Tránh rủi ro cháy nổ, nhiễm độc hóa chất khi làm thí nghiệm thực tế.\n3. **Tiết kiệm chi phí**: Không tốn kinh phí mua hóa chất, vật liệu đắt tiền.\n4. **Chủ động thử nghiệm nhiều kịch bản**: Dễ dàng làm lại thí nghiệm nhiều lần với các thông số khác nhau.\n\n---\n\n### 3. Một số phần mềm mô phỏng thông dụng\n- **PhET Interactive Simulations** (`phet.colorado.edu`): Mô phỏng các thí nghiệm Vật lí (mạch điện, quang hình), Hóa học, Sinh học và Toán học.\n- **Solar System Scope**: Mô phỏng thiên văn học, quỹ đạo chuyển động của Trái Đất và các hành tinh trong Hệ Mặt Trời.\n- **GeoGebra**: Mô phỏng hình học động, vẽ đồ thị hàm số và đại số.\n- **Trycolors.com**: Mô phỏng sự pha trộn màu sắc nghệ thuật trực quan.",
+  "quiz": [
+    {
+      "id": "tin9_b5_q1",
+      "section_ref": "Mục 1: Khái niệm phần mềm mô phỏng",
+      "muc_sgk": "Mục 1: Khái niệm mô phỏng",
+      "trang_sgk": 25,
+      "cau_hoi": "Phát biểu nào sau đây định nghĩa chính xác nhất về 'Phần mềm mô phỏng'?",
+      "lua_chon": {
+        "A": "Là phần mềm tái hiện trực quan cách thức hoạt động của đối tượng thực tế và cho phép người dùng tương tác, thay đổi thông số",
+        "B": "Là phần mềm chỉ dùng để trình chiếu các đoạn video quay sẵn ngoài đời",
+        "C": "Là phần mềm chỉ dùng để gõ văn bản và in ra giấy",
+        "D": "Là hệ thống chỉ chuyên phục vụ nghe nhạc giải trí"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Phần mềm mô phỏng tái hiện trực quan quy luật hoạt động của đối tượng thực và hỗ trợ tương tác thay đổi tham số hai chiều.",
+      "goi_y_khi_sai": "Đặc trưng then chốt của phần mềm mô phỏng là tái hiện trực quan và cho phép tương tác. Em hãy xem lại định nghĩa ở Mục 1 nhé!",
+      "forbidden_keywords": ["tái hiện trực quan", "thay đổi thông số", "đáp án A"]
+    },
+    {
+      "id": "tin9_b5_q2",
+      "section_ref": "Mục 2: Lợi ích vượt trội của phần mềm mô phỏng",
+      "muc_sgk": "Mục 2: Lợi ích mô phỏng",
+      "trang_sgk": 26,
+      "cau_hoi": "Lợi ích quan trọng nhất của việc sử dụng phần mềm mô phỏng trong học tập các môn Khoa học tự nhiên (Lí, Hóa, Sinh) là gì?",
+      "lua_chon": {
+        "A": "Đảm bảo an toàn khi quan sát thí nghiệm nguy hiểm và trực quan hóa các hiện tượng trừu tượng",
+        "B": "Giúp học sinh không cần phải tư duy bài học",
+        "C": "Thay thế hoàn toàn vai trò giảng dạy của thầy cô giáo",
+        "D": "Bắt buộc phải trả rất nhiều tiền mua thiết bị đắt đỏ"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Phần mềm mô phỏng loại bỏ hoàn toàn nguy cơ cháy nổ, ngộ độc hóa chất và giúp quan sát dễ dàng các hiện tượng vi mô, trừu tượng.",
+      "goi_y_khi_sai": "Hãy tìm những lợi ích về mặt an toàn phòng thí nghiệm và tính trực quan sinh động trong Mục 2 nhé!",
+      "forbidden_keywords": ["an toàn", "trực quan", "đáp án A"]
+    },
+    {
+      "id": "tin9_b5_q3",
+      "section_ref": "Mục 1: Khái niệm phần mềm mô phỏng",
+      "muc_sgk": "Mục 1: Khái niệm mô phỏng",
+      "trang_sgk": 27,
+      "cau_hoi": "Điểm khác biệt cơ bản giữa việc xem một đoạn video thí nghiệm thông thường và thao tác trên phần mềm mô phỏng là gì?",
+      "lua_chon": {
+        "A": "Phần mềm mô phỏng cho phép người dùng thay đổi các thông số đầu vào để quan sát kết quả mới, còn video chỉ là xem thụ động",
+        "B": "Video cho phép tương tác trực tiếp với dữ liệu số",
+        "C": "Cả hai hoàn toàn giống nhau không có điểm khác biệt",
+        "D": "Phần mềm mô phỏng không có hình ảnh chuyển động"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Tính tương tác chủ động (điều chỉnh thông số, góc nhìn, điều kiện ban đầu) là ưu điểm độc nhất của phần mềm mô phỏng so với video thụ động.",
+      "goi_y_khi_sai": "Yếu tố 'tương tác' cho phép người dùng can thiệp vào mô hình được nói đến ở Mục 1 như thế nào? Xem lại nhé!",
+      "forbidden_keywords": ["thay đổi thông số", "tương tác", "đáp án A"]
+    },
+    {
+      "id": "tin9_b5_q4",
+      "section_ref": "Mục 3: Một số phần mềm mô phỏng thông dụng",
+      "muc_sgk": "Mục 3: Các phần mềm mô phỏng",
+      "trang_sgk": 28,
+      "cau_hoi": "Phần mềm Solar System Scope thường được ứng dụng để mô phỏng lĩnh vực nào?",
+      "lua_chon": {
+        "A": "Thiên văn học và chuyển động các hành tinh trong Hệ Mặt Trời",
+        "B": "Pha màu vẽ tranh sơn dầu",
+        "C": "Tính toán bảng lương trong kế toán",
+        "D": "Thiết kế trang web bán hàng trực tuyến"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất tốt! Solar System Scope là phần mềm mô phỏng 3D trực quan về Hệ Mặt Trời, các ngôi sao và chuyển động của các thiên thể trong vũ trụ.",
+      "goi_y_khi_sai": "Tên gọi 'Solar System Scope' (Solar System = Hệ Mặt Trời) gợi ý cho em lĩnh vực khoa học nào trong Mục 3?",
+      "forbidden_keywords": ["Thiên văn học", "Hệ Mặt Trời", "đáp án A"]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 6,
+  "lesson_id": 3,
+  "title": "Thông tin trong máy tính",
+  "status": "published",
+  "content_markdown": "# Bài 3: Thông tin trong máy tính\n\n### 1. Biểu diễn thông tin trong máy tính\n- **Dãy bit**: Máy tính là một thiết bị điện tử chỉ hiểu và xử lí được hai trạng thái tín hiệu điện (có điện / không có điện), được quy ước bằng hai kí hiệu **0** và **1**.\n- Mỗi kí hiệu 0 hoặc 1 được gọi là một **bit** (viết tắt của chữ tiếng Anh *Binary digit* - chữ số nhị phân).\n- **Quy tắc chuyển đổi**: Mọi dạng thông tin quen thuộc của con người như văn bản, chữ số, hình ảnh, âm thanh, video khi đưa vào máy tính đều được biến đổi thành **dãy các bit** (dãy gồm các số 0 và 1) để máy tính lưu trữ và xử lí.\n*Ví dụ: Chữ cái in hoa \"A\" được máy tính lưu trữ dưới dạng một dãy 8 bit là `01000001`.*\n\n---\n\n### 2. Các đơn vị đo lượng thông tin trong máy tính\n- **Bit (kí hiệu là b)**: Là đơn vị đo lượng thông tin nhỏ nhất trong máy tính.\n- **Byte (kí hiệu là B)**: 1 Byte được tạo thành từ 8 bit liên tiếp nhau. Thường dùng để lưu trữ 1 kí tự chữ cái hoặc một con số.\n\n**Bảng các đơn vị đo dung lượng thông tin thông dụng:**\n| Đơn vị đo | Kí hiệu viết tắt | Độ lớn quy đổi chính xác | Độ lớn xấp xỉ trong đời sống |\n| :--- | :--- | :--- | :--- |\n| **Byte** | B | 1 Byte = 8 bit | Chứa được khoảng 1 chữ cái |\n| **Kilobyte** | KB | 1 KB = 1024 B | Xấp xỉ 1 nghìn byte (khoảng nửa trang giấy in chữ) |\n| **Megabyte** | MB | 1 MB = 1024 KB | Xấp xỉ 1 triệu byte (khoảng 1 cuốn sách truyện) |\n| **Gigabyte** | GB | 1 GB = 1024 MB | Xấp xỉ 1 tỉ byte (khoảng 1 bộ phim ngắn HD) |\n| **Terabyte** | TB | 1 TB = 1024 GB | Xấp xỉ 1 nghìn tỉ byte (chứa được cả một thư viện lớn) |\n\n> **Công thức tư duy:** Các đơn vị đo thông tin lớn gấp nhau **1024 lần** (tương đương 2 mũ 10): Byte → KB → MB → GB → TB.",
+  "quiz": [
+    {
+      "id": "tin6_b3_q1",
+      "section_ref": "Mục 1: Biểu diễn thông tin trong máy tính",
+      "muc_sgk": "Mục 1: Biểu diễn thông tin",
+      "trang_sgk": 12,
+      "cau_hoi": "Trong máy tính, mọi thông tin như văn bản, hình ảnh, âm thanh đều được biến đổi thành dãy bit. Dãy bit là dãy chỉ gồm những kí hiệu nào?",
+      "lua_chon": {
+        "A": "Các chữ cái từ A đến Z",
+        "B": "Hai kí hiệu 0 và 1",
+        "C": "Các chữ số từ 0 đến 9",
+        "D": "Các nốt nhạc Đồ, Rê, Mi"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Máy tính hoạt động dựa trên các tín hiệu điện tử bật/tắt, nên mọi thông tin đều được mã hóa bằng hai kí hiệu nhị phân 0 và 1.",
+      "goi_y_khi_sai": "Em hãy nhớ lại Mục 1: Máy tính sử dụng hệ nhị phân chỉ gồm đúng 2 con số cơ bản nào để biểu diễn bit?",
+      "forbidden_keywords": ["0 và 1", "đáp án B"]
+    },
+    {
+      "id": "tin6_b3_q2",
+      "section_ref": "Mục 2: Các đơn vị đo lượng thông tin",
+      "muc_sgk": "Mục 2: Đơn vị đo lượng thông tin",
+      "trang_sgk": 13,
+      "cau_hoi": "Mối quan hệ quy đổi chuẩn giữa đơn vị Byte (B) và Bit (b) là gì?",
+      "lua_chon": {
+        "A": "1 Byte = 2 bit",
+        "B": "1 Byte = 4 bit",
+        "C": "1 Byte = 8 bit",
+        "D": "1 Byte = 10 bit"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Rất chuẩn! 1 Byte luôn được tạo thành từ 8 bit ghép lại với nhau, đủ để biểu diễn một kí tự chữ cái trong máy tính.",
+      "goi_y_khi_sai": "Em hãy xem lại bảng đơn vị đo ở Mục 2: 1 Byte gồm bao nhiêu bit ghép lại?",
+      "forbidden_keywords": ["8 bit", "đáp án C"]
+    },
+    {
+      "id": "tin6_b3_q3",
+      "section_ref": "Mục 2: Các đơn vị đo lượng thông tin",
+      "muc_sgk": "Mục 2: Đơn vị đo lượng thông tin",
+      "trang_sgk": 14,
+      "cau_hoi": "Một chiếc USB lưu trữ có dung lượng ghi trên vỏ là 16 GB. Chữ viết tắt 'GB' đọc là gì?",
+      "lua_chon": {
+        "A": "GigaByte",
+        "B": "GigaBit",
+        "C": "GramByte",
+        "D": "MegaByte"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! GB là viết tắt của GigaByte, đơn vị đo xấp xỉ bằng một tỉ byte.",
+      "goi_y_khi_sai": "Kí tự 'G' là viết tắt của tiền tố Giga, còn chữ 'B' viết hoa là viết tắt của Byte hay Bit? Xem lại Bảng đơn vị đo nhé!",
+      "forbidden_keywords": ["GigaByte", "đáp án A"]
+    },
+    {
+      "id": "tin6_b3_q4",
+      "section_ref": "Mục 2: Các đơn vị đo lượng thông tin",
+      "muc_sgk": "Mục 2: Đơn vị đo lượng thông tin",
+      "trang_sgk": 14,
+      "cau_hoi": "Theo thứ tự từ NHỎ ĐẾN LỚN, dãy sắp xếp các đơn vị đo dung lượng thông tin nào dưới đây là đúng?",
+      "lua_chon": {
+        "A": "Byte → Megabyte → Kilobyte → Gigabyte",
+        "B": "Byte → Kilobyte → Megabyte → Gigabyte",
+        "C": "Kilobyte → Byte → Gigabyte → Terabyte",
+        "D": "Gigabyte → Megabyte → Kilobyte → Byte"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất xuất sắc! Thứ tự đúng từ nhỏ đến lớn là: Byte (B) → Kilobyte (KB) → Megabyte (MB) → Gigabyte (GB) → Terabyte (TB).",
+      "goi_y_khi_sai": "Hãy nhớ quy tắc: Byte nhỏ nhất, tiếp theo đến Kilo (nghìn), Mega (triệu), Giga (tỉ). Đâu là phương án xếp từ bé đến lớn?",
+      "forbidden_keywords": ["Byte → Kilobyte", "đáp án B"]
+    }
+  ]
+}

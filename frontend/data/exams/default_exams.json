@@ -1,0 +1,218 @@
+{
+  "exams": [
+    {
+      "exam_id": "exam_tin9_15p_b1_b2",
+      "title": "Kiểm tra 15 phút – Bài 1 & 2: Thế giới kĩ thuật số & Thông tin (Tin học 9)",
+      "grade": 9,
+      "subject": "Tin học",
+      "target_classes": [
+        "Tất cả"
+      ],
+      "duration_minutes": 15,
+      "status": "published",
+      "created_at": "2026-10-20T08:00:00Z",
+      "total_questions": 5,
+      "questions": [
+        {
+          "id": "tin9_q1",
+          "cau_hoi": "Yếu tố nào sau đây đóng vai trò là căn cứ quan trọng nhất để con người phân tích và đưa ra quyết định khi giải quyết một vấn đề?",
+          "lua_chon": {
+            "A": "Thông tin thu thập được",
+            "B": "Sự phỏng đoán may rủi",
+            "C": "Cảm tính nhất thời",
+            "D": "Tin đồn không rõ nguồn gốc"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
+          "muc_sgk": "Mục 1: Vai trò của thông tin"
+        },
+        {
+          "id": "tin9_q2",
+          "cau_hoi": "Bạn Mai tìm hiểu điểm chuẩn xét tuyển vào lớp 10 của một trường THPT nhưng lại dùng bảng số liệu tuyển sinh từ 3 năm trước. Thông tin đó đã vi phạm tiêu chí chất lượng nào?",
+          "lua_chon": {
+            "A": "Tính mới (Tính cập nhật)",
+            "B": "Tính bảo mật",
+            "C": "Tính thẩm mỹ",
+            "D": "Tính dung lượng"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
+          "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin"
+        },
+        {
+          "id": "tin9_q3",
+          "cau_hoi": "Bộ phận nào sau đây đóng vai trò là 'bộ não' của các thiết bị số thông minh hiện đại?",
+          "lua_chon": {
+            "A": "Bộ vi xử lý (CPU/Microprocessor)",
+            "B": "Bàn phím cơ học",
+            "C": "Màn hình hiển thị",
+            "D": "Bộ nguồn máy tính"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Bộ vi xử lý (CPU) là trung tâm điều khiển, tiếp nhận và xử lý mọi phép toán và lệnh điều hành của thiết bị số.",
+          "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí"
+        },
+        {
+          "id": "tin9_q4",
+          "cau_hoi": "Đặc điểm nào sau đây KHÔNG PHẢI là ưu thế vượt trội của máy tính so với con người trong xử lý thông tin?",
+          "lua_chon": {
+            "A": "Tốc độ xử lý hàng tỷ phép tính mỗi giây",
+            "B": "Khả năng lưu trữ lượng dữ liệu khổng lồ",
+            "C": "Khả năng thấu cảm và rung động cảm xúc nghệ thuật",
+            "D": "Khả năng làm việc liên tục không mệt mỏi"
+          },
+          "dap_an_dung": "C",
+          "giai_thich": "Máy tính xử lý dữ liệu theo thuật toán logic, không có cảm xúc, tình cảm hay sự rung động tinh tế như con người.",
+          "muc_sgk": "Mục 2: Ưu thế của máy tính"
+        },
+        {
+          "id": "tin9_q5",
+          "cau_hoi": "Khi tra cứu thông tin về kỳ thi tuyển sinh vào lớp 10, nguồn thông tin nào sau đây có độ tin cậy cao nhất?",
+          "lua_chon": {
+            "A": "Cổng thông tin điện tử chính thức của Sở Giáo dục và Đào tạo",
+            "B": "Bài đăng trên nhóm Facebook ẩn danh",
+            "C": "Bình luận trên diễn đàn trò chuyện tự do",
+            "D": "Tin nhắn truyền miệng giữa bạn bè"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Cổng thông tin chính thức của cơ quan quản lý nhà nước (Sở GD&ĐT) là nguồn thông tin chính thống, có tính pháp lý và độ chính xác tuyệt đối.",
+          "muc_sgk": "Mục 1: Vai trò của thông tin"
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_tin9_15p_b3",
+      "title": "Kiểm tra 15 phút – Bài 3: Đánh giá chất lượng thông tin (Tin học 9)",
+      "grade": 9,
+      "subject": "Tin học",
+      "target_classes": [
+        "Tất cả"
+      ],
+      "duration_minutes": 15,
+      "status": "published",
+      "created_at": "2026-10-20T08:30:00Z",
+      "total_questions": 4,
+      "questions": [
+        {
+          "id": "tin9_b3_q1",
+          "cau_hoi": "Khi tìm kiếm thông tin trên Internet, dấu hiệu nào sau đây cho thấy một website có độ tin cậy cao?",
+          "lua_chon": {
+            "A": "Trang web có nhiều quảng cáo nhấp nháy giật gân",
+            "B": "Tên miền thuộc tổ chức giáo dục (.edu.vn) hoặc chính phủ (.gov.vn) và ghi rõ tác giả",
+            "C": "Không ghi nguồn gốc và không có ngày tháng xuất bản",
+            "D": "Tiêu đề viết hoa toàn bộ kèm lời kêu gọi chia sẻ khẩn cấp"
+          },
+          "dap_an_dung": "B",
+          "giai_thich": "Các tên miền .gov.vn, .edu.vn thuộc các cơ quan nhà nước, trường học có quy trình kiểm duyệt nội dung chặt chẽ và tác giả rõ ràng.",
+          "muc_sgk": "Mục 2: Quy trình thực hành"
+        },
+        {
+          "id": "tin9_b3_q2",
+          "cau_hoi": "Để tìm kiếm thông tin hiệu quả và tiết kiệm thời gian trên công cụ tìm kiếm Google, em nên làm gì?",
+          "lua_chon": {
+            "A": "Sử dụng từ khóa ngắn gọn, chính xác và đặt cụm từ cần tìm trong dấu ngoặc kép \" \"",
+            "B": "Gõ toàn bộ đoạn văn dài vào ô tìm kiếm",
+            "C": "Chỉ nhấp vào kết quả đầu tiên xuất hiện mà không cần so sánh",
+            "D": "Sử dụng các từ cảm thán dài dòng"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Đặt cụm từ chính xác trong dấu ngoặc kép giúp công cụ tìm kiếm lọc đúng chuỗi từ cần tìm, giảm thiểu kết quả rác.",
+          "muc_sgk": "Mục 2: Quy trình thực hành"
+        },
+        {
+          "id": "tin9_b3_q3",
+          "cau_hoi": "Khi bắt gặp một bài viết gây xôn xao trên mạng xã hội về quy định thi cử mới, hành động chuẩn mực nhất là gì?",
+          "lua_chon": {
+            "A": "Bấm chia sẻ ngay lập tức để cảnh báo bạn bè",
+            "B": "Đối chiếu thông tin với thông báo chính thức trên website Bộ/Sở Giáo dục trước khi tin và chia sẻ",
+            "C": "Thêm bình luận chỉ trích gay gắt",
+            "D": "Bỏ qua không cần quan tâm đến tính đúng sai"
+          },
+          "dap_an_dung": "B",
+          "giai_thich": "Kiểm chứng chéo với các nguồn tin chính thống là kỹ năng số bắt buộc để phòng ngừa tin giả và thông tin sai lệch.",
+          "muc_sgk": "Mục 2: Quy trình thực hành"
+        },
+        {
+          "id": "tin9_b3_q4",
+          "cau_hoi": "Trong việc tìm hiểu hướng học tập sau THCS, việc chỉ biết điểm chuẩn mà không tìm hiểu về học phí và vị trí trường thể hiện thông tin bị thiếu tiêu chí nào?",
+          "lua_chon": {
+            "A": "Tính đầy đủ",
+            "B": "Tính mới",
+            "C": "Tính thẩm mỹ",
+            "D": "Tính bảo mật"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Thông tin thiếu các khía cạnh cần thiết để đưa ra quyết định toàn diện là thông tin vi phạm tiêu chí Tính đầy đủ.",
+          "muc_sgk": "Mục 1: Mục tiêu thực hành"
+        }
+      ]
+    },
+    {
+      "exam_id": "exam_tin6_15p_b1_b2",
+      "title": "Kiểm tra 15 phút – Thông tin và Dữ liệu trong đời sống (Tin học 6)",
+      "grade": 6,
+      "subject": "Tin học",
+      "target_classes": [
+        "Tất cả"
+      ],
+      "duration_minutes": 15,
+      "status": "published",
+      "created_at": "2026-10-20T09:00:00Z",
+      "total_questions": 4,
+      "questions": [
+        {
+          "id": "tin6_q1",
+          "cau_hoi": "Thông tin là gì?",
+          "lua_chon": {
+            "A": "Những hiểu biết của con người về thế giới xung quanh và về chính bản thân mình",
+            "B": "Các con số ghi chép trong vở",
+            "C": "Văn bản in trên sách báo",
+            "D": "Hình ảnh chụp từ điện thoại"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Theo định nghĩa SGK Tin học 6, thông tin là tất cả những hiểu biết của con người về thế giới xung quanh và về chính mình.",
+          "muc_sgk": "Mục 1: Thông tin và dữ liệu"
+        },
+        {
+          "id": "tin6_q2",
+          "cau_hoi": "Vật mang tin là gì?",
+          "lua_chon": {
+            "A": "Phương tiện dùng để lưu trữ và truyền đạt thông tin (như sách, báo, thẻ nhớ, USB)",
+            "B": "Chỉ các loại máy vi tính để bàn",
+            "C": "Người đưa thư",
+            "D": "Sóng điện thoại"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Vật mang tin là các phương tiện, vật thể chứa đựng dữ liệu để lưu trữ và truyền đạt thông tin đến người khác.",
+          "muc_sgk": "Mục 2: Vật mang tin"
+        },
+        {
+          "id": "tin6_q3",
+          "cau_hoi": "Mối quan hệ giữa dữ liệu và thông tin là gì?",
+          "lua_chon": {
+            "A": "Dữ liệu sau khi được xử lý và có ý nghĩa đối với con người sẽ trở thành thông tin",
+            "B": "Dữ liệu và thông tin hoàn toàn giống hệt nhau",
+            "C": "Thông tin là dữ liệu chưa qua xử lý",
+            "D": "Không có mối liên hệ nào"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Dữ liệu là các con số, ký tự, hình ảnh thô; khi được con người hoặc máy tính tiếp nhận và hiểu được ý nghĩa thì trở thành thông tin.",
+          "muc_sgk": "Mục 1: Thông tin và dữ liệu"
+        },
+        {
+          "id": "tin6_q4",
+          "cau_hoi": "Ví dụ nào sau đây thể hiện tầm quan trọng của thông tin trong việc ra quyết định?",
+          "lua_chon": {
+            "A": "Nghe dự báo thời tiết có mưa bão nên quyết định mang theo áo mưa trước khi đi học",
+            "B": "Đi bộ ngoài sân trường mà không nhìn đường",
+            "C": "Vẽ tranh theo sở thích cá nhân",
+            "D": "Ngủ một giấc thật ngon"
+          },
+          "dap_an_dung": "A",
+          "giai_thich": "Nhận được thông tin dự báo thời tiết giúp em đưa ra quyết định đúng đắn là chuẩn bị áo mưa để bảo vệ sức khỏe.",
+          "muc_sgk": "Mục 3: Tầm quan trọng của thông tin"
+        }
+      ]
+    }
+  ]
+}

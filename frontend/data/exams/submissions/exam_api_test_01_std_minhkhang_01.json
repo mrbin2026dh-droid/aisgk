@@ -1,0 +1,85 @@
+{
+  "exam_id": "exam_api_test_01",
+  "student_id": "std_minhkhang_01",
+  "student_name": "Nguyễn Minh Khang",
+  "class_code": "9A",
+  "grade": 9,
+  "answers": {
+    "q1": "A",
+    "q2": "A"
+  },
+  "score": 5.0,
+  "correct_count": 1,
+  "total_questions": 2,
+  "percentage": 50,
+  "evaluation": {
+    "score": 5.0,
+    "total_questions": 2,
+    "correct_count": 1,
+    "percentage": 50,
+    "socratic_advice": "Đạt yêu cầu (5.0/10). Em đã có nền tảng cơ bản nhưng các khái niệm phân biệt còn dễ bị nhầm lẫn. Hãy dành 10 phút đọc lại các mục được AI đề xuất nhé.",
+    "recommended_lessons": [
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Vật mang tin",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Vật mang tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Vật mang tin để ôn lại ngay"
+      }
+    ],
+    "weak_topics": [
+      "Mục 2: Vật mang tin"
+    ],
+    "ai_evaluation": {
+      "overall_comment": "Đạt yêu cầu (5.0/10). Em đã có nền tảng cơ bản nhưng các khái niệm phân biệt còn dễ bị nhầm lẫn. Hãy dành 10 phút đọc lại các mục được AI đề xuất nhé.",
+      "weak_topics": {
+        "Mục 2: Vật mang tin": 1
+      },
+      "recommendations": [
+        {
+          "lesson_id": 1,
+          "topic": "Mục 2: Vật mang tin",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Vật mang tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 2: Vật mang tin để ôn lại ngay"
+        }
+      ]
+    },
+    "details": [
+      {
+        "id": "q1",
+        "cau_hoi": "Bộ phận nào là bộ não của máy tính?",
+        "lua_chon": {
+          "A": "CPU",
+          "B": "RAM",
+          "C": "Màn hình",
+          "D": "Bàn phím"
+        },
+        "user_choice": "A",
+        "correct_choice": "A",
+        "is_correct": true,
+        "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+        "giai_thich_su_pham": "CPU là khối điều khiển và tính toán trung tâm.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Thiết bị có gắn bộ xử lí"
+      },
+      {
+        "id": "q2",
+        "cau_hoi": "Đâu là vật mang tin?",
+        "lua_chon": {
+          "A": "Ý nghĩ trong đầu",
+          "B": "Vở ghi bài",
+          "C": "Ánh sáng đỏ",
+          "D": "Tiếng còi"
+        },
+        "user_choice": "A",
+        "correct_choice": "B",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Vật mang tin",
+        "giai_thich_su_pham": "Vở ghi là vật thể vật lý chứa dữ liệu.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Vật mang tin"
+      }
+    ],
+    "submitted_at": "2026-10-20T17:14:18.169164"
+  },
+  "submitted_at": "2026-10-20T17:14:18.169164"
+}

@@ -1,0 +1,67 @@
+{
+  "exam_id": "exam_tin6_15p_b1_b2",
+  "title": "Kiểm tra 15 phút – Thông tin và Dữ liệu trong đời sống (Tin học 6)",
+  "grade": 6,
+  "subject": "Tin học",
+  "target_classes": [
+    "Tất cả"
+  ],
+  "duration_minutes": 15,
+  "status": "published",
+  "created_at": "2026-10-20T09:00:00Z",
+  "total_questions": 4,
+  "questions": [
+    {
+      "id": "tin6_q1",
+      "cau_hoi": "Thông tin là gì?",
+      "lua_chon": {
+        "A": "Những hiểu biết của con người về thế giới xung quanh và về chính bản thân mình",
+        "B": "Các con số ghi chép trong vở",
+        "C": "Văn bản in trên sách báo",
+        "D": "Hình ảnh chụp từ điện thoại"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Theo định nghĩa SGK Tin học 6, thông tin là tất cả những hiểu biết của con người về thế giới xung quanh và về chính mình.",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu"
+    },
+    {
+      "id": "tin6_q2",
+      "cau_hoi": "Vật mang tin là gì?",
+      "lua_chon": {
+        "A": "Phương tiện dùng để lưu trữ và truyền đạt thông tin (như sách, báo, thẻ nhớ, USB)",
+        "B": "Chỉ các loại máy vi tính để bàn",
+        "C": "Người đưa thư",
+        "D": "Sóng điện thoại"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Vật mang tin là các phương tiện, vật thể chứa đựng dữ liệu để lưu trữ và truyền đạt thông tin đến người khác.",
+      "muc_sgk": "Mục 2: Vật mang tin"
+    },
+    {
+      "id": "tin6_q3",
+      "cau_hoi": "Mối quan hệ giữa dữ liệu và thông tin là gì?",
+      "lua_chon": {
+        "A": "Dữ liệu sau khi được xử lý và có ý nghĩa đối với con người sẽ trở thành thông tin",
+        "B": "Dữ liệu và thông tin hoàn toàn giống hệt nhau",
+        "C": "Thông tin là dữ liệu chưa qua xử lý",
+        "D": "Không có mối liên hệ nào"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Dữ liệu là các con số, ký tự, hình ảnh thô; khi được con người hoặc máy tính tiếp nhận và hiểu được ý nghĩa thì trở thành thông tin.",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu"
+    },
+    {
+      "id": "tin6_q4",
+      "cau_hoi": "Ví dụ nào sau đây thể hiện tầm quan trọng của thông tin trong việc ra quyết định?",
+      "lua_chon": {
+        "A": "Nghe dự báo thời tiết có mưa bão nên quyết định mang theo áo mưa trước khi đi học",
+        "B": "Đi bộ ngoài sân trường mà không nhìn đường",
+        "C": "Vẽ tranh theo sở thích cá nhân",
+        "D": "Ngủ một giấc thật ngon"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Nhận được thông tin dự báo thời tiết giúp em đưa ra quyết định đúng đắn là chuẩn bị áo mưa để bảo vệ sức khỏe.",
+      "muc_sgk": "Mục 3: Tầm quan trọng của thông tin"
+    }
+  ]
+}

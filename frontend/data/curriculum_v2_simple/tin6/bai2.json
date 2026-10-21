@@ -1,0 +1,78 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 6,
+  "lesson_id": 2,
+  "title": "Xử lí thông tin",
+  "status": "published",
+  "content_markdown": "# Bài 2: Xử lí thông tin\n\n### 1. Quá trình xử lí thông tin của con người\n- **Xử lí thông tin** là việc biến đổi dữ liệu thu nhận được thành thông tin có ích giúp con người hiểu biết và đưa ra quyết định.\n- Quá trình xử lí thông tin của con người diễn ra liên tục theo **4 hoạt động cơ bản (Quy trình 4 bước: Nhận → Nhớ → Nghĩ → Nói/Làm)**:\n  1. **Thu nhận thông tin (NHẬN)**: Nhờ các giác quan (mắt thấy, tai nghe, mũi ngửi, tay chạm...) để tiếp nhận dữ liệu từ thế giới bên ngoài.\n     *Ví dụ: Tai em nghe thấy tiếng chuông đồng hồ báo thức reo leng keng lúc 6 giờ sáng.*\n  2. **Lưu trữ thông tin (NHỚ)**: Bộ não ghi nhớ lại thông tin vào bộ nhớ để không bị quên mất.\n     *Ví dụ: Não nhớ ra hôm nay là thứ Hai, có tiết Tin học ở trường.*\n  3. **Xử lí thông tin (NGHĨ)**: Bộ não so sánh, suy tính, phân tích để tìm ra hướng giải quyết.\n     *Ví dụ: Não suy nghĩ: \"Nếu không dậy ngay bây giờ thì sẽ bị muộn giờ học!\".*\n  4. **Truyền thông tin (NÓI / LÀM)**: Não điều khiển các bộ phận cơ thể hành động hoặc chia sẻ thông tin với người khác.\n     *Ví dụ: Tay em tắt chuông báo thức, chân bật dậy bước ra khỏi giường và miệng gọi: \"Mẹ ơi con dậy rồi!\".*\n\n**Bảng so sánh 4 bước xử lí giữa Con người và Máy tính:**\n| Hoạt động xử lí | Ở Con người | Ở Máy tính |\n| :--- | :--- | :--- |\n| **1. Thu nhận** | Các giác quan (mắt, tai, mũi...) | Thiết bị vào: Bàn phím, chuột, micro, camera |\n| **2. Lưu trữ** | Bộ nhớ của não bộ | Thiết bị lưu trữ: Ổ cứng SSD/HDD, thẻ nhớ, USB |\n| **3. Xử lí** | Bộ não suy nghĩ, tính toán | Bộ vi xử lí CPU (Đóng vai trò là \"Bộ não\") |\n| **4. Truyền** | Nói ra, viết ra, cử động tay chân | Thiết bị ra: Màn hình, loa, máy in |\n\n> **Ghi nhớ cốt lõi:** Trong 4 bước, **xử lí thông tin (Bộ não suy nghĩ / CPU tính toán)** là hoạt động quan trọng nhất vì nó tạo ra sự hiểu biết mới và quyết định hành động.\n\n---\n\n### 2. Máy tính là công cụ hiệu quả để xử lí thông tin\n- **Ưu điểm vượt trội của máy tính so với con người**:\n  - **Tốc độ cực nhanh**: Thực hiện hàng triệu, hàng tỷ phép tính chỉ trong một giây.\n  - **Độ chính xác cao**: Tính toán chuẩn xác tuyệt đối, không bị nhầm lẫn.\n  - **Lưu trữ khổng lồ**: Lưu được lượng sách vở tương đương cả một thư viện lớn.\n  - **Làm việc bền bỉ**: Hoạt động liên tục 24/7 mà không hề biết mệt mỏi hay mất tập trung.",
+  "quiz": [
+    {
+      "id": "tin6_b2_q1",
+      "section_ref": "Mục 1: Quá trình xử lí thông tin của con người",
+      "muc_sgk": "Mục 1: Quá trình xử lí thông tin",
+      "trang_sgk": 8,
+      "cau_hoi": "Mỗi buổi sáng khi nghe chuông báo thức reo, hoạt động 'tai em nghe thấy tiếng chuông reo' thuộc bước nào trong quá trình xử lí thông tin của con người?",
+      "lua_chon": {
+        "A": "Thu nhận thông tin",
+        "B": "Lưu trữ thông tin",
+        "C": "Xử lí thông tin",
+        "D": "Truyền thông tin"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Tai là giác quan tiếp nhận âm thanh từ môi trường bên ngoài vào cơ thể, đó chính là hoạt động Thu nhận thông tin.",
+      "goi_y_khi_sai": "Em hãy nhớ lại: Mắt nhìn, tai nghe, mũi ngửi để đón nhận dữ liệu từ thế giới bên ngoài là hoạt động nào trong 4 bước? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Thu nhận", "đáp án A"]
+    },
+    {
+      "id": "tin6_b2_q2",
+      "section_ref": "Mục 1: Quá trình xử lí thông tin của con người",
+      "muc_sgk": "Mục 1: Quá trình xử lí thông tin",
+      "trang_sgk": 9,
+      "cau_hoi": "Trong các hoạt động sau đây của học sinh khi làm bài kiểm tra, hoạt động nào thuộc bước 'Xử lí thông tin'?",
+      "lua_chon": {
+        "A": "Mắt đọc đề bài toán in trên giấy thi",
+        "B": "Chép lại đề bài toán vào giấy nháp",
+        "C": "Bộ não suy nghĩ và tính nhẩm phép tính 25 + 17 = 42 trong đầu",
+        "D": "Dùng bút viết kết quả 42 vào bài thi để nộp cho thầy cô"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Rất chuẩn! Suy nghĩ, tính nhẩm trong đầu là bộ não đang thực hiện biến đổi dữ liệu thành kết quả mới, đó chính là hoạt động Xử lí thông tin.",
+      "goi_y_khi_sai": "Xử lí thông tin là hoạt động mà bộ não suy nghĩ, tính toán hoặc so sánh để tìm ra kết luận mới. Phương án nào mô tả bộ não đang suy nghĩ tính nhẩm?",
+      "forbidden_keywords": ["tính nhẩm", "đáp án C"]
+    },
+    {
+      "id": "tin6_b2_q3",
+      "section_ref": "Mục 2: Máy tính là công cụ hiệu quả",
+      "muc_sgk": "Mục 2: Máy tính là công cụ hiệu quả",
+      "trang_sgk": 10,
+      "cau_hoi": "Bộ phận nào sau đây của máy tính đóng vai trò như 'bộ não', chịu trách nhiệm chính trong việc thực hiện hoạt động xử lí thông tin?",
+      "lua_chon": {
+        "A": "Bàn phím và chuột máy tính",
+        "B": "Bộ vi xử lí (CPU)",
+        "C": "Màn hình hiển thị",
+        "D": "Loa và tai nghe"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất tốt! Bộ vi xử lí CPU (Central Processing Unit) là trung tâm điều khiển và tính toán của máy tính, tương đương với bộ não của con người.",
+      "goi_y_khi_sai": "Hãy tìm thành phần được ví như 'bộ não của máy tính', có nhiệm vụ điều khiển và tính toán dữ liệu trong Mục 2 nhé!",
+      "forbidden_keywords": ["CPU", "Bộ vi xử lí", "đáp án B"]
+    },
+    {
+      "id": "tin6_b2_q4",
+      "section_ref": "Mục 2: Máy tính là công cụ hiệu quả",
+      "muc_sgk": "Mục 2: Máy tính là công cụ hiệu quả",
+      "trang_sgk": 11,
+      "cau_hoi": "Đặc điểm nào sau đây là ưu điểm vượt trội của máy tính so với con người trong quá trình xử lí thông tin?",
+      "lua_chon": {
+        "A": "Máy tính có cảm xúc vui buồn và tình cảm phong phú",
+        "B": "Máy tính có thể tự ý làm việc mà không cần con người lập trình hay ra lệnh",
+        "C": "Máy tính có thể tính toán hàng triệu phép tính mỗi giây với độ chính xác cao và không bị mệt mỏi",
+        "D": "Máy tính có khả năng tự sáng tác nghệ thuật mà không cần học hỏi"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Chính xác! Tốc độ xử lí siêu nhanh, độ chính xác tuyệt đối và khả năng làm việc liên tục không mệt mỏi là ưu thế vượt trội nhất của máy tính.",
+      "goi_y_khi_sai": "Xem lại 4 ưu điểm vượt trội của máy tính ở Mục 2: Máy tính có tốc độ và độ bền bỉ như thế nào so với con người?",
+      "forbidden_keywords": ["hàng triệu phép tính", "đáp án C"]
+    }
+  ]
+}

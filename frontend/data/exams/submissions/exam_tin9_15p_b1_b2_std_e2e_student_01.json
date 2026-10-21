@@ -1,0 +1,180 @@
+{
+  "exam_id": "exam_tin9_15p_b1_b2",
+  "student_id": "std_e2e_student_01",
+  "student_name": "Trần Văn An",
+  "class_code": "9A",
+  "grade": 9,
+  "answers": {
+    "tin9_q1": "A"
+  },
+  "score": 2.0,
+  "correct_count": 1,
+  "total_questions": 5,
+  "percentage": 20,
+  "evaluation": {
+    "score": 2.0,
+    "total_questions": 5,
+    "correct_count": 1,
+    "percentage": 20,
+    "socratic_advice": "Kết quả chưa như mong muốn (2.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
+    "recommended_lessons": [
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Tiêu chí chất lượng thông tin",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Tiêu chí chất lượng thông tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Tiêu chí chất lượng thông tin để ôn lại ngay"
+      },
+      {
+        "lesson_id": 1,
+        "topic": "Mục 1: Thiết bị có gắn bộ xử lí",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Thiết bị có gắn bộ xử lí'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 1: Thiết bị có gắn bộ xử lí để ôn lại ngay"
+      },
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Ưu thế của máy tính",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Ưu thế của máy tính'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Ưu thế của máy tính để ôn lại ngay"
+      },
+      {
+        "lesson_id": 1,
+        "topic": "Mục 1: Vai trò của thông tin",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Vai trò của thông tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 1: Vai trò của thông tin để ôn lại ngay"
+      }
+    ],
+    "weak_topics": [
+      "Mục 2: Tiêu chí chất lượng thông tin",
+      "Mục 1: Thiết bị có gắn bộ xử lí",
+      "Mục 2: Ưu thế của máy tính",
+      "Mục 1: Vai trò của thông tin"
+    ],
+    "ai_evaluation": {
+      "overall_comment": "Kết quả chưa như mong muốn (2.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
+      "weak_topics": {
+        "Mục 2: Tiêu chí chất lượng thông tin": 1,
+        "Mục 1: Thiết bị có gắn bộ xử lí": 1,
+        "Mục 2: Ưu thế của máy tính": 1,
+        "Mục 1: Vai trò của thông tin": 1
+      },
+      "recommendations": [
+        {
+          "lesson_id": 1,
+          "topic": "Mục 2: Tiêu chí chất lượng thông tin",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Tiêu chí chất lượng thông tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 2: Tiêu chí chất lượng thông tin để ôn lại ngay"
+        },
+        {
+          "lesson_id": 1,
+          "topic": "Mục 1: Thiết bị có gắn bộ xử lí",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Thiết bị có gắn bộ xử lí'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 1: Thiết bị có gắn bộ xử lí để ôn lại ngay"
+        },
+        {
+          "lesson_id": 1,
+          "topic": "Mục 2: Ưu thế của máy tính",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Ưu thế của máy tính'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 2: Ưu thế của máy tính để ôn lại ngay"
+        },
+        {
+          "lesson_id": 1,
+          "topic": "Mục 1: Vai trò của thông tin",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Vai trò của thông tin'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 1: Vai trò của thông tin để ôn lại ngay"
+        }
+      ]
+    },
+    "details": [
+      {
+        "id": "tin9_q1",
+        "cau_hoi": "Yếu tố nào sau đây đóng vai trò là căn cứ quan trọng nhất để con người phân tích và đưa ra quyết định khi giải quyết một vấn đề?",
+        "lua_chon": {
+          "A": "Thông tin thu thập được",
+          "B": "Sự phỏng đoán may rủi",
+          "C": "Cảm tính nhất thời",
+          "D": "Tin đồn không rõ nguồn gốc"
+        },
+        "user_choice": "A",
+        "correct_choice": "A",
+        "is_correct": true,
+        "muc_sgk": "Mục 1: Vai trò của thông tin",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Vai trò của thông tin"
+      },
+      {
+        "id": "tin9_q2",
+        "cau_hoi": "Bạn Mai tìm hiểu điểm chuẩn xét tuyển vào lớp 10 của một trường THPT nhưng lại dùng bảng số liệu tuyển sinh từ 3 năm trước. Thông tin đó đã vi phạm tiêu chí chất lượng nào?",
+        "lua_chon": {
+          "A": "Tính mới (Tính cập nhật)",
+          "B": "Tính bảo mật",
+          "C": "Tính thẩm mỹ",
+          "D": "Tính dung lượng"
+        },
+        "user_choice": "",
+        "correct_choice": "A",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Tiêu chí chất lượng thông tin"
+      },
+      {
+        "id": "tin9_q3",
+        "cau_hoi": "Bộ phận nào sau đây đóng vai trò là 'bộ não' của các thiết bị số thông minh hiện đại?",
+        "lua_chon": {
+          "A": "Bộ vi xử lý (CPU/Microprocessor)",
+          "B": "Bàn phím cơ học",
+          "C": "Màn hình hiển thị",
+          "D": "Bộ nguồn máy tính"
+        },
+        "user_choice": "",
+        "correct_choice": "A",
+        "is_correct": false,
+        "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Thiết bị có gắn bộ xử lí"
+      },
+      {
+        "id": "tin9_q4",
+        "cau_hoi": "Đặc điểm nào sau đây KHÔNG PHẢI là ưu thế vượt trội của máy tính so với con người trong xử lý thông tin?",
+        "lua_chon": {
+          "A": "Tốc độ xử lý hàng tỷ phép tính mỗi giây",
+          "B": "Khả năng lưu trữ lượng dữ liệu khổng lồ",
+          "C": "Khả năng thấu cảm và rung động cảm xúc nghệ thuật",
+          "D": "Khả năng làm việc liên tục không mệt mỏi"
+        },
+        "user_choice": "",
+        "correct_choice": "C",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Ưu thế của máy tính",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Ưu thế của máy tính"
+      },
+      {
+        "id": "tin9_q5",
+        "cau_hoi": "Khi tra cứu thông tin về kỳ thi tuyển sinh vào lớp 10, nguồn thông tin nào sau đây có độ tin cậy cao nhất?",
+        "lua_chon": {
+          "A": "Cổng thông tin điện tử chính thức của Sở Giáo dục và Đào tạo",
+          "B": "Bài đăng trên nhóm Facebook ẩn danh",
+          "C": "Bình luận trên diễn đàn trò chuyện tự do",
+          "D": "Tin nhắn truyền miệng giữa bạn bè"
+        },
+        "user_choice": "",
+        "correct_choice": "A",
+        "is_correct": false,
+        "muc_sgk": "Mục 1: Vai trò của thông tin",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Vai trò của thông tin"
+      }
+    ],
+    "submitted_at": "2026-10-20T17:14:06.189132"
+  },
+  "submitted_at": "2026-10-20T17:14:06.189132"
+}

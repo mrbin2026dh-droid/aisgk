@@ -153,6 +153,9 @@
               <button type="button" class="std-dropdown-item" id="btnStdTeacherStudio">
                 <span>📝</span> <span>Biên soạn SGK (Studio)</span>
               </button>
+              <button type="button" class="std-dropdown-item" id="btnStdTeacherChangePin">
+                <span>🔑</span> <span>Đổi mã PIN Giáo viên</span>
+              </button>
             </li>
             <li id="stdMenuEditProfile">
               <button type="button" class="std-dropdown-item" id="btnStdOpenEditProfile">
@@ -648,6 +651,11 @@
           <button id="smBtnExportReport" class="btn-primary sm-btn-export" title="Xuất báo cáo danh sách và bảng điểm CSV">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Xuất báo cáo</span>
+          </button>
+
+          <!-- Nút Đổi mã PIN Giáo viên -->
+          <button id="smBtnChangePin" class="btn-secondary sm-btn-pin" title="Đổi mã PIN Giáo viên bảo mật">
+            <span>🔑 Đổi PIN</span>
           </button>
 
           <!-- Nút Quay lại học bài -->
@@ -1892,11 +1900,7 @@
             </div>
           </div>
 
-          <!-- Điền nhanh mã PIN -->
-          <div class="sl-quick-pin-row">
-            <span class="sl-quick-pin-hint">Mặc định: <code>Tch-8b6657ed96b64ad2</code></span>
-            <button type="button" class="sl-quick-pin-btn" id="slBtnUseSamplePin">Điền mã này</button>
-          </div>
+
 
           <!-- Thông báo lỗi PIN -->
           <div id="slTeacherAuthMsg" class="sl-auth-msg hidden" role="alert"></div>
@@ -2009,6 +2013,50 @@
           <button type="button" class="btn-primary" id="btnSaveEditProfile" style="flex: 1; padding: 10px; font-weight: 600;">Lưu thay đổi</button>
         </div>
       </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL ĐỔI MÃ PIN GIÁO VIÊN BẢO MẬT -->
+  <div id="modalTeacherChangePin" class="teacher-change-pin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="titleChangePin">
+    <div class="teacher-pin-backdrop" id="backdropTeacherChangePin"></div>
+    <div class="teacher-pin-card-modal">
+      <div class="pin-modal-header">
+        <div class="pin-modal-title-group">
+          <span class="pin-modal-icon">🔑</span>
+          <div>
+            <h3 id="titleChangePin" class="pin-modal-title">Đổi mã PIN Giáo viên</h3>
+            <p class="pin-modal-subtitle">Bảo vệ quyền quản trị và biên soạn bài học</p>
+          </div>
+        </div>
+        <button type="button" class="pin-modal-close-btn" id="btnCloseChangePinModal" aria-label="Đóng modal">✕</button>
+      </div>
+
+      <div class="pin-modal-body">
+        <div class="pin-form-group">
+          <label for="inputCurTeacherPin" class="pin-form-label">Mã PIN hiện tại:</label>
+          <input type="password" id="inputCurTeacherPin" class="pin-form-input" placeholder="Nhập mã PIN đang dùng..." autocomplete="current-password">
+        </div>
+
+        <div class="pin-form-group">
+          <label for="inputNewTeacherPin" class="pin-form-label">Mã PIN mới (tối thiểu 6 ký tự):</label>
+          <input type="password" id="inputNewTeacherPin" class="pin-form-input" placeholder="Nhập mã PIN mới..." autocomplete="new-password">
+        </div>
+
+        <div class="pin-form-group">
+          <label for="inputConfirmTeacherPin" class="pin-form-label">Xác nhận mã PIN mới:</label>
+          <input type="password" id="inputConfirmTeacherPin" class="pin-form-input" placeholder="Nhập lại mã PIN mới..." autocomplete="new-password">
+        </div>
+
+        <div id="msgTeacherChangePin" class="pin-modal-msg hidden" role="alert"></div>
+      </div>
+
+      <div class="pin-modal-footer">
+        <button type="button" class="btn-secondary pin-modal-btn-cancel" id="btnCancelChangePin">Hủy bỏ</button>
+        <button type="button" class="btn-primary pin-modal-btn-save" id="btnSubmitChangeTeacherPin">
+          <span>Lưu mã PIN mới</span>
+        </button>
+      </div>
     </div>
   </div>
 

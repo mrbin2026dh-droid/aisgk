@@ -1,0 +1,132 @@
+{
+  "exam_id": "exam_tin9_15p_b3",
+  "student_id": "std_e2e_student_01",
+  "student_name": "Trần Văn An",
+  "class_code": "9A",
+  "grade": 9,
+  "answers": {
+    "tin9_b3_q1": "A"
+  },
+  "score": 0.0,
+  "correct_count": 0,
+  "total_questions": 4,
+  "percentage": 0,
+  "evaluation": {
+    "score": 0.0,
+    "total_questions": 4,
+    "correct_count": 0,
+    "percentage": 0,
+    "socratic_advice": "Kết quả chưa như mong muốn (0.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
+    "recommended_lessons": [
+      {
+        "lesson_id": 1,
+        "topic": "Mục 2: Quy trình thực hành",
+        "mistakes_count": 3,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Quy trình thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 2: Quy trình thực hành để ôn lại ngay"
+      },
+      {
+        "lesson_id": 1,
+        "topic": "Mục 1: Mục tiêu thực hành",
+        "mistakes_count": 1,
+        "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Mục tiêu thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+        "action_text": "Mở Mục 1: Mục tiêu thực hành để ôn lại ngay"
+      }
+    ],
+    "weak_topics": [
+      "Mục 2: Quy trình thực hành",
+      "Mục 1: Mục tiêu thực hành"
+    ],
+    "ai_evaluation": {
+      "overall_comment": "Kết quả chưa như mong muốn (0.0/10). Đừng lo lắng, hãy mở lại các mục bài học SGK được gợi ý bên dưới để ôn tập lại cùng Thầy Socrates nhé!",
+      "weak_topics": {
+        "Mục 2: Quy trình thực hành": 3,
+        "Mục 1: Mục tiêu thực hành": 1
+      },
+      "recommendations": [
+        {
+          "lesson_id": 1,
+          "topic": "Mục 2: Quy trình thực hành",
+          "mistakes_count": 3,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 2: Quy trình thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 2: Quy trình thực hành để ôn lại ngay"
+        },
+        {
+          "lesson_id": 1,
+          "topic": "Mục 1: Mục tiêu thực hành",
+          "mistakes_count": 1,
+          "advice": "Em cần xem lại lý thuyết tại 'Mục 1: Mục tiêu thực hành'. Nắm chắc định nghĩa và ví dụ thực tế trong sách.",
+          "action_text": "Mở Mục 1: Mục tiêu thực hành để ôn lại ngay"
+        }
+      ]
+    },
+    "details": [
+      {
+        "id": "tin9_b3_q1",
+        "cau_hoi": "Khi tìm kiếm thông tin trên Internet, dấu hiệu nào sau đây cho thấy một website có độ tin cậy cao?",
+        "lua_chon": {
+          "A": "Trang web có nhiều quảng cáo nhấp nháy giật gân",
+          "B": "Tên miền thuộc tổ chức giáo dục (.edu.vn) hoặc chính phủ (.gov.vn) và ghi rõ tác giả",
+          "C": "Không ghi nguồn gốc và không có ngày tháng xuất bản",
+          "D": "Tiêu đề viết hoa toàn bộ kèm lời kêu gọi chia sẻ khẩn cấp"
+        },
+        "user_choice": "A",
+        "correct_choice": "B",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Quy trình thực hành",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Quy trình thực hành"
+      },
+      {
+        "id": "tin9_b3_q2",
+        "cau_hoi": "Để tìm kiếm thông tin hiệu quả và tiết kiệm thời gian trên công cụ tìm kiếm Google, em nên làm gì?",
+        "lua_chon": {
+          "A": "Sử dụng từ khóa ngắn gọn, chính xác và đặt cụm từ cần tìm trong dấu ngoặc kép \" \"",
+          "B": "Gõ toàn bộ đoạn văn dài vào ô tìm kiếm",
+          "C": "Chỉ nhấp vào kết quả đầu tiên xuất hiện mà không cần so sánh",
+          "D": "Sử dụng các từ cảm thán dài dòng"
+        },
+        "user_choice": "",
+        "correct_choice": "A",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Quy trình thực hành",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Quy trình thực hành"
+      },
+      {
+        "id": "tin9_b3_q3",
+        "cau_hoi": "Khi bắt gặp một bài viết gây xôn xao trên mạng xã hội về quy định thi cử mới, hành động chuẩn mực nhất là gì?",
+        "lua_chon": {
+          "A": "Bấm chia sẻ ngay lập tức để cảnh báo bạn bè",
+          "B": "Đối chiếu thông tin với thông báo chính thức trên website Bộ/Sở Giáo dục trước khi tin và chia sẻ",
+          "C": "Thêm bình luận chỉ trích gay gắt",
+          "D": "Bỏ qua không cần quan tâm đến tính đúng sai"
+        },
+        "user_choice": "",
+        "correct_choice": "B",
+        "is_correct": false,
+        "muc_sgk": "Mục 2: Quy trình thực hành",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 2: Quy trình thực hành"
+      },
+      {
+        "id": "tin9_b3_q4",
+        "cau_hoi": "Trong việc tìm hiểu hướng học tập sau THCS, việc chỉ biết điểm chuẩn mà không tìm hiểu về học phí và vị trí trường thể hiện thông tin bị thiếu tiêu chí nào?",
+        "lua_chon": {
+          "A": "Tính đầy đủ",
+          "B": "Tính mới",
+          "C": "Tính thẩm mỹ",
+          "D": "Tính bảo mật"
+        },
+        "user_choice": "",
+        "correct_choice": "A",
+        "is_correct": false,
+        "muc_sgk": "Mục 1: Mục tiêu thực hành",
+        "giai_thich_su_pham": "Đáp án chuẩn xác theo SGK.",
+        "goi_y_khi_sai": "Xem lại Mục 1: Mục tiêu thực hành"
+      }
+    ],
+    "submitted_at": "2026-10-20T15:54:18.051893"
+  },
+  "submitted_at": "2026-10-20T15:54:18.051893"
+}

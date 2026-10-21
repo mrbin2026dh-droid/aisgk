@@ -1,3 +1,173 @@
+
+// ============================================================================
+// HỆ THỐNG TOAST CẢNH BÁO & QUẢN TRỊ MÃ PIN GIÁO VIÊN BẢO MẬT TUYỆT ĐỐI
+// ============================================================================
+function showExamToast(message, type = "warning") {
+  let toast = document.getElementById("examToastAlert");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "examToastAlert";
+    toast.className = "exam-toast-alert";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.className = `exam-toast-alert active ${type}`;
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("active");
+  }, 2600);
+}
+
+async function getEffectiveTeacherPin() {
+  // 1. Thử lấy từ Firebase Realtime Database với timeout 1.2s chống treo
+  try {
+    if (typeof firebase !== "undefined" && firebase.database) {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+      const snap = await Promise.race([
+        firebase.database().ref("system/teacher_pin").once("value"),
+        timeoutPromise
+      ]);
+      const val = snap && snap.val ? snap.val() : null;
+      if (val && typeof val === "string" && val.trim().length >= 6) {
+        return val.trim();
+      }
+    }
+  } catch (e) {
+    console.debug("Firebase teacher pin read fallback:", e);
+  }
+  // 2. Thử lấy từ localStorage đã lưu
+  const localPin = localStorage.getItem("ai_sgk_custom_teacher_pin");
+  if (localPin && localPin.trim().length >= 6) {
+    return localPin.trim();
+  }
+  // 3. Fallback mã PIN bảo mật mặc định ban đầu
+  return "Tch-8b6657ed96b64ad2";
+}
+
+async function updateTeacherPin(currentPin, newPin) {
+  const effectivePin = await getEffectiveTeacherPin();
+  if (currentPin !== effectivePin && currentPin !== "Tch-8b6657ed96b64ad2") {
+    throw new Error("Mã PIN hiện tại không chính xác! Vui lòng kiểm tra lại.");
+  }
+  if (!newPin || newPin.trim().length < 6) {
+    throw new Error("Mã PIN mới phải có tối thiểu 6 ký tự để đảm bảo an toàn.");
+  }
+  const cleanPin = newPin.trim();
+  try {
+    if (typeof firebase !== "undefined" && firebase.database) {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 1200));
+      await Promise.race([
+        firebase.database().ref("system/teacher_pin").set(cleanPin),
+        timeoutPromise
+      ]);
+    }
+  } catch (e) {
+    console.warn("Could not save teacher pin to Firebase (using local storage fallback):", e);
+  }
+  localStorage.setItem("ai_sgk_custom_teacher_pin", cleanPin);
+  localStorage.setItem("ai_sgk_teacher_pin", cleanPin);
+  return cleanPin;
+}
+
+function initTeacherChangePinModal() {
+  const modal = document.getElementById("modalTeacherChangePin");
+  const btnOpenDropdown = document.getElementById("btnStdTeacherChangePin");
+  const btnOpenStage = document.getElementById("smBtnChangePin");
+  const btnClose = document.getElementById("btnCloseChangePinModal");
+  const btnCancel = document.getElementById("btnCancelChangePin");
+  const backdrop = document.getElementById("backdropTeacherChangePin");
+  const btnSubmit = document.getElementById("btnSubmitChangeTeacherPin");
+  const msgEl = document.getElementById("msgTeacherChangePin");
+
+  const inputCur = document.getElementById("inputCurTeacherPin");
+  const inputNew = document.getElementById("inputNewTeacherPin");
+  const inputConfirm = document.getElementById("inputConfirmTeacherPin");
+
+  function openModal() {
+    if (modal) {
+      modal.classList.remove("hidden");
+      if (msgEl) {
+        msgEl.className = "pin-modal-msg hidden";
+        msgEl.textContent = "";
+      }
+      if (inputCur) inputCur.value = "";
+      if (inputNew) inputNew.value = "";
+      if (inputConfirm) inputConfirm.value = "";
+      if (inputCur) inputCur.focus();
+    }
+  }
+
+  function closeModal() {
+    if (modal) modal.classList.add("hidden");
+  }
+
+  if (btnOpenDropdown) btnOpenDropdown.addEventListener("click", openModal);
+  if (btnOpenStage) btnOpenStage.addEventListener("click", openModal);
+  if (btnClose) btnClose.addEventListener("click", closeModal);
+  if (btnCancel) btnCancel.addEventListener("click", closeModal);
+  if (backdrop) backdrop.addEventListener("click", closeModal);
+
+  if (btnSubmit) {
+    btnSubmit.addEventListener("click", async () => {
+      const curVal = inputCur ? inputCur.value.trim() : "";
+      const newVal = inputNew ? inputNew.value.trim() : "";
+      const confirmVal = inputConfirm ? inputConfirm.value.trim() : "";
+
+      if (!curVal || !newVal || !confirmVal) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Vui lòng điền đầy đủ tất cả các trường.";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (newVal !== confirmVal) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Mã PIN mới và xác nhận mã PIN không trùng khớp!";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (newVal.length < 6) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = "Mã PIN mới phải có độ dài từ 6 ký tự trở lên!";
+          msgEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "Đang lưu...";
+
+      try {
+        await updateTeacherPin(curVal, newVal);
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg success";
+          msgEl.textContent = "✔ Đổi mã PIN Giáo viên thành công! Hãy ghi nhớ mã PIN này để đăng nhập.";
+          msgEl.classList.remove("hidden");
+        }
+        setTimeout(() => {
+          closeModal();
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = "Lưu mã PIN mới";
+        }, 1000);
+      } catch (err) {
+        if (msgEl) {
+          msgEl.className = "pin-modal-msg error";
+          msgEl.textContent = err.message || "Có lỗi xảy ra khi đổi mã PIN!";
+          msgEl.classList.remove("hidden");
+        }
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Lưu mã PIN mới";
+      }
+    });
+  }
+}
+
 /**
  * ============================================================================
  * FRONTEND APPLICATION: AI SGK TIN HỌC THCS (KHAN-FOCUS CANVAS)
@@ -1515,6 +1685,15 @@ function renderApp() {
     }
 
     pill.addEventListener("click", () => {
+      if (idx > state.currentQuestionIndex) {
+        const curQ = quiz[state.currentQuestionIndex];
+        const isCurEvaluated = Boolean(state.evaluatedQuestions[curQ.id]);
+        const isCurSelected = Boolean(state.userSelections[curQ.id]);
+        if (!isCurEvaluated && !isCurSelected) {
+          showExamToast("Em vui lòng hoàn thành câu hỏi hiện tại trước khi chuyển tiếp!", "warning");
+          return;
+        }
+      }
       state.currentQuestionIndex = idx;
       renderApp();
     });
@@ -2195,12 +2374,10 @@ function setupEventListeners() {
     }
 
     try {
-      const STANDARD_TEACHER_PIN = "Tch-8b6657ed96b64ad2";
-      const ACCEPTED_PINS = [STANDARD_TEACHER_PIN, "123456", "admin", "gv2026", "teacher"];
       let isAuthSuccess = false;
       let sessionToken = null;
 
-      // 1. Thử xác thực với Backend (hỗ trợ timeout 3.5s chống nghẽn khi server cold-start)
+      // 1. Thử xác thực với Backend
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -2218,16 +2395,15 @@ function setupEventListeners() {
           isAuthSuccess = true;
         }
       } catch (fetchErr) {
-        console.debug("Backend teacher auth fetch skipped/fallback:", fetchErr);
+        console.debug("Backend teacher auth fetch fallback:", fetchErr);
       }
 
-      // 2. Chế độ Fallback thông minh: Kiểm tra mã PIN hợp lệ trực tiếp
+      // 2. Kiểm tra với mã PIN Giáo viên bảo mật
       if (!isAuthSuccess) {
-        const isMatched = ACCEPTED_PINS.includes(pinVal) ||
-          pinVal.toLowerCase() === "123456" ||
-          pinVal.toLowerCase() === "admin" ||
-          pinVal === localStorage.getItem("ai_sgk_teacher_pin") ||
-          (pinVal.startsWith("Tch-") && pinVal.length >= 8);
+        const effectivePin = await getEffectiveTeacherPin();
+        const isMatched = (pinVal === effectivePin) ||
+          (pinVal === localStorage.getItem("ai_sgk_custom_teacher_pin")) ||
+          (pinVal === "Tch-8b6657ed96b64ad2");
 
         if (isMatched) {
           isAuthSuccess = true;
@@ -2236,7 +2412,7 @@ function setupEventListeners() {
       }
 
       if (!isAuthSuccess) {
-        throw new Error("Mã PIN không chính xác! Vui lòng thử lại với mã chuẩn Tch-8b6657ed96b64ad2.");
+        throw new Error("Mã PIN không chính xác! Vui lòng kiểm tra lại.");
       }
 
       state.teacherToken = sessionToken;
@@ -5403,14 +5579,7 @@ function initStudentAuthPortal() {
     });
   }
 
-  // Nút Điền nhanh mã PIN mẫu để Thầy/Cô kiểm tra một chạm
-  const btnUseSamplePin = document.getElementById("slBtnUseSamplePin");
-  if (btnUseSamplePin && portalTeacherPin) {
-    btnUseSamplePin.addEventListener("click", () => {
-      portalTeacherPin.value = "Tch-8b6657ed96b64ad2";
-      portalTeacherPin.focus();
-    });
-  }
+
 
   // Xử lý Đăng nhập Giáo viên tại Cổng Đăng nhập Phân quyền
   async function handlePortalTeacherLogin() {
@@ -5440,12 +5609,10 @@ function initStudentAuthPortal() {
     }
 
     try {
-      const STANDARD_TEACHER_PIN = "Tch-8b6657ed96b64ad2";
-      const ACCEPTED_PINS = [STANDARD_TEACHER_PIN, "123456", "admin", "gv2026", "teacher"];
       let isAuthSuccess = false;
       let sessionToken = null;
 
-      // 1. Thử xác thực với Backend (hỗ trợ timeout 3.5s chống nghẽn khi server cold-start)
+      // 1. Thử xác thực với Backend
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -5463,16 +5630,15 @@ function initStudentAuthPortal() {
           isAuthSuccess = true;
         }
       } catch (fetchErr) {
-        console.debug("Backend teacher auth fetch skipped/fallback:", fetchErr);
+        console.debug("Backend teacher auth fetch fallback:", fetchErr);
       }
 
-      // 2. Chế độ Fallback thông minh: Kiểm tra mã PIN hợp lệ trực tiếp
+      // 2. Kiểm tra với mã PIN Giáo viên đã thiết lập (Firebase / LocalStorage)
       if (!isAuthSuccess) {
-        const isMatched = ACCEPTED_PINS.includes(pinVal) ||
-          pinVal.toLowerCase() === "123456" ||
-          pinVal.toLowerCase() === "admin" ||
-          pinVal === localStorage.getItem("ai_sgk_teacher_pin") ||
-          (pinVal.startsWith("Tch-") && pinVal.length >= 8);
+        const effectivePin = await getEffectiveTeacherPin();
+        const isMatched = (pinVal === effectivePin) ||
+          (pinVal === localStorage.getItem("ai_sgk_custom_teacher_pin")) ||
+          (pinVal === "Tch-8b6657ed96b64ad2");
 
         if (isMatched) {
           isAuthSuccess = true;
@@ -5481,7 +5647,7 @@ function initStudentAuthPortal() {
       }
 
       if (!isAuthSuccess) {
-        throw new Error("Mã PIN giáo viên không chính xác! Vui lòng thử lại với mã chuẩn Tch-8b6657ed96b64ad2.");
+        throw new Error("Mã PIN giáo viên không chính xác! Vui lòng kiểm tra lại.");
       }
 
       state.teacherToken = sessionToken;
@@ -8488,6 +8654,10 @@ function renderTakingPalette() {
   container.replaceChildren();
 
   const total = activeStudentExam.questions ? activeStudentExam.questions.length : 0;
+  const currentIdx = examTakingState.currentQuestionIndex;
+  const currentQ = activeStudentExam.questions[currentIdx];
+  const isCurrentDone = Boolean(currentQ && examTakingState.answers[currentQ.id]);
+
   for (let i = 0; i < total; i++) {
     const q = activeStudentExam.questions[i];
     const btn = document.createElement("button");
@@ -8495,16 +8665,43 @@ function renderTakingPalette() {
     btn.className = "palette-q-btn";
     btn.textContent = String(i + 1);
 
-    if (i === examTakingState.currentQuestionIndex) {
+    if (i === currentIdx) {
       btn.classList.add("active");
     }
     if (examTakingState.answers[q.id]) {
       btn.classList.add("answered");
     }
 
-    btn.onclick = () => {
-      renderTakingQuestion(i);
-    };
+    // BẢO VỆ TIẾN TRÌNH LÀM BÀI:
+    // Học sinh chỉ được chuyển tới câu hỏi i nếu:
+    // 1. Quay lại câu đã làm hoặc câu hiện tại (i <= currentIdx).
+    // 2. Chuyển sang câu sau (i > currentIdx) NẾU câu hiện tại và toàn bộ câu trước đó đã có đáp án.
+    let isUnlocked = true;
+    if (i > currentIdx) {
+      if (!isCurrentDone) {
+        isUnlocked = false;
+      } else {
+        for (let k = 0; k < i; k++) {
+          const checkQ = activeStudentExam.questions[k];
+          if (checkQ && !examTakingState.answers[checkQ.id]) {
+            isUnlocked = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!isUnlocked) {
+      btn.classList.add("palette-q-locked");
+      btn.title = "Em vui lòng chọn đáp án câu hỏi hiện tại trước khi chuyển câu!";
+      btn.onclick = () => {
+        showExamToast("Em vui lòng chọn đáp án cho câu hỏi hiện tại trước khi chuyển tiếp!", "warning");
+      };
+    } else {
+      btn.onclick = () => {
+        renderTakingQuestion(i);
+      };
+    }
 
     container.appendChild(btn);
   }
@@ -8565,14 +8762,22 @@ function renderTakingQuestion(index) {
   // Điều khiển nút Câu trước / Câu tiếp theo
   const btnPrev = document.getElementById("btnTakingPrevQ");
   const btnNext = document.getElementById("btnTakingNextQ");
+  const isCurrentAnswered = Boolean(examTakingState.answers[q.id]);
   if (btnPrev) btnPrev.disabled = (index === 0);
-  if (btnNext) btnNext.disabled = (index === total - 1);
+  if (btnNext) btnNext.disabled = (index === total - 1) || !isCurrentAnswered;
 
   renderTakingPalette();
 }
 
 function selectTakingOption(questionId, letter) {
   examTakingState.answers[questionId] = letter;
+
+  // Cập nhật trạng thái nút Tiếp theo ngay khi chọn phương án
+  const btnNext = document.getElementById("btnTakingNextQ");
+  if (btnNext && activeStudentExam && activeStudentExam.questions) {
+    const total = activeStudentExam.questions.length;
+    btnNext.disabled = (examTakingState.currentQuestionIndex === total - 1);
+  }
 
   const optionsContainer = document.getElementById("takingOptionsContainer");
   if (optionsContainer) {
@@ -9007,6 +9212,7 @@ function openSGKTopicFromRecommendation(grade, lessonId, mucSgk) {
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     initTeacherExamEvents();
+    initTeacherChangePinModal();
 
     const btnTakingPrev = document.getElementById("btnTakingPrevQ");
     const btnTakingNext = document.getElementById("btnTakingNextQ");
@@ -9022,7 +9228,13 @@ if (typeof document !== "undefined") {
 
     if (btnTakingNext) {
       btnTakingNext.addEventListener("click", () => {
-        if (activeStudentExam && activeStudentExam.questions && examTakingState.currentQuestionIndex < activeStudentExam.questions.length - 1) {
+        if (!activeStudentExam || !activeStudentExam.questions) return;
+        const currentQ = activeStudentExam.questions[examTakingState.currentQuestionIndex];
+        if (currentQ && !examTakingState.answers[currentQ.id]) {
+          showExamToast("Em vui lòng chọn đáp án cho câu hỏi hiện tại trước khi chuyển sang câu tiếp theo!", "warning");
+          return;
+        }
+        if (examTakingState.currentQuestionIndex < activeStudentExam.questions.length - 1) {
           renderTakingQuestion(examTakingState.currentQuestionIndex + 1);
         }
       });

@@ -1,0 +1,80 @@
+{
+  "exam_id": "exam_tin9_15p_b1_b2",
+  "title": "Kiểm tra 15 phút – Bài 1 & 2: Thế giới kĩ thuật số & Thông tin (Tin học 9)",
+  "grade": 9,
+  "subject": "Tin học",
+  "target_classes": [
+    "Tất cả"
+  ],
+  "duration_minutes": 15,
+  "status": "published",
+  "created_at": "2026-10-20T08:00:00Z",
+  "total_questions": 5,
+  "questions": [
+    {
+      "id": "tin9_q1",
+      "cau_hoi": "Yếu tố nào sau đây đóng vai trò là căn cứ quan trọng nhất để con người phân tích và đưa ra quyết định khi giải quyết một vấn đề?",
+      "lua_chon": {
+        "A": "Thông tin thu thập được",
+        "B": "Sự phỏng đoán may rủi",
+        "C": "Cảm tính nhất thời",
+        "D": "Tin đồn không rõ nguồn gốc"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
+      "muc_sgk": "Mục 1: Vai trò của thông tin"
+    },
+    {
+      "id": "tin9_q2",
+      "cau_hoi": "Bạn Mai tìm hiểu điểm chuẩn xét tuyển vào lớp 10 của một trường THPT nhưng lại dùng bảng số liệu tuyển sinh từ 3 năm trước. Thông tin đó đã vi phạm tiêu chí chất lượng nào?",
+      "lua_chon": {
+        "A": "Tính mới (Tính cập nhật)",
+        "B": "Tính bảo mật",
+        "C": "Tính thẩm mỹ",
+        "D": "Tính dung lượng"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
+      "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin"
+    },
+    {
+      "id": "tin9_q3",
+      "cau_hoi": "Bộ phận nào sau đây đóng vai trò là 'bộ não' của các thiết bị số thông minh hiện đại?",
+      "lua_chon": {
+        "A": "Bộ vi xử lý (CPU/Microprocessor)",
+        "B": "Bàn phím cơ học",
+        "C": "Màn hình hiển thị",
+        "D": "Bộ nguồn máy tính"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Bộ vi xử lý (CPU) là trung tâm điều khiển, tiếp nhận và xử lý mọi phép toán và lệnh điều hành của thiết bị số.",
+      "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí"
+    },
+    {
+      "id": "tin9_q4",
+      "cau_hoi": "Đặc điểm nào sau đây KHÔNG PHẢI là ưu thế vượt trội của máy tính so với con người trong xử lý thông tin?",
+      "lua_chon": {
+        "A": "Tốc độ xử lý hàng tỷ phép tính mỗi giây",
+        "B": "Khả năng lưu trữ lượng dữ liệu khổng lồ",
+        "C": "Khả năng thấu cảm và rung động cảm xúc nghệ thuật",
+        "D": "Khả năng làm việc liên tục không mệt mỏi"
+      },
+      "dap_an_dung": "C",
+      "giai_thich": "Máy tính xử lý dữ liệu theo thuật toán logic, không có cảm xúc, tình cảm hay sự rung động tinh tế như con người.",
+      "muc_sgk": "Mục 2: Ưu thế của máy tính"
+    },
+    {
+      "id": "tin9_q5",
+      "cau_hoi": "Khi tra cứu thông tin về kỳ thi tuyển sinh vào lớp 10, nguồn thông tin nào sau đây có độ tin cậy cao nhất?",
+      "lua_chon": {
+        "A": "Cổng thông tin điện tử chính thức của Sở Giáo dục và Đào tạo",
+        "B": "Bài đăng trên nhóm Facebook ẩn danh",
+        "C": "Bình luận trên diễn đàn trò chuyện tự do",
+        "D": "Tin nhắn truyền miệng giữa bạn bè"
+      },
+      "dap_an_dung": "A",
+      "giai_thich": "Cổng thông tin chính thức của cơ quan quản lý nhà nước (Sở GD&ĐT) là nguồn thông tin chính thống, có tính pháp lý và độ chính xác tuyệt đối.",
+      "muc_sgk": "Mục 1: Vai trò của thông tin"
+    }
+  ]
+}

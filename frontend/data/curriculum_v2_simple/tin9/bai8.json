@@ -1,0 +1,79 @@
+{
+  "schema_version": "3.0_clean",
+  "grade": 9,
+  "lesson_id": 8,
+  "title": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+  "topic": "Chủ đề 4. Ứng dụng tin học",
+  "status": "published",
+  "content_markdown": "# Bài 8: Thực hành: Sử dụng công cụ trực quan trình bày thông tin\n\n### 1. Quy trình xây dựng sơ đồ tư duy dự án\nThực hành tạo sơ đồ tư duy cho một dự án học tập (ví dụ: *\"Chiến dịch Hành tinh Xanh - Giảm thiểu rác thải nhựa học đường\"*).\n\n- **Ba bước thực hành cốt lõi**:\n  1. **Bước 1: Xác định chủ đề trung tâm**: Đặt chủ đề chính ở vị trí trung tâm trang vẽ (ví dụ: *Rác thải nhựa học đường*), làm nổi bật bằng khung viền và hình ảnh biểu tượng.\n  2. **Bước 2: Phát triển các nhánh cấp 1 và cấp 2**:\n     - **Nhánh cấp 1 (Hiện trạng)**: Lượng rác thải hàng ngày, chai nhựa dùng 1 lần, hộp xốp ăn sáng.\n     - **Nhánh cấp 1 (Tác hại)**: Ô nhiễm đất, tắc nghẽn cống rãnh, nguy hại sức khỏe do vi nhựa.\n     - **Nhánh cấp 1 (Giải pháp)**: Sử dụng bình nước cá nhân, phân loại rác tại nguồn, phong trào đổi rác lấy cây xanh.\n  3. **Bước 3: Tinh chỉnh và định dạng thẩm mỹ**: Sử dụng màu sắc phân biệt cho từng nhánh, bổ sung biểu tượng trực quan (icons) để tăng tính gợi mở.\n\n---\n\n### 2. Thiết kế bài trình chiếu và chia sẻ trực tuyến\n- **Quy tắc bố cục bài trình chiếu 5 trang chuẩn mực**:\n  - **Trang 1 (Bìa)**: Tên đề tài, phân môn, tên nhóm và danh sách thành viên thực hiện.\n  - **Trang 2 (Mục tiêu & Đặt vấn đề)**: Nêu lý do chọn đề tài và mục tiêu mong muốn đạt được.\n  - **Trang 3 & 4 (Nội dung & Dữ liệu)**: Bảng số liệu khảo sát, hình ảnh thực tế, biểu đồ so sánh kết quả.\n  - **Trang 5 (Thông điệp & Lời cảm ơn)**: Khẩu hiệu hành động, lời kêu gọi và cảm ơn thầy cô, bạn bè đã lắng nghe.\n\n- **Quy trình chia sẻ và phân quyền cộng tác an toàn**:\n  - **Bước 1**: Nhấn nút **Share (Chia sẻ)** ở góc trên bên phải giao diện làm việc.\n  - **Bước 2**: Nhập email thành viên nhóm hoặc chọn *\"Bất kỳ ai có đường liên kết\"*.\n  - **Bước 3**: Thiết lập quyền hạn chính xác: Chọn **Viewer (Người xem)** đối với khán giả chỉ xem; chọn **Editor (Người chỉnh sửa)** đối với các thành viên trực tiếp đóng góp nội dung.\n  - **Bước 4**: Xuất bản tệp ra định dạng **PDF** để lưu trữ lâu dài hoặc in ấn mà không bao giờ bị xô lệch font chữ.\n\n> **Ghi nhớ:** Quyền truy cập tệp trên môi trường số cần được kiểm soát chặt chẽ để bảo vệ an toàn dữ liệu và tránh bị người lạ chỉnh sửa ngoài ý muốn.",
+  "quiz": [
+    {
+      "id": "tin9_b8_q1",
+      "section_ref": "Mục 1: Quy trình xây dựng sơ đồ tư duy dự án",
+      "muc_sgk": "Mục 1: Cấu trúc sơ đồ tư duy",
+      "trang_sgk": 40,
+      "cau_hoi": "Trong cấu trúc của một sơ đồ tư duy (Mindmap), các ý tưởng cấp 1, cấp 2 được liên kết với chủ đề trung tâm thông qua thành phần nào?",
+      "lua_chon": {
+        "A": "Các nhánh và đường liên kết có mũi tên hoặc màu sắc phân biệt",
+        "B": "Một bức tường gạch ngăn cách",
+        "C": "Những ô trống không có đường nối",
+        "D": "Một tệp âm thanh thu sẵn"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Các nhánh rẽ (branches) và đường liên kết chính là huyết mạch nối các ý tưởng thành cây logic xoay quanh chủ đề chính.",
+      "goi_y_khi_sai": "Để biểu diễn mối quan hệ giữa ý tưởng con với ý tưởng cha trong sơ đồ, người ta dùng đường nét gì? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": ["Các nhánh", "đường liên kết", "đáp án A"]
+    },
+    {
+      "id": "tin9_b8_q2",
+      "section_ref": "Mục 2: Thiết kế bài trình chiếu và chia sẻ trực tuyến",
+      "muc_sgk": "Mục 2: Bố cục bài trình chiếu",
+      "trang_sgk": 42,
+      "cau_hoi": "Trang đầu tiên (Slide 1) của một bài trình chiếu báo cáo dự án nhóm bắt buộc phải chứa thông tin cơ bản nào?",
+      "lua_chon": {
+        "A": "Bảng số liệu chi tiết của toàn bộ dự án",
+        "B": "Tên chủ đề báo cáo, tên nhóm học tập và danh sách các thành viên thực hiện",
+        "C": "Lời cảm ơn và tạm biệt người nghe",
+        "D": "Một đoạn phim dài 30 phút"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Trang bìa luôn phải giới thiệu rõ ràng tên đề tài báo cáo và người/nhóm chịu trách nhiệm thực hiện nội dung.",
+      "goi_y_khi_sai": "Khi bắt đầu thuyết trình, khán giả cần biết đề tài nói về cái gì và do ai thực hiện ở trang nào? Xem lại Quy tắc bố cục ở Mục 2 nhé!",
+      "forbidden_keywords": ["Tên chủ đề", "danh sách thành viên", "đáp án B"]
+    },
+    {
+      "id": "tin9_b8_q3",
+      "section_ref": "Mục 2: Thiết kế bài trình chiếu và chia sẻ trực tuyến",
+      "muc_sgk": "Mục 2: Phân quyền chia sẻ",
+      "trang_sgk": 43,
+      "cau_hoi": "Khi gửi bài báo cáo trực tuyến cho các bạn trong lớp tham khảo, để đảm bảo các bạn CHỈ ĐƯỢC XEM mà KHÔNG THỂ xóa hoặc sửa nội dung của em, em cần chọn quyền nào?",
+      "lua_chon": {
+        "A": "Editor (Người chỉnh sửa)",
+        "B": "Owner (Chủ sở hữu)",
+        "C": "Viewer (Người xem)",
+        "D": "Administrator (Quản trị viên hệ thống)"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Chính xác! Thiết lập quyền Viewer (Người xem) cho phép người nhận đọc nội dung nhưng bị khóa hoàn toàn quyền chỉnh sửa và xóa.",
+      "goi_y_khi_sai": "Chỉ muốn người khác xem nội dung mà không được sửa thì chọn quyền nào có nghĩa là Xem? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["Viewer", "Người xem", "đáp án C"]
+    },
+    {
+      "id": "tin9_b8_q4",
+      "section_ref": "Mục 2: Thiết kế bài trình chiếu và chia sẻ trực tuyến",
+      "muc_sgk": "Mục 2: Xuất bản tệp",
+      "trang_sgk": 44,
+      "cau_hoi": "Định dạng tệp nào sau đây là lựa chọn tối ưu nhất khi cần xuất bản tài liệu báo cáo để in ấn hoặc nộp cho giáo viên mà không lo bị nhảy dòng hay lỗi phông chữ trên máy khác?",
+      "lua_chon": {
+        "A": "Định dạng âm thanh MP3",
+        "B": "Định dạng tài liệu cố định PDF",
+        "C": "Định dạng tệp nén ZIP",
+        "D": "Định dạng tệp thực thi EXE"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Tệp PDF (Portable Document Format) giữ nguyên vẹn 100% định dạng, phông chữ và hình ảnh trên mọi thiết bị và hệ điều hành.",
+      "goi_y_khi_sai": "Định dạng tệp văn bản nổi tiếng thế giới nào chuyên dùng để khóa cố định bố cục khi in ấn và đọc trên máy khác? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": ["PDF", "đáp án B"]
+    }
+  ]
+}
