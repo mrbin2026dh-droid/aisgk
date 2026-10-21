@@ -6877,6 +6877,12 @@ function renderTeacherExamCards() {
   });
 }
 
+async function loadStudentDocuments() {
+  const allDocs = await getAllDocuments();
+  renderStudentDocuments(allDocs);
+  return allDocs;
+}
+
 // Giáo viên gạt công tắc Mở / Khóa bài thi
 async function toggleTeacherExamStatus(examId, isChecked, labelEl, switchEl) {
   const newStatus = isChecked ? "published" : "closed";
@@ -9343,33 +9349,69 @@ const DEFAULT_DOCUMENTS = [
 ];
 
 let currentDocumentsList = [];
+let documentsRealtimeListenerAttached = false;
 
-async function fetchDocumentsFromFirebase() {
-  initFirebaseApp();
-  if (typeof firebase === "undefined" || !firebase.database) return [];
+// Lưu trữ tài liệu vào LocalStorage an toàn (chống lỗi tràn quota 5MB nếu tệp PDF nặng)
+function saveDocumentsToLocalStorage(docs) {
   try {
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500));
-    const snap = await Promise.race([
-      firebase.database().ref("documents").once("value"),
-      timeoutPromise
-    ]);
-    if (snap && snap.exists && snap.exists()) {
-      const data = snap.val();
-      return Object.values(data);
-    }
+    localStorage.setItem("ai_sgk_documents", JSON.stringify(docs));
+    localStorage.setItem("ai_sgk_docs_inited", "true");
   } catch (err) {
-    console.debug("Firebase fetch documents fallback:", err);
+    console.warn("LocalStorage full, stripping large data_url to fit quota:", err);
+    try {
+      const lightDocs = docs.map(d => {
+        const copy = { ...d };
+        if (copy.data_url && copy.data_url.length > 80000) {
+          copy.has_cloud_data = true;
+          delete copy.data_url;
+        }
+        return copy;
+      });
+      localStorage.setItem("ai_sgk_documents", JSON.stringify(lightDocs));
+      localStorage.setItem("ai_sgk_docs_inited", "true");
+    } catch (e2) {
+      console.debug("Could not save to localStorage even with stripped data_url:", e2);
+    }
   }
-  return [];
 }
 
+// Tải tài liệu từ Firebase Realtime Database
+async function fetchDocumentsFromFirebase() {
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return null;
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
+    const [snap, metaSnap] = await Promise.race([
+      Promise.all([
+        firebase.database().ref("documents").once("value"),
+        firebase.database().ref("documents_meta/initialized").once("value")
+      ]),
+      timeoutPromise
+    ]);
+
+    const isInitialized = Boolean(metaSnap && metaSnap.exists && metaSnap.exists() && metaSnap.val());
+    if (snap && snap.exists && snap.exists()) {
+      const data = snap.val();
+      return { docs: Object.values(data), isInitialized: true };
+    }
+    return { docs: [], isInitialized: isInitialized };
+  } catch (err) {
+    console.debug("Firebase fetch documents fallback:", err);
+    return null;
+  }
+}
+
+// Lưu tài liệu mới lên Firebase Realtime Database
 async function syncDocumentToFirebase(doc) {
   initFirebaseApp();
   if (typeof firebase === "undefined" || !firebase.database) return false;
   try {
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
     await Promise.race([
-      firebase.database().ref(`documents/${doc.doc_id}`).set(doc),
+      Promise.all([
+        firebase.database().ref(`documents/${doc.doc_id}`).set(doc),
+        firebase.database().ref("documents_meta/initialized").set(true)
+      ]),
       timeoutPromise
     ]);
     return true;
@@ -9379,11 +9421,19 @@ async function syncDocumentToFirebase(doc) {
   }
 }
 
+// Xóa tài liệu khỏi Firebase Realtime Database
 async function deleteDocumentFromFirebase(docId) {
   initFirebaseApp();
   if (typeof firebase === "undefined" || !firebase.database) return false;
   try {
-    await firebase.database().ref(`documents/${docId}`).remove();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
+    await Promise.race([
+      Promise.all([
+        firebase.database().ref(`documents/${docId}`).remove(),
+        firebase.database().ref("documents_meta/initialized").set(true)
+      ]),
+      timeoutPromise
+    ]);
     return true;
   } catch (err) {
     console.warn("Could not delete document from Firebase:", err);
@@ -9391,54 +9441,115 @@ async function deleteDocumentFromFirebase(docId) {
   }
 }
 
-async function getAllDocuments() {
-  let docs = [];
+// Lắng nghe thay đổi tài liệu từ Firebase Realtime theo thời gian thực (Multi-Device Sync)
+function listenRealtimeDocuments() {
+  if (documentsRealtimeListenerAttached) return;
+  initFirebaseApp();
+  if (typeof firebase === "undefined" || !firebase.database) return;
+  documentsRealtimeListenerAttached = true;
+
   try {
-    const local = localStorage.getItem("ai_sgk_documents");
-    if (local) docs = JSON.parse(local);
+    firebase.database().ref("documents").on("value", (snap) => {
+      let fbDocs = [];
+      if (snap && snap.exists && snap.exists()) {
+        const val = snap.val();
+        fbDocs = Object.values(val);
+      }
+      // Chỉ re-render nếu danh sách tài liệu thực sự có sự thay đổi ID
+      const currentIds = currentDocumentsList.map(d => d.doc_id).sort().join(",");
+      const newIds = fbDocs.map(d => d.doc_id).sort().join(",");
+      if (currentIds !== newIds) {
+        currentDocumentsList = fbDocs;
+        saveDocumentsToLocalStorage(fbDocs);
+        renderCurrentDocumentsView();
+      }
+    });
+  } catch (err) {
+    console.debug("listenRealtimeDocuments error:", err);
+  }
+}
+
+function renderCurrentDocumentsView() {
+  const studentGrid = document.getElementById("studentDocumentsGrid");
+  if (studentGrid && !studentGrid.closest(".hidden")) {
+    renderStudentDocuments(currentDocumentsList);
+  }
+  const teacherGrid = document.getElementById("teacherDocsGrid");
+  if (teacherGrid && !teacherGrid.closest(".hidden")) {
+    renderTeacherDocuments(currentDocumentsList);
+  }
+}
+
+// Lấy danh sách toàn bộ tài liệu (Đảm bảo triệt để: Khi GV xóa hết sẽ KHÔNG tự sinh lại tài liệu mẫu)
+async function getAllDocuments() {
+  const isLocalInited = (localStorage.getItem("ai_sgk_docs_inited") === "true");
+  let docs = null;
+
+  try {
+    const raw = localStorage.getItem("ai_sgk_documents");
+    if (raw !== null) {
+      docs = JSON.parse(raw);
+    }
   } catch (err) {
     console.debug("Local storage read docs:", err);
   }
 
-  if (!docs || docs.length === 0) {
-    docs = DEFAULT_DOCUMENTS;
-    try {
-      localStorage.setItem("ai_sgk_documents", JSON.stringify(docs));
-    } catch (err) {
-      console.debug("Local storage write docs:", err);
-    }
+  // Khởi động bộ lắng nghe Realtime Firebase
+  listenRealtimeDocuments();
+
+  // 1. Nếu thiết bị đã khởi tạo (kể cả mảng rỗng [] khi GV đã xóa hết tất cả tài liệu)
+  if (docs !== null && isLocalInited) {
+    currentDocumentsList = docs;
+
+
+
+    return docs;
   }
 
-  currentDocumentsList = docs;
+  // 2. Nếu LocalStorage chưa có dữ liệu, thử tải từ Firebase
+  const fbResult = await fetchDocumentsFromFirebase();
+  if (fbResult && fbResult.isInitialized) {
+    docs = fbResult.docs;
+    currentDocumentsList = docs;
+    saveDocumentsToLocalStorage(docs);
+    return docs;
+  }
 
-  // Background sync với Firebase Realtime Database (không chặn giao diện)
-  fetchDocumentsFromFirebase().then(fbDocs => {
-    if (fbDocs && fbDocs.length > 0) {
-      currentDocumentsList = fbDocs;
-      try {
-        localStorage.setItem("ai_sgk_documents", JSON.stringify(fbDocs));
-      } catch (err) {
-        console.debug("Local storage save fbDocs:", err);
-      }
-    }
-  }).catch(err => console.debug("FB docs bg sync:", err));
+  // 3. Chỉ nạp 3 tài liệu mặc định khi HỆ THỐNG HOÀN TOÀN MỚI (chưa từng được khởi tạo hay cấu hình)
+  docs = DEFAULT_DOCUMENTS;
+  currentDocumentsList = docs;
+  saveDocumentsToLocalStorage(docs);
+
+  // Đồng bộ 3 tài liệu mẫu lên Firebase lần đầu tiên
+  DEFAULT_DOCUMENTS.forEach(d => {
+    syncDocumentToFirebase(d).catch(e => console.debug("Initial FB sync:", e));
+  });
 
   return docs;
 }
 
-async function loadStudentDocuments() {
+function renderStudentDocuments(allDocs) {
   const grid = document.getElementById("studentDocumentsGrid");
   const countBadge = document.getElementById("badgeStudentDocumentsCount");
   const countPill = document.getElementById("badgeDocSummary");
   if (!grid) return;
 
-  grid.replaceChildren();
-  const allDocs = await getAllDocuments();
+  const docsToRender = allDocs || currentDocumentsList || [];
+
+  // Khử trùng lặp ID tài liệu triệt để
+  const seenIds = new Set();
+  const uniqueDocs = [];
+  docsToRender.forEach(d => {
+    if (d && d.doc_id && !seenIds.has(d.doc_id)) {
+      seenIds.add(d.doc_id);
+      uniqueDocs.push(d);
+    }
+  });
 
   const grade = studentAuthState.grade || state.grade || 9;
   const classCode = studentAuthState.classCode || "";
 
-  const filtered = allDocs.filter(doc => {
+  const filtered = uniqueDocs.filter(doc => {
     if (doc.grade !== "all" && String(doc.grade) !== String(grade)) return false;
     if (doc.target_classes && doc.target_classes.length > 0) {
       if (!doc.target_classes.includes("all") && !doc.target_classes.includes("Tất cả") && classCode && !doc.target_classes.includes(classCode)) {
@@ -9447,6 +9558,8 @@ async function loadStudentDocuments() {
     }
     return true;
   });
+
+  grid.replaceChildren();
 
   if (countBadge) countBadge.textContent = String(filtered.length);
   if (countPill) countPill.textContent = `${filtered.length} tài liệu`;
@@ -9506,7 +9619,7 @@ async function loadStudentDocuments() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
           <span>Xem tài liệu</span>
         </button>
-        <a href="${docUrl}" download="${doc.file_name || 'tai_lieu.pdf'}" class="btn-doc-download" title="Tải file PDF về máy">
+        <a href="${docUrl || '#'}" download="${doc.file_name || 'tai_lieu.pdf'}" class="btn-doc-download" title="Tải file PDF về máy">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </a>
       </div>
@@ -9521,7 +9634,8 @@ async function loadStudentDocuments() {
   });
 }
 
-function openPdfViewer(doc) {
+// Mở bộ xem PDF (tự động nạp từ Firebase nếu dữ liệu Base64 bị stripped khỏi LocalStorage)
+async function openPdfViewer(doc) {
   const modal = document.getElementById("modalPdfViewer");
   const titleEl = document.getElementById("modalPdfViewerTitle");
   const subtitleEl = document.getElementById("modalPdfViewerSubtitle");
@@ -9531,21 +9645,37 @@ function openPdfViewer(doc) {
 
   if (!modal || !doc) return;
 
-  const docUrl = doc.data_url || doc.url || (`assets/docs/${doc.file_name}`);
   const gradeLabel = doc.grade === "all" ? "Tất cả các khối" : `Khối ${doc.grade}`;
-
   if (titleEl) titleEl.textContent = doc.title;
   if (subtitleEl) subtitleEl.textContent = `${gradeLabel} • ${doc.uploaded_by || "Giáo viên Tin học"}`;
 
+  let docUrl = doc.data_url || doc.url || (`assets/docs/${doc.file_name}`);
+
+  // Nếu tệp PDF tải lên từ cloud mà chưa có sẵn data_url trong RAM/LocalStorage:
+  if (!docUrl && doc.doc_id && typeof firebase !== "undefined" && firebase.database) {
+    try {
+      const snap = await firebase.database().ref(`documents/${doc.doc_id}`).once("value");
+      if (snap && snap.exists && snap.exists()) {
+        const val = snap.val();
+        if (val && val.data_url) {
+          docUrl = val.data_url;
+          doc.data_url = docUrl; // cache tạm vào RAM
+        }
+      }
+    } catch (err) {
+      console.debug("Fetch full doc data_url from Firebase error:", err);
+    }
+  }
+
   if (iframe) {
-    iframe.src = docUrl;
+    iframe.src = docUrl || "about:blank";
   }
   if (btnDownload) {
-    btnDownload.href = docUrl;
+    btnDownload.href = docUrl || "#";
     btnDownload.download = doc.file_name || "tai_lieu.pdf";
   }
   if (btnOpenTab) {
-    btnOpenTab.href = docUrl;
+    btnOpenTab.href = docUrl || "#";
   }
 
   modal.classList.remove("hidden");
@@ -9558,17 +9688,57 @@ function closePdfViewer() {
   if (modal) modal.classList.add("hidden");
 }
 
-async function loadTeacherDocuments() {
+window.deleteTeacherDocument = deleteTeacherDocument;
+window.clearAllTeacherDocuments = clearAllTeacherDocuments;
+
+async function deleteTeacherDocument(docId) {
+  const updated = currentDocumentsList.filter(d => d.doc_id !== docId);
+  currentDocumentsList = updated;
+  saveDocumentsToLocalStorage(updated);
+  renderTeacherDocuments(updated);
+  renderStudentDocuments(updated);
+  await deleteDocumentFromFirebase(docId);
+  return updated;
+}
+
+async function clearAllTeacherDocuments() {
+  currentDocumentsList = [];
+  saveDocumentsToLocalStorage([]);
+  renderTeacherDocuments([]);
+  renderStudentDocuments([]);
+  initFirebaseApp();
+  if (typeof firebase !== "undefined" && firebase.database) {
+    try {
+      await firebase.database().ref("documents").remove();
+      await firebase.database().ref("documents_meta/initialized").set(true);
+    } catch (e) {
+      console.debug("Clear all FB documents error:", e);
+    }
+  }
+}
+
+function renderTeacherDocuments(allDocs) {
   const grid = document.getElementById("teacherDocsGrid");
   const pill = document.getElementById("teacherDocCountPill");
   if (!grid) return;
 
+  const docsToRender = allDocs || currentDocumentsList || [];
+
+  // Khử trùng lặp ID tài liệu triệt để
+  const seenIds = new Set();
+  const uniqueDocs = [];
+  docsToRender.forEach(d => {
+    if (d && d.doc_id && !seenIds.has(d.doc_id)) {
+      seenIds.add(d.doc_id);
+      uniqueDocs.push(d);
+    }
+  });
+
+  if (pill) pill.textContent = `${uniqueDocs.length} tài liệu`;
+
   grid.replaceChildren();
-  const allDocs = await getAllDocuments();
 
-  if (pill) pill.textContent = `${allDocs.length} tài liệu`;
-
-  if (allDocs.length === 0) {
+  if (uniqueDocs.length === 0) {
     const emptyP = document.createElement("p");
     emptyP.style.color = "#94a3b8";
     emptyP.style.fontSize = "0.9rem";
@@ -9578,7 +9748,7 @@ async function loadTeacherDocuments() {
     return;
   }
 
-  allDocs.forEach(doc => {
+  uniqueDocs.forEach(doc => {
     const card = document.createElement("div");
     card.className = "teacher-doc-card";
 
@@ -9607,22 +9777,19 @@ async function loadTeacherDocuments() {
     if (delBtn) {
       delBtn.addEventListener("click", async () => {
         if (!confirm(`Thầy/Cô có chắc chắn muốn xóa tài liệu "${doc.title}" không?`)) return;
-        await deleteDocumentFromFirebase(doc.doc_id);
-        const updated = currentDocumentsList.filter(d => d.doc_id !== doc.doc_id);
-        currentDocumentsList = updated;
-        try {
-          localStorage.setItem("ai_sgk_documents", JSON.stringify(updated));
-        } catch (err) {
-          console.debug("Local storage update docs:", err);
-        }
+        await deleteTeacherDocument(doc.doc_id);
         showExamToast("✔ Đã xóa tài liệu thành công!", "success");
-        loadTeacherDocuments();
-        loadStudentDocuments();
       });
     }
 
     grid.appendChild(card);
   });
+}
+
+async function loadTeacherDocuments() {
+  const allDocs = await getAllDocuments();
+  renderTeacherDocuments(allDocs);
+  return allDocs;
 }
 
 function initTeacherUploadDocModal() {
@@ -9731,7 +9898,7 @@ function initTeacherUploadDocModal() {
       }
 
       btnSubmit.disabled = true;
-      btnSubmit.textContent = "Đang tải lên...";
+      btnSubmit.textContent = "Đang tải lên Firebase...";
 
       const newDoc = {
         doc_id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -9747,23 +9914,27 @@ function initTeacherUploadDocModal() {
       };
 
       try {
+        // 1. Lưu trực tiếp lên Firebase Realtime Database
         await syncDocumentToFirebase(newDoc);
+
+        // 2. Cập nhật bộ nhớ cục bộ
         const docs = await getAllDocuments();
-        docs.unshift(newDoc);
-        currentDocumentsList = docs;
-        try {
-          localStorage.setItem("ai_sgk_documents", JSON.stringify(docs));
-        } catch (err) {
-          console.debug("Local storage save docs:", err);
+        const existingIdx = docs.findIndex(d => d.doc_id === newDoc.doc_id);
+        if (existingIdx >= 0) {
+          docs[existingIdx] = newDoc;
+        } else {
+          docs.unshift(newDoc);
         }
+        currentDocumentsList = docs;
+        saveDocumentsToLocalStorage(docs);
 
         if (msgEl) {
           msgEl.className = "pin-modal-msg success";
-          msgEl.textContent = "✔ Tải lên tài liệu PDF thành công! Học sinh đã có thể xem ngay.";
+          msgEl.textContent = "✔ Tải lên Firebase thành công! Học sinh đã có thể xem ngay.";
           msgEl.classList.remove("hidden");
         }
 
-        showExamToast(`✔ Đã đăng tài liệu "${title}" cho học sinh thành công!`, "success");
+        showExamToast(`✔ Đã lưu tài liệu "${title}" lên Firebase thành công!`, "success");
 
         setTimeout(() => {
           closeModal();
