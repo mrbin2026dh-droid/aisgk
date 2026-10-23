@@ -18,55 +18,49 @@ function showExamToast(message, type = "warning") {
   }, 2600);
 }
 
-async function getEffectiveTeacherPin() {
-  // 1. Thử lấy từ Firebase Realtime Database với timeout 1.2s chống treo
-  try {
-    if (typeof firebase !== "undefined" && firebase.database) {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 3500));
-      const snap = await Promise.race([
-        firebase.database().ref("system/teacher_pin").once("value"),
-        timeoutPromise
-      ]);
-      const val = snap && snap.val ? snap.val() : null;
-      if (val && typeof val === "string" && val.trim().length >= 6) {
-        return val.trim();
-      }
-    }
-  } catch (e) {
-    console.debug("Firebase teacher pin read fallback:", e);
-  }
-  // 2. Thử lấy từ localStorage đã lưu
-  const localPin = localStorage.getItem("ai_sgk_custom_teacher_pin");
-  if (localPin && localPin.trim().length >= 6) {
-    return localPin.trim();
-  }
-  // 3. Fallback mã PIN bảo mật mặc định ban đầu
-  return "Tch-8b6657ed96b64ad2";
-}
-
 async function updateTeacherPin(currentPin, newPin) {
-  const effectivePin = await getEffectiveTeacherPin();
-  if (currentPin !== effectivePin && currentPin !== "Tch-8b6657ed96b64ad2") {
-    throw new Error("Mã PIN hiện tại không chính xác! Vui lòng kiểm tra lại.");
+  if (!currentPin || !newPin) {
+    throw new Error("Vui lòng điền đầy đủ mã PIN hiện tại và mã PIN mới.");
   }
-  if (!newPin || newPin.trim().length < 6) {
+  if (newPin.trim().length < 6) {
     throw new Error("Mã PIN mới phải có tối thiểu 6 ký tự để đảm bảo an toàn.");
   }
-  const cleanPin = newPin.trim();
-  try {
-    if (typeof firebase !== "undefined" && firebase.database) {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase Timeout")), 3500));
-      await Promise.race([
-        firebase.database().ref("system/teacher_pin").set(cleanPin),
-        timeoutPromise
-      ]);
-    }
-  } catch (e) {
-    console.warn("Could not save teacher pin to Firebase (using local storage fallback):", e);
+
+  const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
+  const headers = { "Content-Type": "application/json" };
+  if (teacherToken) {
+    headers["x-teacher-token"] = teacherToken;
   }
-  localStorage.setItem("ai_sgk_custom_teacher_pin", cleanPin);
-  localStorage.setItem("ai_sgk_teacher_pin", cleanPin);
-  return cleanPin;
+
+  const res = await fetch(`${API_BASE}/teacher/change-pin`, {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify({
+      current_pin: currentPin.trim(),
+      new_pin: newPin.trim()
+    })
+  });
+
+  if (!res.ok) {
+    let errorDetail = "Có lỗi xảy ra khi đổi mã PIN trên máy chủ.";
+    try {
+      const errJson = await res.json();
+      if (errJson && errJson.detail) errorDetail = errJson.detail;
+    } catch (_err) {
+      console.warn("[AISGK-AUTH] Không thể phân tích phản hồi lỗi JSON từ máy chủ khi đổi mã PIN.");
+    }
+    throw new Error(errorDetail);
+  }
+
+  // Thu hồi phiên cục bộ để buộc đăng nhập lại bằng mã PIN mới
+  state.teacherToken = null;
+  state.teacherUnlocked = false;
+  state.isTeacher = false;
+  sessionStorage.removeItem("ai_sgk_teacher_token");
+  localStorage.removeItem("ai_sgk_custom_teacher_pin");
+  localStorage.removeItem("ai_sgk_teacher_pin");
+
+  return newPin.trim();
 }
 
 function initTeacherChangePinModal() {
@@ -2447,21 +2441,9 @@ function setupEventListeners() {
         console.debug("Backend teacher auth fetch fallback:", fetchErr);
       }
 
-      // 2. Kiểm tra với mã PIN Giáo viên bảo mật
+      // 2. Bắt buộc xác thực qua backend - không tự sinh token ngoại tuyến
       if (!isAuthSuccess) {
-        const effectivePin = await getEffectiveTeacherPin();
-        const isMatched = (pinVal === effectivePin) ||
-          (pinVal === localStorage.getItem("ai_sgk_custom_teacher_pin")) ||
-          (pinVal === "Tch-8b6657ed96b64ad2");
-
-        if (isMatched) {
-          isAuthSuccess = true;
-          sessionToken = "tch_live_session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
-        }
-      }
-
-      if (!isAuthSuccess) {
-        throw new Error("Mã PIN không chính xác! Vui lòng kiểm tra lại.");
+        throw new Error("Mã PIN giáo viên không chính xác hoặc máy chủ không phản hồi!");
       }
 
       state.teacherToken = sessionToken;
@@ -3231,17 +3213,20 @@ async function evaluateCurrentQuestion(qid) {
         muc_sgk: quizItem.muc_sgk || "SGK",
         student_choice: choice
       };
+      state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;
     } else {
+      // Khi mất mạng và đáp án đã giấu: KHÔNG ĐƯỢC COI LÀ SAI VÀ KHÔNG ĐƯỢC TĂNG ATTEMPTS (F05 & L12)
       state.evaluatedQuestions[qid] = {
-        is_correct: false,
-        feedback: "Em hãy xem lại nội dung trong SGK và suy ngẫm thêm nhé!",
-        muc_sgk: "Mục 1",
+        is_network_error: true,
+        feedback: "⚠️ Không thể kết nối với máy chủ để chấm câu hỏi này. Vui lòng kiểm tra lại kết nối mạng!",
         student_choice: choice
       };
     }
   }
 
-  state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;
+  if (state.evaluatedQuestions[qid] && !state.evaluatedQuestions[qid].is_network_error && state.evaluatedQuestions[qid].is_correct !== undefined) {
+    state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;
+  }
   renderApp();
 }
 
@@ -3592,23 +3577,16 @@ function calculateRealStudentStats(s, targetGrade = 9, teacherExams = []) {
     }
   });
 
-  // Tích hợp điểm các bài kiểm tra do giáo viên tạo vào điểm số & tiến độ
+  // Tích hợp điểm các bài kiểm tra do giáo viên tạo: tính vào điểm trung bình, KHÔNG cộng vào số bài học hoàn thành (F06 & L14)
   studentExams.forEach(ex => {
     if (typeof ex.score === "number" && ex.score >= 0) {
       totalScore += ex.score;
       scoreCount++;
-      if (ex.passed || ex.score >= 5.0) {
-        completedCount++;
-        progressUnits += 1.0;
-      }
       startedCount++;
     }
   });
 
   let progressPercent = totalLessons > 0 ? Math.min(100, Math.round((progressUnits / totalLessons) * 100)) : 0;
-  if (typeof s.progress_percent === "number" && s.progress_percent > progressPercent) {
-    progressPercent = s.progress_percent;
-  }
 
   let avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
   if (scoreCount === 0 && typeof s.average_score === "number" && s.average_score > 0) {
@@ -4855,6 +4833,18 @@ function updateHeaderStudentAuthUI() {
 }
 
 function handleTeacherLogout() {
+  const currentToken = (typeof state !== "undefined" && state.teacherToken) || (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("ai_sgk_teacher_token") : null);
+  if (currentToken && typeof fetch === "function") {
+    try {
+      fetch("/api/teacher/logout", {
+        method: "POST",
+        headers: { "x-teacher-token": currentToken }
+      }).catch(() => console.warn("[AISGK-AUTH] Lỗi mạng khi gọi endpoint đăng xuất giáo viên từ xa."));
+    } catch (_err) {
+      console.warn("[AISGK-AUTH] Không thể kích hoạt request đăng xuất giáo viên.");
+    }
+  }
+
   state.teacherToken = null;
   state.teacherUnlocked = false;
   state.teacherLessonData = null;
@@ -5014,6 +5004,17 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = isBlocked;
 
+      // Lấy Google Firebase ID Token chính thức để gửi xác thực backend (V3-01 & V3-02)
+      let googleIdToken = null;
+      if (typeof user.getIdToken === "function") {
+        try {
+          googleIdToken = await user.getIdToken();
+        } catch (tokenErr) {
+          console.warn("Lỗi lấy Google ID Token:", tokenErr);
+        }
+      }
+      studentAuthState.token = googleIdToken;
+
       // Lưu vào localStorage để ghi nhớ tự động vĩnh viễn (Persistent Login)
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
       updateHeaderStudentAuthUI();
@@ -5057,6 +5058,7 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.classCode = classCodeVal;
       studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = false;
+      studentAuthState.token = null;
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
       updateHeaderStudentAuthUI();
     }
@@ -5281,9 +5283,11 @@ function handleStudentLogout() {
     studentAuthState.studentName = "";
     studentAuthState.studentEmail = "";
     studentAuthState.uid = "";
+    studentAuthState.token = null;
     studentAuthState.isBlocked = false;
     studentAuthState.grade = 9;
     localStorage.removeItem("ai_sgk_student_auth");
+    localStorage.removeItem("aisgk_student_token");
 
     // Đóng phiên Giáo viên nếu có
     state.teacherToken = null;
@@ -5520,8 +5524,38 @@ function initStudentAuthPortal() {
       let studentUid = null;
       let studentClass = `${selectedGrade}A`;
 
-      // 1. Quét tìm mã học sinh 6 số trên toàn bộ các lớp trong Firebase Realtime Database
-      if (window.firebase && firebase.database) {
+      // 1. Thử xác thực với Backend API / LAN Server trước (Fail-Closed R01 & R02)
+      let studentToken = null;
+      if (typeof fetch === "function") {
+        try {
+          const apiRoot = (typeof getExamApiRoot === "function") ? getExamApiRoot() : "/api";
+          const res = await fetch(`${apiRoot}/student/lan-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ student_code: codeVal, grade: selectedGrade })
+          });
+          if (res.ok) {
+            const lanAuth = await res.json();
+            studentData = lanAuth.student;
+            studentToken = lanAuth.token;
+            studentUid = (studentData && studentData.uid) || `std_${codeVal}`;
+            studentClass = (studentData && studentData.class_code) || `${selectedGrade}A`;
+            selectedGrade = (studentData && studentData.grade) || selectedGrade;
+          } else if (res.status === 403) {
+            throw new Error("Tài khoản của em đang bị Giáo viên tạm khóa!");
+          } else if (res.status === 404 || res.status === 400) {
+            throw new Error(`Mã học sinh '${codeVal}' không tồn tại trong danh sách trường/lớp!`);
+          }
+        } catch (backendErr) {
+          if (backendErr.message && (backendErr.message.includes("không tồn tại") || backendErr.message.includes("tạm khóa"))) {
+            throw backendErr;
+          }
+          console.debug("Backend LAN login offline/unreachable:", backendErr);
+        }
+      }
+
+      // 2. Quét tìm mã học sinh 6 số trên toàn bộ các lớp trong Firebase Realtime Database
+      if (!studentData && typeof firebase !== "undefined" && firebase.database) {
         try {
           const snap = await firebase.database().ref("students").once("value");
           if (snap.exists()) {
@@ -5546,34 +5580,9 @@ function initStudentAuthPortal() {
         }
       }
 
-      // 2. Nếu chưa có trên Firebase: Cấp phiên học sinh mới với mã 6 số này
+      // 3. Fail-Closed: CẤM tự ý cấp phiên giả mạo cho mã học sinh không tồn tại
       if (!studentData) {
-        studentUid = `std_code_${codeVal}`;
-        studentData = {
-          full_name: `Học sinh ${codeVal}`,
-          student_code: codeVal,
-          class_code: studentClass,
-          grade: selectedGrade
-        };
-        if (window.firebase && firebase.database) {
-          try {
-            await firebase.database().ref(`students/${studentClass}/${studentUid}`).set({
-              uid: studentUid,
-              full_name: studentData.full_name,
-              student_code: codeVal,
-              email: `${codeVal}@thcs.edu.vn`,
-              class_code: studentClass,
-              grade: selectedGrade,
-              progress_percent: 0,
-              average_score: 0,
-              status: "learning",
-              is_blocked: false,
-              created_at: new Date().toISOString()
-            });
-          } catch (e) {
-            console.debug("Tạo offline record:", e);
-          }
-        }
+        throw new Error(`Mã học sinh '${codeVal}' không hợp lệ hoặc chưa được đăng ký trong hệ thống!`);
       }
 
       if (studentData.is_blocked) {
@@ -5588,6 +5597,7 @@ function initStudentAuthPortal() {
       studentAuthState.classCode = studentClass;
       studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = false;
+      studentAuthState.token = studentToken || null;
 
       localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
       updateHeaderStudentAuthUI();
@@ -5712,21 +5722,9 @@ function initStudentAuthPortal() {
         console.debug("Backend teacher auth fetch fallback:", fetchErr);
       }
 
-      // 2. Kiểm tra với mã PIN Giáo viên đã thiết lập (Firebase / LocalStorage)
+      // 2. Bắt buộc xác thực qua backend - không tự sinh token ngoại tuyến
       if (!isAuthSuccess) {
-        const effectivePin = await getEffectiveTeacherPin();
-        const isMatched = (pinVal === effectivePin) ||
-          (pinVal === localStorage.getItem("ai_sgk_custom_teacher_pin")) ||
-          (pinVal === "Tch-8b6657ed96b64ad2");
-
-        if (isMatched) {
-          isAuthSuccess = true;
-          sessionToken = "tch_live_session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
-        }
-      }
-
-      if (!isAuthSuccess) {
-        throw new Error("Mã PIN giáo viên không chính xác! Vui lòng kiểm tra lại.");
+        throw new Error("Mã PIN giáo viên không chính xác hoặc phiên xác thực thất bại!");
       }
 
       state.teacherToken = sessionToken;
@@ -5740,6 +5738,7 @@ function initStudentAuthPortal() {
       studentAuthState.studentCode = "";
       studentAuthState.studentAvatar = "";
       studentAuthState.isBlocked = false;
+      studentAuthState.token = sessionToken || null;
       studentAuthState.studentName = "Giáo viên Tin học";
       studentAuthState.studentEmail = "giaovien@thcs.edu.vn";
       studentAuthState.classCode = "Tất cả các khối";
@@ -6201,17 +6200,24 @@ function initStudentAuthPortal() {
    MODULE: HỆ THỐNG DỮ LIỆU TIẾN TRÌNH HỌC TẬP THỰC TẾ (TRIỆT TIÊU 100% MOCK)
    ========================================================================== */
 
-function getStudentStorageKey() {
+function getStudentStorageKey(grade) {
   const id = studentAuthState.uid || studentAuthState.studentCode || (studentAuthState.studentEmail ? studentAuthState.studentEmail.split("@")[0] : "local_student");
-  return `ai_sgk_student_progress_${id}`;
+  const targetGrade = grade || (typeof studentAuthState !== "undefined" && studentAuthState.grade) || 9;
+  return `ai_sgk_student_progress_${id}_g${targetGrade}`;
 }
 
 function loadStudentProgressData(grade = (studentAuthState.grade || 9)) {
-  const key = getStudentStorageKey();
+  const targetGrade = Number(grade) || 9;
+  const key = getStudentStorageKey(targetGrade);
   let data = null;
   try {
     const raw = localStorage.getItem(key);
-    if (raw) data = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Number(parsed.grade) === targetGrade) {
+        data = parsed;
+      }
+    }
   } catch (e) {
     console.warn("Lỗi đọc tiến độ học sinh:", e);
   }
@@ -6222,8 +6228,8 @@ function loadStudentProgressData(grade = (studentAuthState.grade || 9)) {
       const fallbackRaw = localStorage.getItem("ai_sgk_user_progress");
       if (fallbackRaw) {
         const parsed = JSON.parse(fallbackRaw);
-        if (parsed && parsed[grade]) {
-          data = { grade: grade, lessons: parsed[grade], study_dates: [] };
+        if (parsed && parsed[targetGrade]) {
+          data = { grade: targetGrade, lessons: parsed[targetGrade], study_dates: [] };
         }
       }
     } catch (e) {
@@ -6231,9 +6237,9 @@ function loadStudentProgressData(grade = (studentAuthState.grade || 9)) {
     }
   }
 
-  if (!data) {
+  if (!data || Number(data.grade) !== targetGrade) {
     data = {
-      grade: grade,
+      grade: targetGrade,
       study_dates: [],
       lessons: {}
     };
@@ -6242,7 +6248,8 @@ function loadStudentProgressData(grade = (studentAuthState.grade || 9)) {
 }
 
 function saveStudentProgressData(data) {
-  const key = getStudentStorageKey();
+  const targetGrade = (data && data.grade) ? Number(data.grade) : ((typeof studentAuthState !== "undefined" && studentAuthState.grade) || 9);
+  const key = getStudentStorageKey(targetGrade);
   try {
     localStorage.setItem(key, JSON.stringify(data));
     if (!studentAuthState.isLoggedIn) {
@@ -6253,7 +6260,7 @@ function saveStudentProgressData(data) {
       } catch (e) {
         console.warn("Lỗi đọc allProg:", e);
       }
-      allProg[data.grade] = data.lessons;
+      allProg[targetGrade] = data.lessons;
       localStorage.setItem("ai_sgk_user_progress", JSON.stringify(allProg));
     }
   } catch (e) {
@@ -6673,8 +6680,17 @@ async function syncExamToFirebase(exam) {
   initFirebaseApp();
   if (typeof firebase === "undefined" || !firebase.database) return false;
   try {
-    await firebase.database().ref(`exams/${exam.exam_id}`).set(exam);
-    console.log("✔ [Firebase] Đã đồng bộ đề kiểm tra:", exam.exam_id);
+    // R04: Bảo vệ đáp án - Chỉ lưu đề thi công khai (đã lọc dap_an_dung & giai_thich_su_pham) vào node exams
+    const sanitizedQuestions = (exam.questions || []).map(q => {
+      const { dap_an_dung, giai_thich_su_pham, ...safeQ } = q;
+      return safeQ;
+    });
+    const publicExam = {
+      ...exam,
+      questions: sanitizedQuestions
+    };
+    await firebase.database().ref(`exams/${exam.exam_id}`).set(publicExam);
+    console.log("✔ [Firebase] Đã đồng bộ đề kiểm tra (đã bảo vệ đáp án):", exam.exam_id);
     return true;
   } catch (err) {
     console.warn("⚠️ [Firebase] Lỗi đồng bộ đề thi:", err);
@@ -6965,6 +6981,42 @@ async function loadStudentDocuments() {
 // Giáo viên gạt công tắc Mở / Khóa bài thi
 async function toggleTeacherExamStatus(examId, isChecked, labelEl, switchEl) {
   const newStatus = isChecked ? "published" : "closed";
+  const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
+
+  if (!teacherToken) {
+    alert("Phiên làm việc giáo viên chưa được xác thực. Vui lòng đăng nhập lại!");
+    if (switchEl) switchEl.checked = !isChecked;
+    return;
+  }
+
+  // 1. Kiểm tra xác thực và đồng bộ lên Backend API trước
+  try {
+    const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-teacher-token": teacherToken
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        alert("Phiên làm việc giáo viên đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại!");
+      } else {
+        alert(`Không thể cập nhật trạng thái đề thi (Mã lỗi ${res.status}).`);
+      }
+      if (switchEl) switchEl.checked = !isChecked;
+      return;
+    }
+  } catch (errApi) {
+    console.debug("Backend status update offline/network error:", errApi);
+    alert("Không thể kết nối đến máy chủ để cập nhật trạng thái đề thi.");
+    if (switchEl) switchEl.checked = !isChecked;
+    return;
+  }
+
+  // 2. Chỉ khi backend xác nhận hợp lệ mới cập nhật giao diện & Firebase/localStorage
   if (labelEl) {
     labelEl.textContent = isChecked ? "● Đang mở" : "🔒 Đã khóa";
     labelEl.className = `exam-status-toggle-label ${isChecked ? 'open' : 'closed'}`;
@@ -6973,11 +7025,9 @@ async function toggleTeacherExamStatus(examId, isChecked, labelEl, switchEl) {
     switchEl.title = isChecked ? "Gạt để khóa bài thi" : "Gạt để mở bài thi";
   }
 
-  // Cập nhật trạng thái trong mảng nhớ
   const target = currentExamList.find(e => e.exam_id === examId);
   if (target) target.status = newStatus;
 
-  // 1. Đồng bộ lên Firebase Realtime Database
   try {
     initFirebaseApp();
     if (typeof firebase !== "undefined" && firebase.database) {
@@ -6987,20 +7037,6 @@ async function toggleTeacherExamStatus(examId, isChecked, labelEl, switchEl) {
   } catch (errFb) {
     console.debug("Firebase update exam status error:", errFb);
   }
-
-  // 2. Đồng bộ lên Backend API
-  try {
-    await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/status`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-teacher-token": state.teacherToken || "tch_live_session_9a"
-      },
-      body: JSON.stringify({ status: newStatus })
-    });
-  } catch (errApi) {
-    console.debug("Backend status update offline:", errApi);
-  }
 }
 
 // Xóa bài kiểm tra
@@ -7008,15 +7044,29 @@ async function confirmAndDeleteExam(examId, examTitle) {
   const confirmDel = confirm(`Thầy/Cô có chắc chắn muốn xóa bài kiểm tra: "${examTitle}" không? Thao tác này không thể hoàn tác.`);
   if (!confirmDel) return;
 
+  const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
+  if (!teacherToken) {
+    alert("Phiên làm việc giáo viên chưa được xác thực. Vui lòng đăng nhập lại!");
+    return;
+  }
+
   try {
-    // 1. Xóa trên Backend nếu có
-    try {
-      await fetch(`${getExamApiRoot()}/teacher/exams/${examId}`, { method: "DELETE" });
-    } catch (errApi) {
-      console.debug("Backend delete API offline:", errApi);
+    // 1. Bắt buộc kiểm tra quyền xóa trên Backend API trước
+    const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}`, {
+      method: "DELETE",
+      headers: { "x-teacher-token": teacherToken }
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        alert("Phiên làm việc giáo viên đã hết hạn hoặc không có quyền xóa. Vui lòng đăng nhập lại!");
+      } else {
+        alert(`Không thể xóa bài kiểm tra từ máy chủ (Mã lỗi ${res.status}).`);
+      }
+      return;
     }
 
-    // 2. Xóa khỏi localStorage
+    // 2. Chỉ xóa khỏi localStorage và Firebase sau khi Backend xác nhận thành công
     try {
       const localList = JSON.parse(localStorage.getItem("AISGK_CUSTOM_EXAMS") || "[]");
       const updated = localList.filter(e => e.exam_id !== examId);
@@ -7025,10 +7075,8 @@ async function confirmAndDeleteExam(examId, examTitle) {
       console.debug("localStorage delete error:", errLocal);
     }
 
-    // 3. Xóa trên Firebase Realtime Database
     await deleteExamFromFirebase(examId);
 
-    // 4. Xóa khỏi currentExamList
     currentExamList = currentExamList.filter(e => e.exam_id !== examId);
     renderTeacherExamCards();
     alert(`✔ Đã xóa bài kiểm tra "${examTitle}" thành công!`);
@@ -7397,8 +7445,10 @@ function initTeacherExamEvents() {
       const formData = new FormData();
       formData.append("file", file);
       try {
+        const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
         const res = await fetch(`${getExamApiRoot()}/teacher/exams/upload-excel`, {
           method: "POST",
+          headers: teacherToken ? { "x-teacher-token": teacherToken } : {},
           body: formData
         });
         if (res.ok) {
@@ -7406,6 +7456,8 @@ function initTeacherExamEvents() {
           if (data.success && data.questions) {
             applyParsedQuestions(data.questions, file.name);
           }
+        } else if (res.status === 401) {
+          alert("Phiên làm việc giáo viên đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại!");
         }
       } catch (err) {
         alert("Lỗi tải file Excel: " + err.message);
@@ -7486,7 +7538,39 @@ function initTeacherExamEvents() {
         btnSavePublish.disabled = true;
         btnSavePublish.textContent = "Đang lưu bài...";
 
-        // 1. Lưu vào localStorage dự phòng
+        const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
+        if (!teacherToken) {
+          alert("Phiên làm việc giáo viên chưa được xác thực. Vui lòng đăng nhập lại trước khi lưu đề!");
+          return;
+        }
+
+        // 1. Bắt buộc kiểm tra lưu trên Backend API trước (chặn đứng khi mất kết nối / timeout / non-200)
+        let createRes;
+        try {
+          createRes = await fetch(`${getExamApiRoot()}/teacher/exams/create`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-teacher-token": teacherToken
+            },
+            body: JSON.stringify(examPayload)
+          });
+        } catch (errBackend) {
+          console.error("Lỗi kết nối máy chủ backend khi lưu đề:", errBackend);
+          alert("Không thể kết nối đến máy chủ Backend để lưu bài kiểm tra. Vui lòng kiểm tra mạng và thử lại!");
+          return;
+        }
+
+        if (!createRes.ok) {
+          if (createRes.status === 401) {
+            alert("Phiên làm việc giáo viên đã hết hạn hoặc không có quyền tạo đề. Vui lòng đăng nhập lại!");
+          } else {
+            alert(`Không thể lưu đề kiểm tra lên máy chủ (Mã lỗi ${createRes.status}).`);
+          }
+          return;
+        }
+
+        // 2. Chỉ sau khi backend chấp nhận mới cập nhật localStorage và Firebase
         try {
           const localList = JSON.parse(localStorage.getItem("AISGK_CUSTOM_EXAMS") || "[]");
           const idx = localList.findIndex(e => e.exam_id === examId);
@@ -7498,17 +7582,6 @@ function initTeacherExamEvents() {
           localStorage.setItem("AISGK_CUSTOM_EXAMS", JSON.stringify(localList));
         } catch (errLocal) {
           console.debug("Lưu localStorage lỗi:", errLocal);
-        }
-
-        // 2. Lưu lên backend nếu có
-        try {
-          await fetch(`${getExamApiRoot()}/teacher/exams/create`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(examPayload)
-          });
-        } catch (errBackend) {
-          console.debug("Backend API offline:", errBackend);
         }
 
         // 3. Đồng bộ trực tiếp lên Firebase Realtime Database
@@ -7606,10 +7679,9 @@ async function openTeacherExamResults(examId, examTitle) {
 
     // 2. Thử lấy từ Backend API (gửi kèm token giáo viên)
     try {
+      const teacherToken = state.teacherToken || sessionStorage.getItem("ai_sgk_teacher_token");
       const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/results`, {
-        headers: {
-          "x-teacher-token": state.teacherToken || "tch_live_session_9a"
-        }
+        headers: teacherToken ? { "x-teacher-token": teacherToken } : {}
       });
       if (res.ok) {
         const data = await res.json();
@@ -8973,22 +9045,47 @@ async function submitStudentExam() {
   try {
     let result = null;
 
-    // 1. Thử gửi lên backend chấm bài
+    // 1. Thử gửi lên backend chấm bài (có gửi kèm token xác thực phiên R02)
+    let backendRejected = false;
+    let backendRejectMsg = "";
+    const studentToken = (studentAuthState && studentAuthState.token) || (typeof localStorage !== "undefined" ? (JSON.parse(localStorage.getItem("ai_sgk_student_auth") || "{}").token) : null);
+    const submitHeaders = { "Content-Type": "application/json" };
+    if (studentToken) {
+      submitHeaders["Authorization"] = `Bearer ${studentToken}`;
+      submitHeaders["x-student-token"] = studentToken;
+    }
+
     try {
       const res = await fetch(`${getExamApiRoot()}/exams/submit`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: submitHeaders,
         body: JSON.stringify(payload)
       });
       if (res.ok) {
         const data = await res.json();
         result = data.evaluation;
+        if (result) result.is_backend_verified = true;
+      } else {
+        backendRejected = true;
+        let errDetail = `Mã lỗi ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) errDetail = errData.detail;
+        } catch (_err) {
+          console.warn("[AISGK-EXAM] Không thể đọc nội dung JSON chi tiết của thông báo lỗi từ chối bài thi.");
+        }
+        backendRejectMsg = `Máy chủ từ chối tiếp nhận bài thi (${errDetail}). Bài nộp không được chấp nhận!`;
       }
     } catch (apiErr) {
       console.debug("Backend submit offline, executing client-side Socratic grading:", apiErr);
     }
 
-    // 2. Chấm bài bằng Socratic AI Engine phía Client nếu Backend offline
+    if (backendRejected) {
+      alert(backendRejectMsg);
+      return;
+    }
+
+    // 2. Chế độ Ngoại tuyến: Khi máy chủ offline, lưu bản nháp chờ xác minh (R05)
     if (!result) {
       let questionsWithAnswers = [];
       if (activeStudentExamFull && activeStudentExamFull.questions) {
@@ -8999,65 +9096,24 @@ async function submitStudentExam() {
         if (found && found.questions) questionsWithAnswers = found.questions;
       }
 
-      let correctCount = 0;
-      const totalQ = questionsWithAnswers.length || 1;
-      const details = [];
-      const weakTopicsMap = {};
-
-      questionsWithAnswers.forEach(q => {
-        const studentChoice = examTakingState.answers[q.id];
-        const isCorrect = (studentChoice === q.dap_an_dung);
-        if (isCorrect) {
-          correctCount++;
-        } else {
-          const topic = q.muc_sgk || "Kiến thức chung SGK";
-          weakTopicsMap[topic] = (weakTopicsMap[topic] || 0) + 1;
-        }
-        details.push({
+      // Khóa an toàn P0 (R05): Mọi bài thi chính thức khi mất mạng đều ở trạng thái pending_verification
+      // CẤM tự chấm 10 điểm hoặc tự đồng bộ lên bảng xếp hạng cloud khi chưa có backend xác nhận
+      result = {
+        score: null,
+        status: "pending_verification",
+        is_pending: true,
+        is_backend_verified: false,
+        correct_count: 0,
+        total_questions: questionsWithAnswers.length || 1,
+        socratic_advice: "Bài làm của em đã được lưu tạm an toàn trên thiết bị (Chế độ Ngoại tuyến). Điểm số chính thức sẽ được Gia sư Socrates cập nhật ngay khi kết nối lại máy chủ.",
+        details: questionsWithAnswers.map(q => ({
           id: q.id,
           cau_hoi: q.cau_hoi,
-          is_correct: isCorrect,
-          student_choice: studentChoice,
-          correct_option: q.dap_an_dung,
-          giai_thich: q.giai_thich || "Đáp án chuẩn xác theo SGK.",
-          muc_sgk: q.muc_sgk || "Kiến thức chung"
-        });
-      });
-
-      const score = Math.round((correctCount / totalQ) * 100) / 10;
-      const weakTopics = Object.keys(weakTopicsMap);
-
-      let socraticAdvice = "";
-      if (score >= 9) {
-        socraticAdvice = `🌟 Xuất sắc! Em đã hoàn thành bài kiểm tra với điểm số tuyệt vời ${score}/10 (${correctCount}/${totalQ} câu). Em nắm rất chắc các khái niệm trọng tâm trong SGK Tin học. Hãy tiếp tục phát huy!`;
-      } else if (score >= 7) {
-        socraticAdvice = `👍 Khá tốt! Em đã trả lời đúng ${correctCount}/${totalQ} câu (${score}/10 điểm). Em đã nắm được nền tảng kiến thức bài học. Hãy xem lại giải thích ở các mục bên dưới để củng cố các câu còn nhầm lẫn nhé.`;
-      } else if (score >= 5) {
-        socraticAdvice = `⚠️ Em đã đạt mức yêu cầu cơ bản (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Hệ thống nhận diện em còn bị nhầm lẫn ở các chủ đề: ${weakTopics.join(', ')}. Em hãy dành ít nhất 15 phút mở lại các mục SGK được Gia sư Socrates đề xuất bên dưới để ôn lại lý thuyết nhé!`;
-      } else {
-        socraticAdvice = `🚨 Kết quả kiểm tra của em chưa đạt yêu cầu (${score}/10 điểm, đúng ${correctCount}/${totalQ} câu). Thầy Socrates nhận thấy em đang gặp khó khăn ở các chủ đề: ${weakTopics.join(', ') || 'các kiến thức bài học'}. Đừng nản lòng! Hãy bấm vào nút "Mở SGK học ngay" bên dưới để đọc lại lý thuyết và phân tích từng câu sai nhé!`;
-      }
-
-      result = {
-        score: score,
-        correct_count: correctCount,
-        total_questions: totalQ,
-        percentage: Math.round((correctCount / totalQ) * 100),
-        weak_topics: weakTopics,
-        socratic_advice: socraticAdvice,
-        details: details,
+          is_correct: null,
+          student_choice: examTakingState.answers ? examTakingState.answers[q.id] : undefined,
+          giai_thich: "Bài nộp đang chờ máy chủ xác thực và chấm điểm."
+        })),
         time_spent: timeSpentStr,
-        recommended_lessons: weakTopics.map((topic, i) => {
-          const matchLesson = topic.match(/Bài\s*(\d+)/i) || (activeStudentExam.title && activeStudentExam.title.match(/Bài\s*(\d+)/i));
-          const lessonId = matchLesson ? parseInt(matchLesson[1], 10) : (i + 1);
-          return {
-            grade: activeStudentExam.grade || 9,
-            lesson_id: lessonId,
-            title: `Tin học ${activeStudentExam.grade || 9} - Bài ${lessonId}`,
-            muc_sgk: topic,
-            advice: `Em cần ôn lại lý thuyết tại "${topic}" để nắm chắc kiến thức.`
-          };
-        }),
         submitted_at: new Date().toISOString()
       };
     }
@@ -9083,8 +9139,10 @@ async function submitStudentExam() {
 
     result.time_spent = result.time_spent || timeSpentStr;
 
-    // 4. ĐỒNG BỘ LÊN FIREBASE REALTIME DATABASE
-    await syncSubmissionToFirebase(payload, result);
+    // 4. CHỈ ĐỒNG BỘ LÊN FIREBASE KHI ĐÃ ĐƯỢC BACKEND XÁC THỰC VÀ CÓ ĐIỂM HỢP LỆ (R05)
+    if (result && result.is_backend_verified && !result.is_pending && result.score !== null) {
+      await syncSubmissionToFirebase(payload, result);
+    }
 
     // 5. Tính toán thứ hạng xếp điểm trong lớp từ Firebase
     try {
@@ -9101,7 +9159,7 @@ async function submitStudentExam() {
       console.debug("Compute rank failed:", eRank);
     }
 
-    // 6. Lưu offline vào localStorage
+    // 6. Lưu offline vào localStorage và hàng đợi đồng bộ bền vững (V3-04)
     try {
       const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
       localSubs.unshift({
@@ -9110,6 +9168,19 @@ async function submitStudentExam() {
         evaluation: result
       });
       localStorage.setItem("AISGK_SUBMISSIONS", JSON.stringify(localSubs));
+
+      if (result && result.is_pending) {
+        const offlineQueue = JSON.parse(localStorage.getItem("aisgk_offline_submissions") || "[]");
+        const exists = offlineQueue.some(item => item.submission_id === payload.submission_id);
+        if (!exists) {
+          offlineQueue.push({
+            ...payload,
+            time_spent: timeSpentStr,
+            queued_at: new Date().toISOString()
+          });
+          localStorage.setItem("aisgk_offline_submissions", JSON.stringify(offlineQueue));
+        }
+      }
     } catch (eSub) {
       console.debug("Lưu localStorage submission thất bại:", eSub);
     }
@@ -9130,7 +9201,8 @@ async function submitStudentExam() {
 }
 
 function renderExamResult(evaluation) {
-  const scoreVal = evaluation.score !== undefined ? evaluation.score : 0;
+  const isPending = evaluation && (evaluation.is_pending || evaluation.status === "pending_verification" || evaluation.score === null);
+  const scoreVal = (evaluation && evaluation.score !== undefined && evaluation.score !== null) ? evaluation.score : 0;
   const scoreNum = parseFloat(scoreVal) || 0;
   const scoreEl = document.getElementById("resultScoreNum");
   const countEl = document.getElementById("resultCorrectCount");
@@ -9138,11 +9210,16 @@ function renderExamResult(evaluation) {
   const timeEl = document.getElementById("resultTimeSpent");
   const examTitleEl = document.getElementById("resultExamTitle");
 
-  if (scoreEl) scoreEl.textContent = String(scoreNum.toFixed(1));
-  if (countEl) countEl.textContent = `✔ ${evaluation.correct_count ?? 0}/${evaluation.total_questions ?? 0} câu đúng`;
-
-  const pct = evaluation.total_questions > 0 ? Math.round(((evaluation.correct_count ?? 0) / evaluation.total_questions) * 100) : 0;
-  if (percentEl) percentEl.textContent = `⚡ Đạt ${pct}%`;
+  if (isPending) {
+    if (scoreEl) scoreEl.textContent = "Chờ xác minh";
+    if (countEl) countEl.textContent = "Bài thi đã lưu offline — Đang chờ máy chủ kết nối để chấm điểm";
+    if (percentEl) percentEl.textContent = "Chờ xác minh";
+  } else {
+    if (scoreEl) scoreEl.textContent = String(scoreNum.toFixed(1));
+    if (countEl) countEl.textContent = `✔ ${evaluation.correct_count ?? 0}/${evaluation.total_questions ?? 0} câu đúng`;
+    const pct = evaluation.total_questions > 0 ? Math.round(((evaluation.correct_count ?? 0) / evaluation.total_questions) * 100) : 0;
+    if (percentEl) percentEl.textContent = `⚡ Đạt ${pct}%`;
+  }
   if (timeEl && (evaluation.time_spent || evaluation.timeSpent)) {
     timeEl.textContent = `⏱ ${evaluation.time_spent || evaluation.timeSpent}`;
   }
@@ -9331,6 +9408,113 @@ function openSGKTopicFromRecommendation(grade, lessonId, mucSgk) {
       alert(`Hệ thống đã mở SGK Lớp ${grade} - Bài ${lessonId} để em ôn lại phần: "${mucSgk}".`);
     }
   }, 400);
+}
+
+async function flushPendingExamSubmissions() {
+  if (typeof localStorage === "undefined") return;
+  if (typeof navigator !== "undefined" && !navigator.onLine) return;
+  if (flushPendingExamSubmissions._isRunning) return;
+
+  const initialUid = (typeof studentAuthState !== "undefined" && studentAuthState.uid) || "";
+  const initialToken = (typeof studentAuthState !== "undefined" && studentAuthState.token) || "";
+  if (!initialUid || !initialToken) return;
+
+  flushPendingExamSubmissions._isRunning = true;
+  const ackedSubIds = new Set();
+
+  // D01: Validate evaluation theo hợp đồng API thực tế trước khi chấp nhận ACK
+  function isEvaluationValid(ev, expectedId) {
+    if (!ev || typeof ev !== "object" || Array.isArray(ev)) return false;
+    if (Object.keys(ev).length === 0) return false;
+    if (typeof ev.score !== "number" || !Number.isFinite(ev.score) || ev.score < 0) return false;
+    if (typeof ev.total_questions !== "number" || !Number.isInteger(ev.total_questions) || ev.total_questions < 0) return false;
+    if (typeof ev.correct_count !== "number" || !Number.isInteger(ev.correct_count) || ev.correct_count < 0) return false;
+    if (ev.submission_id && expectedId && ev.submission_id !== expectedId) return false;
+    return true;
+  }
+
+  try {
+    let initialQueue = [];
+    try {
+      initialQueue = JSON.parse(localStorage.getItem("aisgk_offline_submissions") || "[]");
+    } catch (_) {
+      return;
+    }
+    if (!Array.isArray(initialQueue) || !initialQueue.length) return;
+
+    for (const item of initialQueue) {
+      // D02: Trước mỗi request, xác minh UID/token còn khớp với phiên bắt đầu flush
+      const liveUid = (typeof studentAuthState !== "undefined" && studentAuthState.uid) || "";
+      const liveToken = (typeof studentAuthState !== "undefined" && studentAuthState.token) || "";
+      if (!liveUid || !liveToken || liveUid !== initialUid || liveToken !== initialToken) {
+        console.warn("[AISGK-OUTBOX] Phiên đăng nhập đã thay đổi hoặc đăng xuất trong khi flush. Dừng gửi các bài tiếp theo!");
+        break;
+      }
+
+      if (!item || item.student_id !== initialUid) {
+        continue;
+      }
+      try {
+        const apiRoot = (typeof getExamApiRoot === "function") ? getExamApiRoot() : "/api";
+        const res = await fetch(`${apiRoot}/exams/submit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${initialToken}`,
+            "x-student-token": initialToken
+          },
+          body: JSON.stringify(item)
+        });
+
+        if (res && res.ok) {
+          const data = await res.json();
+          // D01: CHỈ chấp nhận ACK khi nghiệp vụ xác nhận thành công rõ ràng
+          // Response schema phải có success === true và evaluation hợp lệ theo hợp đồng API thực tế
+          if (data && data.success === true && isEvaluationValid(data.evaluation, item.submission_id)) {
+            ackedSubIds.add(item.submission_id);
+
+            // D02: Phản hồi đến muộn sau khi đổi tài khoản không được cập nhật giao diện của tài khoản mới
+            const currentUidAfterFetch = (typeof studentAuthState !== "undefined" && studentAuthState.uid) || "";
+            if (currentUidAfterFetch === initialUid) {
+              if (typeof syncSubmissionToFirebase === "function") {
+                try {
+                  await syncSubmissionToFirebase(item, data.evaluation);
+                } catch (_err) {
+                  console.warn("[AISGK-OUTBOX] Đồng bộ bài nộp sang Firebase client-side thất bại sau khi đã ACK.");
+                }
+              }
+            } else {
+              console.warn("[AISGK-OUTBOX] Phản hồi nộp bài đến muộn sau khi đã đổi tài khoản. Không cập nhật UI tài khoản mới.");
+            }
+          } else {
+            console.warn("[AISGK-OUTBOX] Server chưa ACK hợp lệ hoặc evaluation không đúng hợp đồng:", item.submission_id, data);
+          }
+        }
+      } catch (_) {
+        // Gặp lỗi mạng hoặc exception: Không thêm vào ackedSubIds để giữ lại thử lại sau
+      }
+    }
+
+    // D02: Không ghi đè snapshot cũ làm mất bài mới thêm vào trong lúc đang flush!
+    // Re-read hàng đợi tươi mới nhất từ localStorage và chỉ lọc bỏ các bài đã được ACK thành công
+    if (ackedSubIds.size > 0) {
+      try {
+        const freshQueue = JSON.parse(localStorage.getItem("aisgk_offline_submissions") || "[]");
+        if (Array.isArray(freshQueue)) {
+          const remainingQueue = freshQueue.filter(entry => entry && !ackedSubIds.has(entry.submission_id));
+          localStorage.setItem("aisgk_offline_submissions", JSON.stringify(remainingQueue));
+        }
+      } catch (_err) {
+        console.warn("[AISGK-OUTBOX] Lỗi khi cập nhật hàng đợi bài nộp ngoại tuyến trên bộ nhớ cục bộ.");
+      }
+    }
+  } finally {
+    flushPendingExamSubmissions._isRunning = false;
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", flushPendingExamSubmissions);
 }
 
 // Khởi tạo các sự kiện khi load trang
