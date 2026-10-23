@@ -46,7 +46,7 @@ async function updateTeacherPin(currentPin, newPin) {
     try {
       const errJson = await res.json();
       if (errJson && errJson.detail) errorDetail = errJson.detail;
-    } catch (_err) {
+    } catch {
       console.warn("[AISGK-AUTH] Không thể phân tích phản hồi lỗi JSON từ máy chủ khi đổi mã PIN.");
     }
     throw new Error(errorDetail);
@@ -193,10 +193,7 @@ const getBackendPool = () => {
   }
 
   if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    if (window.location.port === "8000") {
-      return ["http://127.0.0.1:8000/api"];
-    }
-    return [""];
+    return [`${window.location.origin}/api`];
   }
 
   if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
@@ -258,6 +255,8 @@ const state = {
   teacherUnlocked: false,
   questionAttempts: {},
   isChatSubmitting: false,
+  chatTurnId: 0,
+  activeChatAbortController: null,
   availableLessons: [],
   catalogFilterTopic: "all",
   catalogSearchQuery: ""
@@ -839,11 +838,26 @@ async function getTeacherExamsForGrade(grade = 9, className = null) {
   const g = parseInt(grade, 10) || 9;
   let allExams = [];
 
+  // Backend cũng là nguồn đề chính thức khi chạy LAN hoặc không có Firebase.
+  try {
+    const query = new URLSearchParams({ grade: String(g) });
+    if (className) query.set("class_code", className);
+    const response = await fetch(`${getExamApiRoot()}/exams/list?${query}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data.exams)) allExams = data.exams;
+    }
+  } catch (err) {
+    console.debug("Backend exam list unavailable:", err);
+  }
+
   // 1. Ưu tiên đọc trực tiếp từ Firebase Realtime Database
   try {
     const fbExams = await fetchExamsFromFirebase();
-    if (Array.isArray(fbExams) && fbExams.length > 0) {
-      allExams = fbExams;
+    if (Array.isArray(fbExams)) {
+      const byId = new Map(allExams.map(e => [String(e.exam_id || e.id || e.title), e]));
+      fbExams.forEach(e => byId.set(String(e.exam_id || e.id || e.title), e));
+      allExams = [...byId.values()];
     }
   } catch (err) {
     console.debug("fetchExamsFromFirebase:", err);
@@ -1239,11 +1253,13 @@ async function initApp() {
     console.warn("Lỗi đọc URL params:", urlErr);
   }
 
+  const initialGradeLabel = document.getElementById("sidebarGradeLabel");
+  if (initialGradeLabel) initialGradeLabel.textContent = `TIN HỌC ${state.grade}`;
   renderCurriculumTree(); // Render ngay lập tức cây mục lục
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked && !(state.teacherUnlocked && state.teacherToken)) {
     switchView("dashboard");
   } else {
     switchView("theory");
@@ -1369,6 +1385,21 @@ async function switchToLesson(newLessonId) {
     closeCatalogModal();
     return;
   }
+  // Hủy fetch chat in-flight nếu có để chống rò rỉ phản hồi cũ sang bài mới
+  if (state.activeChatAbortController) {
+    try { state.activeChatAbortController.abort(); } catch {}
+    state.activeChatAbortController = null;
+  }
+  state.isChatSubmitting = false;
+  state.chatTurnId = (state.chatTurnId || 0) + 1;
+  const chatInputEl = document.getElementById("chatInput");
+  if (chatInputEl) chatInputEl.disabled = false;
+  const btnSendEl = document.getElementById("btnSendChat") || document.getElementById("chatSendBtn");
+  if (btnSendEl) btnSendEl.disabled = false;
+  const btnHeaderEl = document.getElementById("btnHeaderTutor") || document.getElementById("btnAskSocrates");
+  if (btnHeaderEl) btnHeaderEl.disabled = false;
+  document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = false);
+
   state.lessonId = newLessonId;
   state.currentQuestionIndex = 0;
   state.userSelections = {};
@@ -1804,7 +1835,12 @@ function renderApp() {
     const evalData = state.evaluatedQuestions[qid];
     feedbackBox.className = "feedback-box active";
 
-    if (evalData.is_correct) {
+    if (evalData.is_network_error) {
+      feedbackTitle.textContent = "Chưa thể kiểm tra câu trả lời";
+      feedbackSourceTag.textContent = "";
+      feedbackDesc.textContent = evalData.feedback || "Em hãy kiểm tra kết nối rồi thử chấm lại câu này.";
+      feedbackSocratesAction.style.display = "none";
+    } else if (evalData.is_correct) {
       feedbackBox.classList.add("correct-theme");
       feedbackTitle.textContent = "🎉 Rất chính xác! Em đã hiểu đúng bài học.";
       feedbackSourceTag.textContent = evalData.muc_sgk ? `[${evalData.muc_sgk}]` : "";
@@ -1836,6 +1872,12 @@ function renderApp() {
     if (!isEvaluated) {
       btnActionText.textContent = "Kiểm tra đáp án";
       btnAction.disabled = !userChoice;
+    } else if (state.evaluatedQuestions[qid].is_network_error) {
+      btnActionText.textContent = "Kiểm tra lại kết nối";
+      btnAction.disabled = !userChoice;
+    } else if (!state.evaluatedQuestions[qid].is_correct) {
+      btnActionText.textContent = "Thử lại câu này";
+      btnAction.disabled = false;
     } else {
       if (state.currentQuestionIndex < quiz.length - 1) {
         btnActionText.textContent = "Câu tiếp theo ➔";
@@ -1847,13 +1889,9 @@ function renderApp() {
     }
   }
 
-  // Cập nhật Thanh tiến độ Sidebar (Khớp hình 25% và Đã hoàn thành 2/8 bài)
-  const evaluatedCount = Object.keys(state.evaluatedQuestions).length;
-  const completedLessons = 2;
-  const totalLessons = 8;
-  const progressPercent = evaluatedCount > 0 
-    ? Math.round((evaluatedCount / quiz.length) * 100) 
-    : Math.round((completedLessons / totalLessons) * 100);
+  // Cập nhật Thanh tiến độ Sidebar từ câu trả lời đúng đã xác thực của bài hiện tại.
+  const correctCount = quiz.filter(q => state.evaluatedQuestions[String(q.id)]?.is_correct === true).length;
+  const progressPercent = quiz.length ? Math.round((correctCount / quiz.length) * 100) : 0;
 
   const percentEl = document.getElementById("roadmapProgressPercent");
   if (percentEl) percentEl.textContent = `${progressPercent}%`;
@@ -1862,11 +1900,7 @@ function renderApp() {
 
   const subtextEl = document.getElementById("roadmapProgressSubtext");
   if (subtextEl) {
-    if (evaluatedCount > 0) {
-      subtextEl.textContent = `Đã hoàn thành ${evaluatedCount}/${quiz.length} câu hỏi`;
-    } else {
-      subtextEl.textContent = `Đã hoàn thành ${completedLessons}/${totalLessons} bài`;
-    }
+    subtextEl.textContent = `Đã làm đúng ${correctCount}/${quiz.length} câu hỏi`;
   }
 
   renderPromptSuggestions();
@@ -2009,6 +2043,21 @@ async function switchGrade(newGrade) {
   }
 
   if (state.grade === newGrade) return;
+  // Hủy fetch chat in-flight nếu có khi đổi khối lớp
+  if (state.activeChatAbortController) {
+    try { state.activeChatAbortController.abort(); } catch {}
+    state.activeChatAbortController = null;
+  }
+  state.isChatSubmitting = false;
+  state.chatTurnId = (state.chatTurnId || 0) + 1;
+  const chatInputElGrade = document.getElementById("chatInput");
+  if (chatInputElGrade) chatInputElGrade.disabled = false;
+  const btnSendElGrade = document.getElementById("btnSendChat") || document.getElementById("chatSendBtn");
+  if (btnSendElGrade) btnSendElGrade.disabled = false;
+  const btnHeaderElGrade = document.getElementById("btnHeaderTutor") || document.getElementById("btnAskSocrates");
+  if (btnHeaderElGrade) btnHeaderElGrade.disabled = false;
+  document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = false);
+
   state.grade = newGrade;
   state.lessonId = 1;
   state.currentQuestionIndex = 0;
@@ -2044,7 +2093,7 @@ async function switchGrade(newGrade) {
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked && !(state.teacherUnlocked && state.teacherToken)) {
     switchView("dashboard");
   } else {
     switchView("theory");
@@ -2196,8 +2245,13 @@ function setupEventListeners() {
     const qid = currentQ.id;
     const isEvaluated = Boolean(state.evaluatedQuestions[qid]);
 
-    if (!isEvaluated) {
+    if (!isEvaluated || state.evaluatedQuestions[qid].is_network_error) {
       await evaluateCurrentQuestion(qid);
+    } else if (!state.evaluatedQuestions[qid].is_correct) {
+      // Học sinh áp dụng gợi ý rồi tự chọn lại; giữ số lần thử cho giàn giáo.
+      delete state.evaluatedQuestions[qid];
+      delete state.userSelections[qid];
+      renderApp();
     } else {
       if (state.currentQuestionIndex < quiz.length - 1) {
         state.currentQuestionIndex++;
@@ -2214,7 +2268,7 @@ function setupEventListeners() {
     const currentQ = state.lessonData && state.lessonData.quiz ? state.lessonData.quiz[state.currentQuestionIndex] : null;
     if (!currentQ) return;
     const qid = currentQ.id;
-    const choice = state.answers ? state.answers[qid] : null;
+    const choice = state.userSelections[qid] || null;
     const attempts = state.questionAttempts[qid] || 1;
     const prompt = choice 
       ? `Thầy ơi, ở câu "${currentQ.cau_hoi}" em chọn phương án ${choice} chưa đúng, thầy gợi ý giúp em cách suy luận nhé!`
@@ -3053,6 +3107,7 @@ function setupEventListeners() {
     state.currentQuestionIndex = 0;
     state.userSelections = {};
     state.evaluatedQuestions = {};
+    state.questionAttempts = {};
     document.getElementById("completionCard").classList.remove("active");
     document.getElementById("quizView").classList.add("active");
     renderApp();
@@ -3067,6 +3122,13 @@ function switchView(tabName) {
       openStudentManagementStage();
       return;
     }
+  }
+  if (tabName !== state.activeTab && (tabName === "dashboard" || tabName === "exam")) {
+    if (state.activeChatAbortController) {
+      try { state.activeChatAbortController.abort(); } catch {}
+      state.activeChatAbortController = null;
+    }
+    state.isChatSubmitting = false;
   }
   state.activeTab = tabName;
   const dashboardView = document.getElementById("dashboardView");
@@ -3213,7 +3275,6 @@ async function evaluateCurrentQuestion(qid) {
         muc_sgk: quizItem.muc_sgk || "SGK",
         student_choice: choice
       };
-      state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;
     } else {
       // Khi mất mạng và đáp án đã giấu: KHÔNG ĐƯỢC COI LÀ SAI VÀ KHÔNG ĐƯỢC TĂNG ATTEMPTS (F05 & L12)
       state.evaluatedQuestions[qid] = {
@@ -3368,6 +3429,16 @@ async function sendChatMessage(messageText, customContext = null) {
     return; // Chặn double-click và race condition
   }
 
+  // Hủy bộ điều khiển in-flight trước đó nếu có
+  if (state.activeChatAbortController) {
+    try {
+      state.activeChatAbortController.abort();
+    } catch {}
+    state.activeChatAbortController = null;
+  }
+  const abortController = new AbortController();
+  state.activeChatAbortController = abortController;
+
   state.isChatSubmitting = true;
   state.chatTurnId = (state.chatTurnId || 0) + 1;
   const currentTurnId = state.chatTurnId;
@@ -3383,9 +3454,15 @@ async function sendChatMessage(messageText, customContext = null) {
   if (btnHeaderTutor) btnHeaderTutor.disabled = true;
   document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = true);
 
-  // Bộ giám sát thời gian tối đa (30s Watchdog): Chống kẹt Mutex vĩnh viễn trong mọi tình huống hy hữu
+  // Bộ giám sát thời gian tối đa (30s Watchdog): Hủy fetch và giải phóng khóa Mutex
   let watchdogTimer = setTimeout(() => {
-    console.warn("⚠️ [Watchdog] Typewriter timeout vượt 30s. Tự động giải phóng khóa Mutex.");
+    console.warn("⚠️ [Watchdog] Typewriter/Fetch timeout vượt 30s. Tự động hủy fetch và giải phóng khóa Mutex.");
+    try {
+      abortController.abort();
+    } catch {}
+    if (loadingBubble && loadingBubble.parentNode) {
+      loadingBubble.innerHTML = "⏱️ <em>Yêu cầu phản hồi quá 30 giây đã được hủy để bảo vệ kết nối. Em có thể gửi lại câu hỏi nhé!</em>" /* sanitize */;
+    }
     releaseChatMutex(currentTurnId);
   }, 30000);
 
@@ -3402,6 +3479,9 @@ async function sendChatMessage(messageText, customContext = null) {
     if (watchdogTimer) {
       clearTimeout(watchdogTimer);
       watchdogTimer = null;
+    }
+    if (state.activeChatAbortController === abortController) {
+      state.activeChatAbortController = null;
     }
     state.isChatSubmitting = false;
     if (chatInput) chatInput.disabled = false;
@@ -3447,7 +3527,7 @@ async function sendChatMessage(messageText, customContext = null) {
   } else if (state.lessonData && state.lessonData.quiz && state.lessonData.quiz[state.currentQuestionIndex]) {
     const currentQ = state.lessonData.quiz[state.currentQuestionIndex];
     const qid = currentQ.id;
-    const studentChoice = state.answers ? state.answers[qid] : null;
+    const studentChoice = state.userSelections[qid] || null;
     const evalState = state.evaluatedQuestions ? state.evaluatedQuestions[qid] : null;
     const attempts = state.questionAttempts[qid] || 1;
     contextPayload = {
@@ -3471,7 +3551,7 @@ async function sendChatMessage(messageText, customContext = null) {
       history: state.chatHistory.slice(-4)
     };
 
-    const headers = { 
+    const headers = {
       "Content-Type": "application/json",
       "X-Student-Session": getOrCreateStudentSession(),
       "X-Curriculum-Version": "v2"
@@ -3487,7 +3567,8 @@ async function sendChatMessage(messageText, customContext = null) {
         const attemptRes = await fetch(`${currentBase}/chat`, {
           method: "POST",
           headers,
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: abortController.signal
         });
         if (attemptRes.ok) {
           res = attemptRes;
@@ -3510,6 +3591,23 @@ async function sendChatMessage(messageText, customContext = null) {
     const data = await res.json();
     const reply = data.reply;
 
+    // Kiểm tra xem lượt gọi có còn hợp lệ không trước khi cập nhật DOM và lịch sử (Anti-Stale Callback)
+    const isStillValid = (
+      state.chatTurnId === currentTurnId &&
+      state.grade === chatGrade &&
+      state.lessonId === chatLessonId &&
+      !abortController.signal.aborted
+    );
+
+    if (!isStillValid) {
+      console.warn(`[Chat] Bỏ qua phản hồi cũ của lượt ${currentTurnId} do đã chuyển bài, chuyển lượt hoặc bị hủy.`);
+      if (loadingBubble && loadingBubble.parentNode) {
+        loadingBubble.remove();
+      }
+      releaseChatMutex(currentTurnId);
+      return;
+    }
+
     // Kích hoạt Hiệu ứng Đánh máy (Typewriter Effect - Sonet R3: Giữ khóa mutex cho đến khi gõ xong)
     typeWriterEffect(loadingBubble, reply, () => {
       releaseChatMutex(currentTurnId);
@@ -3519,6 +3617,14 @@ async function sendChatMessage(messageText, customContext = null) {
     state.chatHistory.push({ role: "user", content: cleanMessage });
     state.chatHistory.push({ role: "assistant", content: reply });
   } catch (err) {
+    if (abortController.signal.aborted || (err && err.name === "AbortError")) {
+      console.warn(`[Chat] Lượt gọi ${currentTurnId} đã được hủy chủ động.`);
+      if (state.chatTurnId !== currentTurnId && loadingBubble && loadingBubble.parentNode) {
+        loadingBubble.remove();
+      }
+      releaseChatMutex(currentTurnId);
+      return;
+    }
     console.error("Lỗi kết nối AI Socrates:", err);
     loadingBubble.innerHTML = "⚠️ <em>Máy chủ AI đang khởi động hoặc đang cập nhật kết nối. Em vui lòng thử lại sau giây lát nhé!</em>" /* sanitize */;
     releaseChatMutex(currentTurnId);
@@ -3753,10 +3859,11 @@ class StudentDataAdapter {
         const total = students.length;
         const completed = students.filter(s => s.status === "completed").length;
         const learning = students.filter(s => s.status === "learning").length;
-        const needsSupport = students.filter(s => s.status === "needs_support").length;
-        const notStarted = Math.max(0, total - completed - learning - needsSupport);
+        const needsSupport = students.filter(s => s.status === "needs_support" || (s.score_count > 0 && s.average_score < 5)).length;
+        const notStarted = students.filter(s => s.status === "not_started").length;
+        const observed = students.filter(s => s.score_count > 0);
         const compPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
-        const avgScore = total > 0 ? Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1)) : 0;
+        const avgScore = observed.length > 0 ? Number((observed.reduce((acc, s) => acc + s.average_score, 0) / observed.length).toFixed(1)) : 0;
 
         const overview = {
           grade: Number(gNum),
@@ -3768,8 +3875,8 @@ class StudentDataAdapter {
             completed_percent: compPercent,
             average_score: avgScore,
             score_delta_month: 0.0,
-            improved_count: Math.max(0, total - needsSupport),
-            improved_percent: total > 0 ? Math.round(((total - needsSupport) / total) * 100) : 0,
+            improved_count: 0,
+            improved_percent: 0,
             needs_support_count: needsSupport,
             needs_support_percent: total > 0 ? Math.round((needsSupport / total) * 100) : 0
           },
@@ -3786,6 +3893,24 @@ class StudentDataAdapter {
         return overview;
       } catch (err) {
         console.warn("Lỗi đọc học sinh từ Firebase Realtime Database:", err);
+      }
+    }
+
+    // Máy chủ LAN giữ danh sách học sinh ngay cả khi Firebase không được tải.
+    if (state.teacherToken) {
+      try {
+        const response = await fetch(`${getExamApiRoot()}/teacher/students-overview/${gNum}/${encodeURIComponent(className)}`, {
+          headers: { Authorization: `Bearer ${state.teacherToken}` }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data && Array.isArray(result.data.students) && result.data.kpi) {
+            this.cachedOverview = result.data;
+            return result.data;
+          }
+        }
+      } catch (err) {
+        console.debug("Backend student overview unavailable:", err);
       }
     }
 
@@ -3835,21 +3960,22 @@ class StudentDataAdapter {
     }
 
     const completed = students.filter(s => s.status === "completed" || s.progress_percent >= 100).length;
-    const notStarted = students.filter(s => s.progress_percent === 0).length;
+    const notStarted = students.filter(s => s.status === "not_started").length;
     const compPercent = Math.round((completed / total) * 100);
-    const avgScore = Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1));
-    const needsSupport = students.filter(s => s.status === "needs_support" || (s.average_score > 0 && s.average_score < 5.0)).length;
+    const observed = students.filter(s => s.score_count > 0);
+    const avgScore = observed.length ? Number((observed.reduce((acc, s) => acc + s.average_score, 0) / observed.length).toFixed(1)) : 0;
+    const needsSupport = students.filter(s => s.status === "needs_support" || (s.score_count > 0 && s.average_score < 5.0)).length;
 
     let general = "";
     let concerns = "";
-    if (avgScore === 0 && compPercent === 0) {
+    if (observed.length === 0 && compPercent === 0) {
       general = `Lớp ${className} có ${total} học sinh. Các em mới tham gia lớp học và chưa hoàn thành bài luyện tập nào (Tiến độ 0%, Điểm TB 0/10).`;
       concerns = `Hiện tại có ${notStarted} học sinh chưa bắt đầu làm bài. Giáo viên nên hướng dẫn các em mở bài 1 để làm quen với hệ thống.`;
     } else {
       general = `Lớp ${className} có ${total} học sinh, tiến độ hoàn thành đạt ${compPercent}%, điểm trung bình toàn lớp đạt ${avgScore}/10.`;
       concerns = needsSupport > 0 
         ? `Có ${needsSupport} học sinh cần được hỗ trợ thêm do điểm trung bình dưới 5.0.`
-        : "Tất cả học sinh trong lớp đều đang duy trì kết quả học tập tốt.";
+        : "Chưa ghi nhận điểm dưới 5; cần xem từng bài làm và học sinh chưa có kết quả trước khi kết luận.";
     }
 
     return {
@@ -4189,7 +4315,10 @@ async function loadStudentManagementData() {
 
   renderKPIs(data.kpi);
   renderDonutChart(data.donut_progress, data.kpi.completed_percent);
-  renderTopicBarChart(data.topic_averages);
+  const topicLabels = new Map((data.students || []).flatMap(student =>
+    (student.topics || []).map(topic => [topic.topic_id, topic.topic_name])));
+  renderTopicBarChart(Object.fromEntries(Object.entries(data.topic_averages || {})
+    .map(([id, score]) => [topicLabels.get(id) || id, score])));
   filterAndRenderStudentTable();
   refreshAIPedagogyAdvice(); // Cập nhật nhận xét AI động theo số liệu thực tế
 }
@@ -4840,7 +4969,7 @@ function handleTeacherLogout() {
         method: "POST",
         headers: { "x-teacher-token": currentToken }
       }).catch(() => console.warn("[AISGK-AUTH] Lỗi mạng khi gọi endpoint đăng xuất giáo viên từ xa."));
-    } catch (_err) {
+    } catch {
       console.warn("[AISGK-AUTH] Không thể kích hoạt request đăng xuất giáo viên.");
     }
   }
@@ -4995,6 +5124,9 @@ async function handleStudentGoogleSignIn() {
         }
       }
 
+      if (typeof user.getIdToken !== "function") throw new Error("Không nhận được xác thực Google.");
+      const googleIdToken = await user.getIdToken();
+      if (!googleIdToken) throw new Error("Không nhận được xác thực Google.");
       studentAuthState.isLoggedIn = true;
       studentAuthState.uid = user.uid;
       studentAuthState.studentName = user.displayName || "Học sinh";
@@ -5004,15 +5136,6 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = isBlocked;
 
-      // Lấy Google Firebase ID Token chính thức để gửi xác thực backend (V3-01 & V3-02)
-      let googleIdToken = null;
-      if (typeof user.getIdToken === "function") {
-        try {
-          googleIdToken = await user.getIdToken();
-        } catch (tokenErr) {
-          console.warn("Lỗi lấy Google ID Token:", tokenErr);
-        }
-      }
       studentAuthState.token = googleIdToken;
 
       // Lưu vào localStorage để ghi nhớ tự động vĩnh viễn (Persistent Login)
@@ -5048,19 +5171,7 @@ async function handleStudentGoogleSignIn() {
 
       checkAndListenStudentStatus(classCodeVal, user.uid);
     } else {
-      // Fallback khi không có kết nối Firebase Auth
-      await new Promise(r => setTimeout(r, 400));
-      studentAuthState.isLoggedIn = true;
-      studentAuthState.uid = "std_" + Math.random().toString(36).substring(2, 9);
-      studentAuthState.studentName = "Nguyễn Minh Khang";
-      studentAuthState.studentEmail = "minhkhang.hs@thcs.edu.vn";
-      studentAuthState.studentAvatar = "";
-      studentAuthState.classCode = classCodeVal;
-      studentAuthState.grade = selectedGrade;
-      studentAuthState.isBlocked = false;
-      studentAuthState.token = null;
-      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
-      updateHeaderStudentAuthUI();
+      throw new Error("Kết nối Google chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
     }
 
     portalDirectClose();
@@ -5071,7 +5182,7 @@ async function handleStudentGoogleSignIn() {
     }
     switchView("dashboard");
   } catch (err) {
-    console.error("Lỗi đăng nhập Google:", err);
+    console.warn("Đăng nhập Google chưa hoàn tất:", err);
     if (err.code === "auth/popup-closed-by-user") {
       // Học sinh đóng popup
     } else if (err.code === "auth/unauthorized-domain") {
@@ -5154,30 +5265,15 @@ async function handleStudentFacebookSignIn() {
           return;
         }
 
-        // Khi Firebase Console chưa kích hoạt Facebook Provider (auth/operation-not-allowed) hoặc thiếu App ID:
-        // Tự động cấp phiên Facebook an toàn cho học sinh để vào học ngay lập tức, triệt tiêu lỗi popup technical
-        console.info("Firebase Facebook provider chưa kích hoạt trong Console. Đang tạo phiên làm việc Facebook an toàn cho học sinh.");
-        const fallbackUid = "fb_" + (studentAuthState.uid ? studentAuthState.uid.replace(/^fb_/, "") : Math.random().toString(36).substring(2, 9));
-        user = {
-          uid: fallbackUid,
-          displayName: "Học sinh Facebook",
-          email: `${fallbackUid}@thcs.edu.vn`,
-          photoURL: ""
-        };
+        throw new Error("Kết nối Facebook chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
       }
     } else {
-      // Khi không có kết nối Firebase Auth
-      await new Promise(r => setTimeout(r, 400));
-      const fallbackUid = "fb_" + Math.random().toString(36).substring(2, 9);
-      user = {
-        uid: fallbackUid,
-        displayName: "Học sinh Facebook",
-        email: `${fallbackUid}@thcs.edu.vn`,
-        photoURL: ""
-      };
+      throw new Error("Kết nối Facebook chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
     }
 
-    if (!user) return;
+    if (!user || typeof user.getIdToken !== "function") throw new Error("Không nhận được xác thực Facebook.");
+    const facebookIdToken = await user.getIdToken();
+    if (!facebookIdToken) throw new Error("Không nhận được xác thực Facebook.");
 
     // Kiểm tra hồ sơ học sinh đã tồn tại trên Firebase Database để giữ đúng Lớp học & Khối
     if (window.firebase && firebase.database) {
@@ -5215,6 +5311,7 @@ async function handleStudentFacebookSignIn() {
     studentAuthState.classCode = classCodeVal;
     studentAuthState.grade = selectedGrade;
     studentAuthState.isBlocked = isBlocked;
+    studentAuthState.token = facebookIdToken;
 
     localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
     updateHeaderStudentAuthUI();
@@ -5256,7 +5353,8 @@ async function handleStudentFacebookSignIn() {
     }
     switchView("dashboard");
   } catch (err) {
-    console.error("Lỗi đăng nhập Facebook:", err);
+    console.warn("Đăng nhập Facebook chưa hoàn tất:", err);
+    showExamToast("Facebook chưa sẵn sàng. Em hãy dùng Mã HS hoặc thử lại sau.");
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -6682,7 +6780,7 @@ async function syncExamToFirebase(exam) {
   try {
     // R04: Bảo vệ đáp án - Chỉ lưu đề thi công khai (đã lọc dap_an_dung & giai_thich_su_pham) vào node exams
     const sanitizedQuestions = (exam.questions || []).map(q => {
-      const { dap_an_dung, giai_thich_su_pham, ...safeQ } = q;
+      const { dap_an_dung: _answer, giai_thich_su_pham: _explanation, ...safeQ } = q;
       return safeQ;
     });
     const publicExam = {
@@ -8068,7 +8166,9 @@ function renderStudentExamKPIs(exams, studentSubs, classSubs, classRoster) {
     }
   }
   if (elTotalInClass) {
-    elTotalInClass.textContent = `/${totalClassParticipants} bạn trong lớp`;
+    elTotalInClass.textContent = myRankIndex >= 0
+      ? `/${totalClassParticipants} bạn trong lớp`
+      : "Chưa đủ dữ liệu xếp hạng";
   }
 }
 
@@ -8319,7 +8419,7 @@ function renderClassLeaderboard(examIdFilter = "all") {
 
   if (rankedList.length === 0) {
     const emptyTr = document.createElement("tr");
-    emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài kiểm tra trong danh mục này.</td>`;
+    emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có dữ liệu xếp hạng cho danh mục này.</td>`;
     tbody.appendChild(emptyTr);
     return;
   }
@@ -9071,7 +9171,7 @@ async function submitStudentExam() {
         try {
           const errData = await res.json();
           if (errData && errData.detail) errDetail = errData.detail;
-        } catch (_err) {
+        } catch {
           console.warn("[AISGK-EXAM] Không thể đọc nội dung JSON chi tiết của thông báo lỗi từ chối bài thi.");
         }
         backendRejectMsg = `Máy chủ từ chối tiếp nhận bài thi (${errDetail}). Bài nộp không được chấp nhận!`;
@@ -9164,6 +9264,7 @@ async function submitStudentExam() {
       const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
       localSubs.unshift({
         ...payload,
+        exam_title: activeStudentExam.title,
         time_spent: timeSpentStr,
         evaluation: result
       });
@@ -9437,7 +9538,7 @@ async function flushPendingExamSubmissions() {
     let initialQueue = [];
     try {
       initialQueue = JSON.parse(localStorage.getItem("aisgk_offline_submissions") || "[]");
-    } catch (_) {
+    } catch {
       return;
     }
     if (!Array.isArray(initialQueue) || !initialQueue.length) return;
@@ -9479,7 +9580,7 @@ async function flushPendingExamSubmissions() {
               if (typeof syncSubmissionToFirebase === "function") {
                 try {
                   await syncSubmissionToFirebase(item, data.evaluation);
-                } catch (_err) {
+                } catch {
                   console.warn("[AISGK-OUTBOX] Đồng bộ bài nộp sang Firebase client-side thất bại sau khi đã ACK.");
                 }
               }
@@ -9490,7 +9591,7 @@ async function flushPendingExamSubmissions() {
             console.warn("[AISGK-OUTBOX] Server chưa ACK hợp lệ hoặc evaluation không đúng hợp đồng:", item.submission_id, data);
           }
         }
-      } catch (_) {
+      } catch {
         // Gặp lỗi mạng hoặc exception: Không thêm vào ackedSubIds để giữ lại thử lại sau
       }
     }
@@ -9504,7 +9605,7 @@ async function flushPendingExamSubmissions() {
           const remainingQueue = freshQueue.filter(entry => entry && !ackedSubIds.has(entry.submission_id));
           localStorage.setItem("aisgk_offline_submissions", JSON.stringify(remainingQueue));
         }
-      } catch (_err) {
+      } catch {
         console.warn("[AISGK-OUTBOX] Lỗi khi cập nhật hàng đợi bài nộp ngoại tuyến trên bộ nhớ cục bộ.");
       }
     }
