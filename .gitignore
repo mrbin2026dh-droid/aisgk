@@ -1,0 +1,31 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.venv/
+node_modules/
+audit_log.jsonl
+**/audit_log.jsonl
+*.blocks.json.bak
+*.blocks.json.*.bak
+
+# Các dự án độc lập / ngoài lề
+rea/
+lan_quiz_arena/
+.kilo/
+
+# Artifacts và log kiểm thử cục bộ
+tests/artifacts/
+tests/artifacts_v2/
+tests/logs/
+tools/logs/
+tests/*.png
+scratch/
+.worktrees/
+
+# Du lieu van hanh & bao ve thong tin hoc sinh
+data/students_registry.json
+data/exams/submissions/
+.bridge/
+
+frontend/data/exams/submissions/

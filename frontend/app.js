@@ -2,6 +2,23 @@
 // ============================================================================
 // HỆ THỐNG TOAST CẢNH BÁO & QUẢN TRỊ MÃ PIN GIÁO VIÊN BẢO MẬT TUYỆT ĐỐI
 // ============================================================================
+// One-time owner-requested reset: retain accounts, lessons and future exam attempts.
+function resetLegacyExamResults(storage) {
+  try {
+    const store = storage || localStorage;
+    const revision = "2026-10-24-clear-exam-results-v1";
+    const key = "ai_sgk_exam_results_cleanup";
+    if (store.getItem(key) === revision) return false;
+    store.removeItem("AISGK_SUBMISSIONS");
+    store.removeItem("aisgk_offline_submissions");
+    store.setItem(key, revision);
+    return true;
+  } catch {
+    return false;
+  }
+}
+resetLegacyExamResults();
+
 function showExamToast(message, type = "warning") {
   let toast = document.getElementById("examToastAlert");
   if (!toast) {
@@ -3695,10 +3712,7 @@ function calculateRealStudentStats(s, targetGrade = 9, teacherExams = []) {
   let progressPercent = totalLessons > 0 ? Math.min(100, Math.round((progressUnits / totalLessons) * 100)) : 0;
 
   let avgScore = scoreCount > 0 ? Number((totalScore / scoreCount).toFixed(1)) : 0;
-  if (scoreCount === 0 && typeof s.average_score === "number" && s.average_score > 0) {
-    avgScore = s.average_score;
-    scoreCount = 1;
-  }
+  // A legacy aggregate is not evidence of a remaining lesson or exam result.
 
   // Danh mục bài kiểm tra/chủ đề: LẤY ĐÚNG TIÊU ĐỀ DO GIÁO VIÊN TẠO (CẤM HARDCODE)
   let topics = [];
